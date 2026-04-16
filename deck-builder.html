@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>DTCG Pro - DECK ARCHITECT</title>
+    <style>
+        :root {
+            --blue: #00d2ff; --purple: #a200ff; --bg: #05050a;
+            --panel: rgba(20, 20, 30, 0.9); --border: rgba(0, 210, 255, 0.3);
+        }
+
+        body { 
+            background: var(--bg); background-image: radial-gradient(circle at center, #111 0%, #000 100%);
+            color: white; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; overflow: hidden;
+        }
+
+        /* 🟢 左侧卡库：独立滚动 */
+        #card-library { width: 70%; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        
+        .lib-header { padding: 20px; flex-shrink: 0; }
+        
+        /* 🔥 高级过滤器：吸顶且内容丰富 */
+        .filter-wrapper {
+            position: sticky; top: 0; background: var(--bg); padding: 10px 20px;
+            z-index: 100; border-bottom: 1px solid #222;
+        }
+        
+        .filter-bar { 
+            background: var(--panel); padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        }
+
+        .filter-bar input, .filter-bar select {
+            background: rgba(0,0,0,0.6); border: 1px solid #444; color: white;
+            padding: 8px; outline: none; border-radius: 4px; font-size: 13px;
+        }
+        .filter-bar input { flex: 2; min-width: 150px; }
+        .filter-bar select { flex: 1; cursor: pointer; }
+
+        .card-grid-container { flex-grow: 1; overflow-y: auto; padding: 20px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 20px; }
+
+        .card-item { cursor: pointer; transition: all 0.2s; position: relative; }
+        .card-item:hover { transform: translateY(-8px); }
+        .card-item img { width: 100%; border-radius: 8px; border: 1px solid transparent; }
+        .card-item:hover img { border-color: var(--blue); box-shadow: 0 0 15px var(--blue); }
+
+        /* 🟣 右侧面板 */
+        #my-deck { width: 30%; padding: 25px; background: var(--panel); display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+        .deck-title { color: var(--blue); font-size: 20px; font-weight: 900; letter-spacing: 2px; margin-bottom: 15px; }
+        
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn { padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 900; font-size: 12px; text-transform: uppercase; transition: 0.3s; }
+        .btn-deploy { background: var(--blue); color: #000; grid-column: span 2; font-size: 14px; margin-bottom: 5px; }
+        .btn-export { background: transparent; border: 1px solid var(--purple); color: var(--purple); }
+        .btn-import { background: transparent; border: 1px solid #555; color: #888; }
+        .btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px currentColor; }
+
+        #deckList { flex-grow: 1; overflow-y: auto; }
+        .deck-card {
+            display: flex; align-items: center; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px; border-radius: 4px; overflow: hidden;
+        }
+        .deck-card img { width: 45px; height: 62px; object-fit: cover; }
+        .deck-card-info { flex-grow: 1; padding: 0 10px; font-size: 12px; }
+        .remove-btn { background: rgba(255, 71, 87, 0.2); color: #ff4757; border: none; height: 62px; padding: 0 12px; cursor: pointer; }
+
+        .back-btn { background: transparent; border: 1px solid #333; color: #666; padding: 8px 15px; cursor: pointer; margin-bottom: 10px; }
+        .back-btn:hover { border-color: var(--blue); color: var(--blue); }
+    </style>
+</head>
+<body>
+
+    <div id="card-library">
+        <div class="lib-header">
+            <button class="back-btn" onclick="window.location.href='index.html'">[ BACK TO LOBBY ]</button>
+            <div style="font-family: monospace; font-size: 12px; color: #444;">DTCG_SYSTEM_V3.0</div>
+        </div>
+
+        <div class="filter-wrapper">
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="SEARCH NAME / ID..." oninput="filterCards()">
+                
+                <select id="colorFilter" onchange="filterCards()">
+                    <option value="">COLOR: ALL</option>
+                    <option value="Red">RED</option><option value="Blue">BLUE</option>
+                    <option value="Yellow">YELLOW</option><option value="Green">GREEN</option>
+                    <option value="Black">BLACK</option><option value="Purple">PURPLE</option>
+                </select>
+
+                <select id="levelFilter" onchange="filterCards()">
+                    <option value="">LV: ALL</option>
+                    <option value="3">LV.3</option><option value="4">LV.4</option>
+                    <option value="5">LV.5</option><option value="6">LV.6</option>
+                    <option value="7">LV.7</option>
+                </select>
+
+                <select id="typeFilter" onchange="filterCards()">
+                    <option value="">TYPE: ALL</option>
+                    <option value="digimon">DIGIMON</option>
+                    <option value="tamer">TAMER</option>
+                    <option value="option">OPTION</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card-grid-container" id="scrollContainer">
+            <div class="card-grid" id="cardGrid"></div>
+            <div id="sentinel" style="height: 50px; width: 100%; display: flex; justify-content: center; align-items: center; color: #666; font-family: monospace;">
+                SCANNING DATABANK...
+            </div>
+        </div>
+    </div>
+
+    <div id="my-deck">
+        <div class="deck-title">DECK ARCHITECT</div>
+        
+        <div class="deck-stats" style="background: rgba(0,0,0,0.5); padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #333; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: bold; color: #ddd;">MAIN DECK:</span>
+                <span style="font-size: 14px; color: var(--blue); font-weight: bold; font-family: monospace;"><span id="main-count">0</span> / 50</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #444; padding-bottom: 10px;">
+                <span style="font-size: 13px; font-weight: bold; color: #ddd;">DIGI-EGGS:</span>
+                <span style="font-size: 14px; color: var(--purple); font-weight: bold; font-family: monospace;"><span id="egg-count">0</span> / 5</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #888; font-weight: bold;">
+                <span>DIGIMON: <span id="digimon-count" style="color: white;">0</span></span>
+                <span>OPTION: <span id="option-count" style="color: white;">0</span></span>
+                <span>TAMER: <span id="tamer-count" style="color: white;">0</span></span>
+            </div>
+        </div>
+        
+        <div class="action-btns">
+            <button class="btn btn-deploy" onclick="saveAndDeploy()">[ DEPLOY TO BATTLE ]</button>
+            <button class="btn btn-export" onclick="exportDeck()">EXPORT</button>
+            <button class="btn btn-import" onclick="importDeck()">IMPORT</button>
+            <button class="btn" id="vault-btn" style="display:none; grid-column: span 2; background: transparent; border: 1px solid var(--gold); color: var(--gold);" onclick="openBuilderVault()">[ 📂 ACCESS VAULT ]</button>
+        </div>
+
+        <div id="deckList"></div>
+    </div>
+
+    <div id="builder-vault-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <div style="width: 400px; background: #111; border: 1px solid var(--gold); border-radius: 12px; padding: 25px; box-shadow: 0 0 30px rgba(255,204,0,0.2);">
+            <h2 style="color: var(--gold); margin-top: 0;">VAULT // EDIT MODE</h2>
+            <div id="builder-vault-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;"></div>
+            <button style="width: 100%; padding: 12px; background: transparent; border: 1px solid #555; color: #888; cursor: pointer; font-weight: bold;" onclick="document.getElementById('builder-vault-overlay').style.display='none'">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        let allCards = [];
+        let myDeck = JSON.parse(localStorage.getItem('currentDeck')) || [];
+        let currentUserId = null;
+        let loadedDeckName = "MY_NEW_DECK"; // 用来记住你现在编辑的卡组叫啥
+
+        // 🔥 分页引擎核心变量
+        let currentFilteredCards = [];
+        let currentRenderedIndex = 0;
+        const CHUNK_SIZE = 50; // 每次装填 50 张卡
+
+        // 1. 初始化
+        fetch('cards.json').then(res => res.json()).then(data => {
+            allCards = data;
+            filterCards(); // 直接调用过滤器来触发第一次渲染
+            renderDeck();
+            
+            // 启动无限滚动雷达
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    renderLibrary(currentFilteredCards, false); // 不重置，继续加载下一批
+                }
+            }, {
+                root: document.getElementById('scrollContainer'),
+                rootMargin: '300px' // 提前 300px 触发，做到丝滑无感加载
+            });
+            observer.observe(document.getElementById('sentinel'));
+        });
+
+        // 2. 分块渲染引擎 (isReset 决定是清空重画，还是往后追加)
+        function renderLibrary(cards, isReset = true) {
+            const grid = document.getElementById('cardGrid');
+            const sentinel = document.getElementById('sentinel');
+            
+            if (isReset) {
+                currentFilteredCards = cards;
+                currentRenderedIndex = 0;
+                grid.innerHTML = ''; // 清空桌面
+            }
+
+            // 切出下一弹夹的卡牌
+            const nextBatch = currentFilteredCards.slice(currentRenderedIndex, currentRenderedIndex + CHUNK_SIZE);
+            
+            if (nextBatch.length === 0) {
+                sentinel.innerText = ">> END OF DATABANK <<";
+                return; 
+            } else {
+                sentinel.innerText = "SCANNING DATABANK...";
+            }
+
+            // 转化为 HTML 并直接追加到底部 (性能极高)
+            const html = nextBatch.map(card => `
+                <div class="card-item" onclick="addToDeck('${card.id}')">
+                    <img src="${card.img}" loading="lazy">
+                </div>
+            `).join('');
+
+            grid.insertAdjacentHTML('beforeend', html);
+            currentRenderedIndex += nextBatch.length;
+        }
+
+        // 3. 搜索和过滤
+        function filterCards() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const color = document.getElementById('colorFilter').value;
+            const lv = document.getElementById('levelFilter').value;
+            const type = document.getElementById('typeFilter').value;
+
+            const filtered = allCards.filter(c => {
+                const matchSearch = c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query);
+                const matchColor = !color || c.color === color;
+                const matchLv = !lv || String(c.level) === lv;
+                const matchType = !type || (c.type && c.type.toLowerCase().includes(type));
+                return matchSearch && matchColor && matchLv && matchType;
+            });
+            
+            // 告诉引擎：条件变了，清空重画第一批
+            renderLibrary(filtered, true);
+        }
+
+        function showCardDetail(card) {
+        const panel = document.getElementById('hover-card-info');
+        if (!card) { panel.style.display = 'none'; return; }
+        
+        panel.style.display = 'flex';
+        document.getElementById('info-name').innerText = card.name;
+        document.getElementById('info-type-level').innerText = (card.type || '').toUpperCase() + (card.level ? ` / LV.${card.level}` : '');
+        document.getElementById('info-dp').innerText = card.dp ? `DP ${card.dp}` : '';
+        
+        const formatText = (txt) => txt ? txt.replace(/\n/g, '<br>') : '';
+        document.getElementById('info-main-effect').innerHTML = card.mainEffect ? `<b>[Main]</b><br>${formatText(card.mainEffect)}` : '';
+        document.getElementById('info-source-effect').innerHTML = card.sourceEffect ? `<b>[Inherited]</b><br>${formatText(card.sourceEffect)}` : '';
+    }
+
+        // 📥 智能加卡逻辑：分别验证主卡组和蛋组的容量
+        function addToDeck(cardId) {
+            const card = allCards.find(c => c.id === cardId);
+            if (!card) return;
+
+            // 判定这张卡是不是蛋
+            const isEgg = card.level === 2 || (card.type && card.type.toLowerCase().includes('egg'));
+            
+            // 实时计算当前的卡组分布
+            const eggs = myDeck.filter(c => c.level === 2 || (c.type && c.type.toLowerCase().includes('egg')));
+            const main = myDeck.filter(c => !(c.level === 2 || (c.type && c.type.toLowerCase().includes('egg'))));
+
+            // 规则拦截：各自独立判定
+            if (isEgg && eggs.length >= 5) return alert("⚠️ 蛋组已满，最多只能带 5 张数码蛋！");
+            if (!isEgg && main.length >= 50) return alert("⚠️ 主卡组已满，最多只能带 50 张！");
+
+            // 同名卡拦截：最多 4 张
+            if (myDeck.filter(c => c.id === cardId).length >= 4) return alert("⚠️ 同编号卡牌最多只能带 4 张！");
+
+            myDeck.push({...card, instanceId: Date.now()});
+            renderDeck();
+        }
+
+        // 📊 智能渲染逻辑：更新仪表盘，并为蛋卡加上紫色高光
+        function renderDeck() {
+            const list = document.getElementById('deckList');
+            
+            // 拆分与统计
+            const eggs = myDeck.filter(c => c.level === 2 || (c.type && c.type.toLowerCase().includes('egg')));
+            const main = myDeck.filter(c => !(c.level === 2 || (c.type && c.type.toLowerCase().includes('egg'))));
+            
+            let digimonCount = 0, optionCount = 0, tamerCount = 0;
+            main.forEach(c => {
+                const t = c.type ? c.type.toLowerCase() : '';
+                if (t.includes('digimon')) digimonCount++;
+                else if (t.includes('option')) optionCount++;
+                else if (t.includes('tamer')) tamerCount++;
+            });
+
+            // 注入数据到仪表盘
+            document.getElementById('main-count').innerText = main.length;
+            document.getElementById('egg-count').innerText = eggs.length;
+            document.getElementById('digimon-count').innerText = digimonCount;
+            document.getElementById('option-count').innerText = optionCount;
+            document.getElementById('tamer-count').innerText = tamerCount;
+
+            // 炫酷交互：满了就变绿，提示玩家可以出战了
+            document.getElementById('main-count').style.color = main.length === 50 ? 'var(--green)' : 'var(--blue)';
+            document.getElementById('egg-count').style.color = (eggs.length > 0 && eggs.length <= 5) ? 'var(--green)' : 'var(--purple)';
+
+            // 渲染卡牌列表 (给数码蛋加上紫色标识和边框)
+            list.innerHTML = myDeck.map((card, index) => {
+                const isEgg = card.level === 2 || (card.type && card.type.toLowerCase().includes('egg'));
+                const borderStyle = isEgg ? 'border-left: 3px solid var(--purple);' : 'border-left: 3px solid var(--blue);';
+                const eggLabel = isEgg ? '<span style="color:var(--purple); font-weight:bold;">[EGG]</span> ' : '';
+
+                return `
+                    <div class="deck-card" style="${borderStyle}">
+                        <img src="${card.img}">
+                        <div class="deck-card-info">
+                            <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${card.name}</div>
+                            <div style="color:#666; font-family:monospace; font-size:10px">${eggLabel}${card.id}</div>
+                        </div>
+                        <button class="remove-btn" onclick="removeFromDeck(${index})">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeFromDeck(index) {
+            myDeck.splice(index, 1);
+            renderDeck();
+        }
+
+        // 🔥 判断身份：如果是 Discord 玩家，开启“存入仓库”模式
+        // 这里我们需要先知道 currentUserId (可以通过 fetch /api/me 拿到)
+        // 📡 网页加载时，探针自动验证 Discord 身份
+        // 📡 防弹级 Discord 身份探针
+        try {
+            fetch('/api/me', { method: 'GET' })
+            .then(res => {
+                if (res.ok) return res.json();
+                throw new Error('GUEST_MODE');
+            })
+            .then(user => {
+                currentUserId = user.id;
+                const vaultBtn = document.getElementById('vault-btn');
+                if (vaultBtn) vaultBtn.style.display = 'block'; 
+                console.log(`>> WELCOME COMMANDER: ${user.username}`);
+            })
+            .catch(err => {
+                console.log(`>> IDENTITY UNVERIFIED: ${err.message}. ENTERING GUEST MODE.`);
+                currentUserId = null;
+            });
+        } catch (e) {
+            console.log(">> LOCAL ENVIRONMENT DETECTED. GUEST MODE ACTIVE.");
+            currentUserId = null;
+        }
+
+        // 📂 打开云端编辑库
+        function openBuilderVault() {
+            if (!currentUserId) return;
+            const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
+            const myDecks = vault[currentUserId] || [];
+            const list = document.getElementById('builder-vault-list');
+            
+            document.getElementById('builder-vault-overlay').style.display = 'flex';
+            
+            if (myDecks.length === 0) {
+                list.innerHTML = `<div style="color:#666; text-align:center; font-family:monospace;">NO DATA FOUND IN VAULT.</div>`;
+                return;
+            }
+
+            // 渲染列表并注入 EDIT 和 DEL 按钮
+            list.innerHTML = myDecks.map((d, idx) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; border: 1px solid #333;">
+                    <div style="text-align: left;">
+                        <div style="color:var(--gold); font-weight:bold; font-size:14px;">${d.name}</div>
+                        <div style="font-size:10px; color:#888; font-family:monospace; margin-top:4px;">${d.cards.length} CARDS</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button style="background:var(--blue); border:none; padding:6px 12px; cursor:pointer; font-weight:bold; font-size:10px; border-radius:4px; color:black;" onclick="loadDeckFromVault(${idx})">EDIT</button>
+                        <button style="background:var(--red); color:white; border:none; padding:6px 12px; cursor:pointer; font-weight:bold; font-size:10px; border-radius:4px;" onclick="deleteDeckFromVault(${idx})">DEL</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 📥 将卡组吸入编辑面板
+        function loadDeckFromVault(idx) {
+            const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
+            const myDecks = vault[currentUserId] || [];
+            myDeck = [...myDecks[idx].cards];
+            loadedDeckName = myDecks[idx].name; // 锁定正在编辑的名字
+            renderDeck();
+            document.getElementById('builder-vault-overlay').style.display = 'none';
+        }
+
+        // 🗑️ 物理抹除卡组
+        function deleteDeckFromVault(idx) {
+            if(!confirm("⚠️ 警告：这会从你的云端永久删除这个卡组，确定吗？")) return;
+            const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
+            vault[currentUserId].splice(idx, 1);
+            localStorage.setItem('dtcg_vault', JSON.stringify(vault));
+            openBuilderVault(); // 刷新列表
+        }
+
+        // 🚀 终极版保存逻辑：支持“另存为”或“覆盖”
+        function saveAndDeploy() {
+            const eggs = myDeck.filter(c => c.level === 2 || (c.type && c.type.toLowerCase().includes('egg')));
+            const main = myDeck.filter(c => !(c.level === 2 || (c.type && c.type.toLowerCase().includes('egg'))));
+
+            if (main.length !== 50) return alert(`⚠️ 主卡组必须满 50 张！当前：${main.length}`);
+
+            if (currentUserId) {
+                // 精英玩家模式：如果编辑过，默认带上原名
+                const deckName = prompt("确认出战代号 (用新名字将另存为新卡组，原名则直接覆盖):", loadedDeckName);
+                if (!deckName) return;
+
+                const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
+                if (!vault[currentUserId]) vault[currentUserId] = [];
+                
+                // 查找是否同名，同名就覆盖，不同名就新增
+                const existingIdx = vault[currentUserId].findIndex(d => d.name === deckName);
+                if (existingIdx !== -1) {
+                    vault[currentUserId][existingIdx].cards = myDeck; // 覆盖更新
+                } else {
+                    vault[currentUserId].push({ name: deckName, cards: myDeck }); // 新增
+                }
+                
+                localStorage.setItem('dtcg_vault', JSON.stringify(vault));
+            }
+            
+            // 将正在编辑的卡组压入热启动内存，并弹射回大厅
+            localStorage.setItem('currentDeck', JSON.stringify(myDeck));
+            window.location.href = 'index.html';
+        }
+
+        // 📤 导出功能：将 ID 列表转为压缩字符串并复制
+        function exportDeck() {
+            if (myDeck.length === 0) return;
+            // 只导出 ID，这样字符串很短
+            const exportData = myDeck.map(c => c.id).join(',');
+            navigator.clipboard.writeText(exportData).then(() => {
+                alert("卡组代码已复制到剪贴板！\n发送给好友，让他们点 IMPORT 粘贴即可。");
+            });
+        }
+
+        // 📥 导入功能：通过 ID 列表还原卡组
+        function importDeck() {
+            const code = prompt("请粘贴卡组代码 (以逗号分隔的 ID):");
+            if (!code) return;
+            const ids = code.split(',');
+            const newDeck = [];
+            ids.forEach(id => {
+                const card = allCards.find(c => c.id === id.trim());
+                if (card) newDeck.push({...card, instanceId: Math.random()});
+            });
+            myDeck = newDeck;
+            renderDeck();
+        }
+
+        // 📡 组卡器专属：提取卡牌资料并展示
+        function showBuilderDetail(card) {
+            const panel = document.getElementById('hover-card-info');
+            if (!card) { panel.style.display = 'none'; return; }
+        
+            panel.style.display = 'flex';
+            document.getElementById('info-name').innerText = card.name || 'UNKNOWN';
+            document.getElementById('info-type-level').innerText = (card.type || '').toUpperCase() + (card.level ? ` / LV.${card.level}` : '') + (card.dp ? ` / DP ${card.dp}` : '');
+        
+            const format = (t) => t ? t.replace(/\n/g, '<br>') : '';
+            document.getElementById('info-main-effect').innerHTML = card.mainEffect ? `<b>[Main]</b><br>${format(card.mainEffect)}` : '';
+            document.getElementById('info-source-effect').innerHTML = card.sourceEffect ? `<b>[Inherited]</b><br>${format(card.sourceEffect)}` : '';
+        }
+    </script>
+</body>
+</html>

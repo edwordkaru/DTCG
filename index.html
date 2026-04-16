@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DTCG Pro v36.5 - Hardcore Engine</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/i18next.min.js"></script>
+    <style>
+        :root { 
+            --blue: #00d2ff; --red: #ff4757; --green: #00ffcc; --gold: #ffcc00;
+            --card-w: 70px; --card-h: 98px; 
+        }
+
+        body, html { 
+            background-color: #05050a; background-image: url('bg.jpg'); 
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: white; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; 
+            height: 100vh; overflow: hidden; transition: filter 0.3s;
+        }
+        * { box-sizing: border-box; }
+
+        .main-layout { display: grid; grid-template-columns: 280px 1fr 280px; height: 100vh; width: 100vw; transition: all 0.5s; }
+
+        .sidebar-left { background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; padding: 15px; height: 100vh; z-index: 100;}
+        #fixed-preview { width: 240px; height: 336px; background-size: contain; background-repeat: no-repeat; background-position: center; border: 2px solid var(--blue); border-radius: 12px; box-shadow: 0 0 20px rgba(0,210,255,0.3); background-image: url('cardback.png'); transition: background-image 0.2s ease-in-out; }
+
+        .center-field { display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; }
+        .player-area { flex: 1; display: flex; align-items: center; padding: 10px; position: relative; gap: 20px; transition: all 0.3s; }
+        
+        .memory-track { height: 35px; background: rgba(0,0,0,0.85); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; position: relative; z-index: 100; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
+        .mem-dot { flex: 1; text-align: center; color: #555; font-size: 12px; transition: all 0.3s; }
+        .mem-active { color: var(--blue); font-size: 24px; font-weight: bold; text-shadow: 0 0 10px var(--blue); }
+
+        .side-container { width: 180px; height: 90%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border-radius: 15px; backdrop-filter: blur(5px); }
+
+        .security-wrapper { width: var(--card-h); height: var(--card-w); position: relative; border: 2px solid transparent; border-radius: 6px; transition: all 0.3s; }
+        .sec-card-visual { position: absolute; width: var(--card-w); height: var(--card-h); background-size: cover; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; transform: rotate(90deg) translate(0, -14px); transform-origin: center; background-image: url('cardback.png'); box-shadow: -2px 2px 5px rgba(0,0,0,0.5); }
+        .security-wrapper.attack-target:hover { border-color: var(--red); box-shadow: 0 0 30px rgba(255,71,87,0.6); background: rgba(255,71,87,0.1); cursor: crosshair; }
+
+        .hatch-zone { display: grid; grid-template-columns: var(--card-w) var(--card-w); gap: 15px; align-items: center; justify-items: center; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; }
+        .egg-pile { width: var(--card-w); height: var(--card-h); background-size: cover; border: 1px solid #444; border-radius: 5px; cursor: pointer; position: relative; transition: transform 0.2s; }
+        .egg-pile:hover { transform: scale(1.05); }
+        .hatch-slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,255,255,0.1); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; text-transform: uppercase; }
+
+        .battle-slots { flex: 1; height: 100%; display: flex; gap: 20px; justify-content: center; align-items: center; }
+
+        .stack-wrap { position: relative; width: var(--card-w); height: var(--card-h); cursor: pointer; transition: all 0.3s; }
+        .stack-wrap:hover { transform: translateY(-5px); }
+        .stack-wrap.attack-target:hover .top-card { border: 3px solid var(--red); box-shadow: 0 0 25px var(--red); transform: scale(1.05); cursor: crosshair; }
+
+        .card-layer { position: absolute; width: 100%; height: 100%; background-size: cover; border-radius: 5px; border: 1px solid #000; box-shadow: 2px 2px 10px rgba(0,0,0,0.8); transition: all 0.3s; }
+        .top-card { border: 2px solid var(--blue); box-shadow: 0 0 15px var(--blue); z-index: 10; }
+        .suspended { transform: rotate(90deg) scale(0.9) !important; opacity: 0.8; }
+
+        .hand-area { height: 130px; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); border-top: 2px solid #222; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 30px; overflow-x: auto; position: relative; z-index: 150;}
+        .hand-card { cursor: pointer; transition: transform 0.2s; }
+        .hand-card:hover { transform: scale(1.1) translateY(-10px); z-index: 20; }
+
+        .sidebar-right { background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(12px); display: flex; flex-direction: column; padding: 15px; border-left: 1px solid rgba(255,255,255,0.1); height: 100vh; z-index: 100;}
+        #log-box { flex: 1; background: rgba(0,0,0,0.6); border: 1px solid #333; border-radius: 6px; padding: 12px; font-size: 11px; color: var(--green); overflow-y: auto; line-height: 1.8; font-family: 'Consolas', 'Monaco', monospace; min-height: 0; margin-bottom: 10px; }
+        .log-entry { margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px; }
+        .log-player { color: var(--blue); font-weight: bold; }
+        
+        .btn-group { display: flex; gap: 10px; flex-shrink: 0; }
+        .pass-btn { flex: 1; padding: 15px; background: linear-gradient(to bottom, var(--red), #b30000); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 0 #660000; }
+        .pass-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #660000; }
+
+        .label { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; flex-shrink: 0; }
+
+        /* 🔥 新增 UI 面板 */
+        #effect-panel { position: absolute; right: 300px; top: 20px; z-index: 1000; background: rgba(0,20,40,0.95); border: 1px solid var(--blue); padding: 15px; border-radius: 8px; display: none; width: 280px; box-shadow: 0 0 20px rgba(0,210,255,0.2); backdrop-filter: blur(5px);}
+        #waiting-banner { display:none; position:absolute; top:80px; left:50%; transform:translate(-50%, 0); background:rgba(255,204,0,0.2); border:1px solid var(--gold); padding:10px 30px; color:var(--gold); border-radius:20px; z-index:2000; font-weight: bold; letter-spacing: 1px;}
+        #blocker-banner { display:none; position:absolute; top:40%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.95); border:2px solid var(--blue); padding:30px; z-index:2500; text-align:center; border-radius: 12px; box-shadow: 0 0 40px rgba(0,210,255,0.4); backdrop-filter: blur(10px);}
+
+        #action-ring { position: absolute; display: none; flex-direction: column; gap: 8px; background: rgba(5,5,10,0.95); border: 1px solid var(--blue); border-radius: 8px; padding: 10px; z-index: 2000; box-shadow: 0 0 20px rgba(0,210,255,0.4); backdrop-filter: blur(5px); }
+        .ring-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 8px 15px; cursor: pointer; text-transform: uppercase; font-size: 10px; font-weight: bold; letter-spacing: 1px; transition: all 0.2s; }
+        .ring-btn:hover { background: var(--blue); color: black; box-shadow: 0 0 10px var(--blue); }
+
+        /* 🔥 新增：小按钮专属样式 */
+        .small-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: monospace;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .small-btn:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+            box-shadow: 0 0 8px var(--blue);
+        }
+        
+        #targeting-banner { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 2000; background: rgba(0,0,0,0.8); border: 2px solid var(--gold); padding: 20px 40px; border-radius: 12px; box-shadow: 0 0 40px rgba(255,204,0,0.3); text-align: center; pointer-events: auto; }
+        #targeting-text { color: var(--gold); font-family: monospace; font-size: 16px; letter-spacing: 2px; line-height: 1.5; }
+        .execute-btn { background: var(--gold); color: black; border: none; padding: 10px 30px; font-size: 14px; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 0 15px var(--gold); border-radius: 4px; display: none; }
+        
+        body.targeting-mode .opponent, body.targeting-mode .sidebar-left, body.targeting-mode .sidebar-right, body.targeting-mode .hand-area { filter: brightness(0.3) grayscale(0.8); pointer-events: none; }
+        body.targeting-mode .self { background: rgba(0, 210, 255, 0.05); }
+        body.targeting-mode .stack-wrap { cursor: crosshair; }
+        body.targeting-mode .hand-area { pointer-events: auto; filter: none; }
+        
+        .targeted-1 .top-card, .targeted-1.hand-card { border: 3px solid var(--blue) !important; box-shadow: 0 0 25px var(--blue) !important; transform: scale(1.05); }
+        .targeted-2 .top-card { border: 3px solid var(--red) !important; box-shadow: 0 0 25px var(--red) !important; transform: scale(1.05); }
+
+        .shake-impact { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+
+        #ace-overlay { position: fixed; inset: 0; background: rgba(30, 0, 0, 0.85); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; animation: redAlertPulse 2s infinite; backdrop-filter: blur(8px); }
+        #ace-panel { border: 2px solid var(--red); box-shadow: 0 0 60px rgba(255, 0, 0, 0.6); background: repeating-linear-gradient(0deg, rgba(10,0,0,0.95), rgba(10,0,0,0.95) 2px, rgba(255,0,0,0.05) 2px, rgba(255,0,0,0.05) 4px); padding: 50px; text-align: center; border-radius: 4px; animation: aceSlam 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+        .ace-title { color: var(--gold); font-size: 28px; font-weight: 900; letter-spacing: 4px; text-shadow: 0 0 20px var(--gold); margin-bottom: 10px; font-family: 'Consolas', monospace; }
+        .ace-desc { color: white; font-family: monospace; margin-bottom: 40px; letter-spacing: 2px; opacity: 0.8; }
+        .ace-btn { padding: 15px 30px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; border-radius: 4px; transition: all 0.3s; }
+        .ace-btn.initiate { background: var(--red); color: white; border: 2px solid #ff9999; box-shadow: 0 0 20px var(--red); }
+        .ace-btn.bypass { background: transparent; color: #888; border: 1px solid #555; }
+        .ace-btn.bypass:hover { color: white; border-color: white; }
+
+        @keyframes aceSlam { 0% { transform: scale(1.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes redAlertPulse { 0%, 100% { background: rgba(30, 0, 0, 0.85); } 50% { background: rgba(60, 0, 0, 0.9); } }
+        /* 🔮 检索盲盒 UI */
+        #reveal-overlay { position: fixed; inset: 0; background: rgba(0, 5, 15, 0.9); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        #reveal-panel { border: 2px solid var(--blue); box-shadow: 0 0 50px rgba(0, 210, 255, 0.2); background: rgba(0, 0, 0, 0.8); padding: 40px; text-align: center; border-radius: 12px; }
+        .reveal-title { color: var(--blue); font-size: 24px; font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; font-family: 'Consolas', monospace; text-shadow: 0 0 10px var(--blue); }
+        .reveal-desc { color: #888; font-size: 12px; letter-spacing: 2px; margin-bottom: 30px; text-transform: uppercase; }
+        #reveal-cards-container { display: flex; gap: 20px; justify-content: center; margin-bottom: 25px; }
+        .reveal-card { width: 120px; height: 168px; background-size: cover; border-radius: 8px; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
+        .reveal-card:hover { transform: translateY(-15px) scale(1.05); border-color: var(--gold); box-shadow: 0 15px 30px rgba(255,204,0,0.5); z-index: 10; }
+        /* ====================== 动态动画 ====================== */
+        .card-fly-in {
+            animation: cardFlyIn 0.6s ease-out forwards;
+        }
+        @keyframes cardFlyIn {
+            0%   { transform: scale(0.3) translateY(80px) rotate(-25deg); opacity: 0; }
+            100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+        }
+
+        .card-shake {
+            animation: cardShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes cardShake {
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .card-explode {
+            animation: cardExplode 0.7s ease-out forwards;
+        }
+        @keyframes cardExplode {
+            0%   { transform: scale(1); opacity: 1; }
+            70%  { transform: scale(1.3); }
+            100% { transform: scale(0.6); opacity: 0; }
+        }
+
+        .card-bounce {
+            animation: cardBounce 0.8s ease-out forwards;
+        }
+        @keyframes cardBounce {
+            0%   { transform: translateY(0) scale(1); }
+            40%  { transform: translateY(-120px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        .memory-flash {
+            animation: memoryFlash 0.3s ease-in-out 2 alternate;
+        }
+        @keyframes memoryFlash {
+            from { background: rgba(0,210,255,0.4); }
+            to   { background: rgba(255,204,0,0.6); }
+        }
+
+        /* 让卡牌在动画期间不被点击干扰 */
+        .stack-wrap.animating, .hand-card.animating { pointer-events: none; }
+    </style>
+</head>
+<body>
+<div id="lobby-screen" style="position: fixed; inset: 0; background: #05050a; z-index: 9999; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding-top: 8vh; overflow-y: auto;">
+        
+        <div style="text-align: center; max-width: 400px; width: 100%; padding: 0 15px;">
+            <h1 style="color: var(--blue); font-family: monospace; letter-spacing: 10px; margin-bottom: 5px;">DTCG_ARENA</h1>
+            <div style="color: #666; font-size: 12px; margin-bottom: 40px; letter-spacing: 2px;">V36.5 MULTIPLAYER NODE</div>
+            
+            <div id="auth-panel" style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px dashed #555; display: flex; flex-direction: column; align-items: center; min-height: 70px; justify-content: center;">
+                
+                <button id="discord-login-btn" class="ring-btn" style="width: 100%; border-color: #5865F2; color: #5865F2; background: rgba(88,101,242,0.1); font-size: 14px; padding: 12px; display: flex; justify-content: center; align-items: center; gap: 10px;" onclick="initDiscordLogin()">
+                    <svg width="20" height="20" viewBox="0 0 127.14 96.36" fill="#5865F2"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96,46,95.88,53,90.94,65.69,84.69,65.69Z"/></svg>
+                    CONNECT DISCORD
+                </button>
+                
+                <div id="user-profile" style="display: none; align-items: center; gap: 15px; justify-content: center; width: 100%;">
+                    <img id="user-avatar" src="" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--green);">
+                    <div style="text-align: left; flex-grow: 1;">
+                        <div id="user-name" style="color: white; font-weight: bold; font-size: 14px;"></div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
+                            <div id="deck-status" style="color: var(--green); font-size: 10px; font-family: monospace; font-weight: bold;">DECK READY</div>
+                            <button class="small-btn" onclick="openDeckLibrary()">[ 📂 MY DECKS ]</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="ring-btn" style="flex: 1; font-size: 12px; padding: 15px; border-color: #aaa; color: #ccc;" onclick="window.location.href='deck-builder.html'">
+                    [ 🛠️ DECK BUILDER ]
+                </button>
+                <button class="ring-btn" id="create-room-btn" style="flex: 1; font-size: 12px; padding: 15px;" onclick="createRoom()">
+                    [ 🏠 CREATE ROOM ]
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="join-room-id" placeholder="ENTER SECURE ROOM ID" style="flex: 2; padding: 12px; background: transparent; border: 1px solid #333; color: white; text-align: center; outline: none; font-family: monospace;">
+                <button class="ring-btn" style="flex: 1; font-size: 12px; border-color: var(--red); color: var(--red);" onclick="joinRoom()">[ JOIN MATCH ]</button>
+            </div>
+            
+            <div style="text-align: left; margin-top: 30px;">
+                <div style="color: var(--blue); font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 10px;">>> ACTIVE NODES (可加入的房间)</div>
+                <div id="available-rooms" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="color: #555; font-size: 12px; text-align: center;">NO ACTIVE ROOMS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div id="staging-screen" style="position: fixed; inset: 0; background: #05050a; z-index: 9998; display: none; flex-direction: column; justify-content: center; align-items: center; background-image: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);">
+        
+        <button onclick="leaveStagingRoom()" style="position: absolute; top: 30px; right: 30px; background: rgba(255, 71, 87, 0.1); border: 1px solid var(--red); color: var(--red); padding: 12px 25px; cursor: pointer; font-family: monospace; font-weight: bold; border-radius: 4px; transition: 0.3s;" onmouseover="this.style.background='var(--red)'; this.style.color='white'" onmouseout="this.style.background='rgba(255, 71, 87, 0.1)'; this.style.color='var(--red)'">[ LEAVE / CLOSE ROOM ]</button>
+
+        <h1 style="color: var(--blue); font-family: monospace; letter-spacing: 5px; margin-bottom: 30px;">ROOM: <span id="staging-room-id" style="color:white;">---</span></h1>
+        
+        <div style="display: flex; gap: 50px; margin-bottom: 40px; align-items: center;">
+            <div id="panel-p1" style="border: 2px solid var(--blue); padding: 30px; border-radius: 10px; width: 280px; text-align: center; background: rgba(0,210,255,0.05); position: relative;">
+                </div>
+            
+            <div style="color: #666; font-size: 24px; font-weight: 900;">VS</div>
+            
+            <div id="panel-p2" style="border: 2px solid var(--purple); padding: 30px; border-radius: 10px; width: 280px; text-align: center; background: rgba(162,0,255,0.05); position: relative;">
+                 </div>
+        </div>
+
+        <button id="ready-btn" class="ring-btn" style="padding: 20px 60px; font-size: 20px; font-weight: bold; border-color: var(--green); color: var(--green); display: none;" onclick="toggleReady()">[ READY TO BATTLE ]</button>
+        
+        <div id="spectator-list" style="margin-top: 30px; color: #888; font-size: 14px; font-family: monospace;">SPECTATORS: NONE</div>
+    </div>
+
+    <div id="mulligan-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 8000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <h1 style="color: var(--blue); font-family: monospace; letter-spacing: 10px; margin-bottom: 10px;">TACTICAL MULLIGAN</h1>
+        <p style="color: #aaa; margin-bottom: 40px; font-family: monospace;">手牌不佳？你可以将手牌洗回卡组并重新抽取 5 张 (每局限 1 次)。</p>
+        
+        <div id="mulligan-btns" style="display: flex; gap: 30px;">
+            <button class="ring-btn" style="border-color: var(--green); color: var(--green); padding: 15px 50px; font-size: 16px;" onclick="submitMulligan(false)">[ KEEP DECK ]</button>
+            <button class="ring-btn" style="border-color: var(--red); color: var(--red); padding: 15px 50px; font-size: 16px;" onclick="submitMulligan(true)">[ MULLIGAN ]</button>
+        </div>
+        
+        <div id="mulligan-waiting" style="color: var(--gold); margin-top: 30px; font-weight: bold; font-family: monospace; font-size: 18px; display: none; letter-spacing: 2px;">>> AWAITING OPPONENT DECISION...</div>
+    </div>
+
+    <div id="effect-choice-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 8500; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <h2 style="color: var(--gold); font-family: monospace; letter-spacing: 5px; margin-bottom: 20px;">>> PENDING ABILITIES (待发动技能)</h2>
+        <div id="effect-list" style="width: 500px; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+            </div>
+        <p style="color: #666; margin-top: 20px; font-size: 12px;">* 根据官方手册：你可以自由选择结算顺序，或选择不发动 [非强制] 效果。</p>
+    </div>
+
+    <div id="chat-widget" style="position: fixed; bottom: 20px; left: 20px; width: 300px; background: rgba(10,10,20,0.8); border: 1px solid #333; border-radius: 8px; z-index: 9999; display: none; flex-direction: column;">
+        <div style="background: rgba(0,0,0,0.5); padding: 5px 10px; font-size: 10px; color: #888; border-bottom: 1px solid #333;">ROOM COMM-LINK</div>
+        <div id="chat-log" style="height: 150px; overflow-y: auto; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 5px;"></div>
+        <div style="display: flex; border-top: 1px solid #333;">
+            <input type="text" id="chat-input" placeholder="Enter message..." style="flex: 1; background: transparent; border: none; color: white; padding: 8px; outline: none; font-size: 12px;" onkeypress="if(event.key === 'Enter') sendChat()">
+            <button onclick="sendChat()" style="background: transparent; border: none; color: var(--blue); cursor: pointer; padding: 0 10px; font-weight: bold;">SEND</button>
+        </div>
+    </div>
+
+<div id="effect-panel">
+    <div style="color:var(--green); font-size: 12px; margin-bottom: 12px; letter-spacing: 1px;">✨ 待处理效果队列</div>
+    <div id="effect-list"></div>
+</div>
+
+<div id="waiting-banner">⏳ 战斗处理中，等待对手响应 (<span id="waiting-step"></span>)...</div>
+
+<div id="deck-library-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <div style="width: 400px; background: #111; border: 1px solid var(--blue); border-radius: 12px; padding: 25px; box-shadow: 0 0 30px rgba(0,210,255,0.2);">
+            <h2 style="color: var(--blue); margin-top: 0;">DECK REPOSITORY</h2>
+            <div id="library-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                </div>
+            <button class="ring-btn" style="width: 100%; border-color: #555; color: #888;" onclick="closeDeckLibrary()">CLOSE</button>
+        </div>
+    </div>
+
+<div id="blocker-banner">
+    <div style="color:var(--blue); font-size:20px; margin-bottom:15px; font-weight: bold;">🛡️ 阻挡阶段 (BLOCKER)</div>
+    <div style="font-size:12px; color:#aaa; margin-bottom:20px;">点击场上带有 [Blocker] 且未横置的数码兽进行物理拦截，或选择跳过直接承受攻击。</div>
+    <button class="ring-btn" onclick="executeSkipBlock()" style="background:var(--red); border-color:var(--red); font-size: 14px; padding: 10px 20px;">跳过阻挡 (TAKE HIT)</button>
+</div>
+
+<div id="ace-overlay">
+    <div id="ace-panel">
+        <div class="ace-title">>> COUNTER TIMING DETECTED <<</div>
+        <div class="ace-desc">OPPONENT ATTACK INCOMING. DO YOU WANT TO RESPOND?</div>
+        <div style="display: flex; gap: 30px; justify-content: center;">
+            <button class="ace-btn initiate" onclick="initiateAceProtocol()">[ BLAST EVOLVE ]</button>
+            <button class="ace-btn bypass" onclick="bypassAceProtocol()">[ BYPASS ]</button>
+        </div>
+    </div>
+</div>
+
+<div id="reveal-overlay">
+    <div id="reveal-panel">
+        <div class="reveal-title">>> DECK SEARCH PROTOCOL <<</div>
+        <div class="reveal-desc">AWAITING TARGET SELECTION. CHOOSE 1 CARD TO ADD TO HAND.</div>
+        <div id="reveal-cards-container"></div>
+        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitReveal(null)">[ SKIP / 放弃检索引擎并归还卡牌 ]</button>
+    </div>
+</div>
+
+<div id="protection-overlay" style="position: fixed; inset: 0; background: rgba(0, 10, 5, 0.9); z-index: 4000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(15px);">
+    <div style="border: 2px solid var(--green); background: rgba(0,0,0,0.8); padding: 40px; text-align: center; border-radius: 12px; box-shadow: 0 0 50px rgba(0, 255, 204, 0.2);">
+        <div style="color: var(--green); font-size: 24px; font-weight: 900; letter-spacing: 3px; margin-bottom: 20px;">>> PROTECTION INTERCEPTED <<</div>
+        <div id="protection-target-img" style="width: 150px; height: 210px; background-size: cover; margin: 0 auto 25px; border-radius: 8px; border: 2px solid var(--green);"></div>
+        <div id="protection-btns" style="display: flex; gap: 15px; justify-content: center;"></div>
+    </div>
+</div>
+
+<div id="trash-revive-overlay" style="position: fixed; inset: 0; background: rgba(15, 0, 20, 0.9); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div id="trash-revive-panel" style="border: 2px solid #a200ff; box-shadow: 0 0 50px rgba(162, 0, 255, 0.2); background: rgba(0, 0, 0, 0.8); padding: 40px; text-align: center; border-radius: 12px; max-width: 80vw; max-height: 80vh; overflow-y: auto;">
+        <div style="color: #a200ff; font-size: 24px; font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; font-family: 'Consolas', monospace; text-shadow: 0 0 10px #a200ff;">>> NECROMANCY PROTOCOL <<</div>
+        <div style="color: #888; font-size: 12px; letter-spacing: 2px; margin-bottom: 30px;">SELECT 1 DIGIMON FROM TRASH TO RESURRECT</div>
+        <div id="trash-revive-cards-container" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 25px;"></div>
+        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitTrashReviveChoice(null)">[ SKIP / 放弃转生 ]</button>
+    </div>
+</div>
+
+<div id="action-ring">
+    <div style="color:var(--blue); font-size:9px; text-align:center; margin-bottom:5px; letter-spacing:1px;">COMMAND LINK</div>
+    <button class="ring-btn" onclick="startTargeting('DNA')">🧬 DNA Digivolve</button>
+    <button class="ring-btn burst" style="color:var(--red); border-color:var(--red);" onclick="startTargeting('BURST')">🔥 Burst Evolve</button>
+    <button class="ring-btn" style="border-color:#555; color:#aaa;" onclick="closeActionRing()">[ ABORT ]</button>
+</div>
+
+<div id="targeting-banner">
+    <div id="targeting-text">>> SYSTEM READY <<</div>
+    <button id="execute-btn" class="execute-btn" onclick="executeSpecialEvolution()">INITIATE SEQUENCE</button>
+    <button class="ring-btn" style="border-color:var(--red); color:var(--red); margin-top:5px;" onclick="cancelTargeting()">CANCEL PROTOCOL</button>
+    <button id="fizzle-btn" class="ring-btn" style="border-color:#555; color:#aaa; margin-top:5px; display:none;" onclick="submitServerTarget(null)">[ FIZZLE / 放空效果 ]</button>
+</div>
+
+<div class="main-layout" id="main-layout">
+    <div class="sidebar-left">
+    <div class="label">Card Preview</div>
+    <div id="fixed-preview"></div>
+    <div id="hover-card-info" style="display: none; flex-direction: column; gap: 8px; margin-top: 15px; padding: 12px; background: rgba(0,210,255,0.05); border: 1px solid rgba(0,210,255,0.2); border-radius: 8px; font-size: 12px; line-height: 1.5; color: #ccc;">
+        <div id="info-name" style="color: var(--gold); font-size: 14px; font-weight: bold; border-bottom: 1px solid rgba(255,204,0,0.3); padding-bottom: 5px;">-</div>
+        <div style="display: flex; justify-content: space-between; font-family: monospace; color: var(--blue);">
+            <span id="info-type-level">-</span>
+            <span id="info-dp" style="color: #ff4757; font-weight: bold;">-</span>
+        </div>
+        <div id="info-cost" style="font-family: monospace; color: var(--green);"></div>
+        <div id="info-main-effect" style="color: #fff; font-size: 11px;"></div>
+        <div id="info-source-effect" style="color: #aaa; font-size: 11px; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #444;"></div>
+    </div>
+</div>
+
+    <div class="center-field">
+        <div class="player-area opponent">
+            <div class="side-container">
+                <div id="p2-security" class="security-wrapper attack-target" ondragover="allowDrop(event)" ondrop="handleAttackSecurity(event)"></div>
+                <div class="hatch-zone"><div class="egg-pile" style="background-image:url('eggback.png'); opacity:0.4;"></div><div id="p2-hatch" class="hatch-slot"></div></div>
+            </div>
+            <div class="battle-slots" id="p2-battle"></div>
+            <div class="side-container"><div class="egg-pile" style="background-image:url('cardback.png'); opacity:0.4;"></div><div class="label">Opponent Deck</div></div>
+        </div>
+
+        <div class="memory-track" id="memory-track"></div>
+
+        <div class="player-area self">
+            <div class="side-container">
+                <div id="p1-security" class="security-wrapper"></div>
+                <div class="hatch-zone">
+                    <div class="egg-pile" onclick="sendAction('hatch')" style="background-image:url('eggback.png')"><div id="egg-count" style="position:absolute; bottom:4px; right:4px; font-size:10px; background:var(--blue); color:black; padding:0 4px; border-radius:3px; font-weight:bold;">0</div></div>
+                    <div id="p1-hatch" class="hatch-slot" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'hatch')">OPEN</div>
+                </div>
+            </div>
+            <div class="battle-slots" id="p1-battle" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'battle')"></div>
+            <div class="side-container"><div class="egg-pile" style="background-image:url('cardback.png')"><div id="deck-count" style="position:absolute; bottom:4px; right:4px; font-size:10px; background:var(--blue); color:black; padding:0 4px; border-radius:3px; font-weight:bold;">0</div></div><div class="label">Main Deck</div></div>
+        </div>
+
+        <div class="hand-area" id="hand"></div>
+    </div>
+
+    <div class="sidebar-right">
+        <div class="label" style="color:var(--green)">System Log // Intelligence</div>
+        <div id="log-box"></div>
+        <div class="btn-group">
+            <button class="pass-btn" onclick="sendAction('pass')">Finish Turn</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const socket = io();
+    
+    // 🔥 身份从写死变成动态分配
+    let roomId = null;
+    let myId = null; 
+    let oppId = null;
+    let myName = "";
+    let myAvatar = ""; // 记录自己的头像
+    let myRole = null; // 记录自己是 p1, p2 还是 spectator
+    
+    // ==========================================
+    // 🔑 身份引擎：读取 Discord 数据并接管大厅
+    // ==========================================
+    
+    // 默认代号
+    myName = "Anon_" + Math.floor(Math.random() * 9999); 
+
+    // 1. 发射跳转指令
+    function initDiscordLogin() {
+        window.location.href = '/auth/discord';
+    }
+
+    // 2. 网页加载完毕时，向后端探针请求身份
+    // 🛡️ 身份引擎：网页加载后立刻去后台打探你是谁
+    let currentUserId = null; // 记录 Discord ID
+
+    fetch('/api/me')
+        .then(response => {
+            if (response.ok) return response.json();
+            throw new Error('未登录');
+        })
+        .then(user => {
+            // 抓到 Discord 资料了！立刻切换成“老玩家”界面
+            document.getElementById('discord-login-btn').style.display = 'none';
+            document.getElementById('user-profile').style.display = 'flex';
+            
+            myAvatar = user.avatar 
+                ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` 
+                : `https://cdn.discordapp.com/embed/avatars/0.png`; 
+            
+            document.getElementById('user-avatar').src = myAvatar;
+            myName = user.global_name || user.username;
+            document.getElementById('user-name').innerText = myName;
+            currentUserId = user.id;
+            
+            const deck = JSON.parse(localStorage.getItem('currentDeck')) || [];
+            document.getElementById('deck-status').innerText = `DECK READY: ${deck.length} CARDS`;
+        })
+        .catch(() => console.log(">> 访客模式接入，请先连接 Discord 以获取完整排面"));
+
+    // ==========================================
+    // ⚔️ 备战室核心交互
+    // ==========================================
+    function createRoom() {
+        //document.getElementById('lobby-status').innerText = ">> INITIATING NODE...";
+        const deck = JSON.parse(localStorage.getItem('currentDeck')) || [];
+        socket.emit('createRoom', { playerName: myName, deck: deck, avatar: myAvatar });
+    }
+
+    function joinRoom() {
+        const rId = document.getElementById('join-room-id').value.toUpperCase();
+        if (!rId) return;
+        const deck = JSON.parse(localStorage.getItem('currentDeck')) || [];
+        socket.emit('joinRoom', { roomId: rId, playerName: myName, customDeck: deck, avatar: myAvatar });
+    }
+
+    // 刚进入房间，切换到备战室 UI
+    socket.on('roomJoined', (data) => {
+        roomId = data.roomId;
+        myRole = data.role; // 'p1', 'p2', or 'spectator'
+        
+        document.getElementById('lobby-screen').style.display = 'none';
+        document.getElementById('staging-screen').style.display = 'flex';
+        document.getElementById('chat-widget').style.display = 'flex'; // 开启聊天
+        document.getElementById('staging-room-id').innerText = roomId;
+        
+        if (myRole !== 'spectator') {
+            document.getElementById('ready-btn').style.display = 'block';
+        } else {
+            addLog(`>> <span style="color:var(--gold)">SPECTATOR MODE ENGAGED.</span>`);
+        }
+        renderStaging(data.state);
+    });
+
+    // 备战室状态刷新 (谁进来了，谁准备了)
+    socket.on('stagingUpdate', (state) => {
+        if (!state) return;
+        renderStaging(state);
+    });
+
+    // ==========================================
+    // ⚔️ 动态备战室渲染 (带换座与房主识别)
+    // ==========================================
+    // 1. 动态渲染备战室（根据身份显示不同的按钮）
+    function renderStaging(state) {
+        const renderPanel = (playerData, roleKey, borderColor) => {
+            if (playerData) {
+                // 座位有人：显示头像、名字、准备状态
+                const isHost = state.hostId === playerData.id;
+                const hostTag = isHost ? `<div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:var(--gold); color:black; font-size:10px; font-weight:900; padding:2px 10px; border-radius:10px;">👑 HOST</div>` : '';
+                const isMe = (playerData.id === socket.id);
+                // 🔥 如果是自己，增加“选牌”和“切观众”按钮
+                const actionBtns = isMe ? `
+                    <div style="margin-top:10px; display:flex; gap:5px; justify-content:center;">
+                        <button class="small-btn" onclick="openDeckLibrary()">[ 📂 CHANGE DECK ]</button>
+                        <button class="small-btn" onclick="switchRole('spectator')">[ 👁️ SPECTATE ]</button>
+                    </div>
+                ` : '';
+
+                return `
+                    ${hostTag}
+                    <img src="${playerData.avatar || ''}" style="width:80px; height:80px; border-radius:50%; border:2px solid ${borderColor}; display:${playerData.avatar?'block':'none'}; margin:0 auto 10px;">
+                    <h2 style="color:white; margin:0;">${playerData.name}</h2>
+                    <div style="color:${playerData.ready?'var(--green)':'var(--red)'}; font-weight:bold;">${playerData.ready?'READY':'NOT READY'}</div>
+                    ${actionBtns}
+                `;
+            } else {
+                // 座位空缺：如果我是观众，显示“上场”按钮
+                const takeSeatBtn = (myRole === 'spectator') ? `<button class="ring-btn" style="font-size:12px; padding:10px; margin-top:10px;" onclick="switchRole('${roleKey}')">[ ⚔️ TAKE SEAT ]</button>` : '';
+                return `<h2 style="color:#444;">EMPTY SEAT</h2>${takeSeatBtn}`;
+            }
+        };
+
+        // 这里的 panel-p1 和 panel-p2 需要你去 HTML 里给那两个 div 加上对应的 ID
+        document.getElementById('panel-p1').innerHTML = renderPanel(state.p1, 'p1', 'var(--blue)');
+        document.getElementById('panel-p2').innerHTML = renderPanel(state.p2, 'p2', 'var(--purple)');
+        
+        if (state.spectators.length > 0) {
+            document.getElementById('spectator-list').innerText = `SPECTATORS: ${state.spectators.join(', ')}`;
+        }
+    }
+
+    // 2. 角色切换函数
+    function switchRole(targetRole) {
+        socket.emit('switchRole', { roomId, toRole: targetRole });
+    }
+
+    // 3. 仓库选牌逻辑（华丽 UI 版）
+    function openDeckLibrary() {
+        if (!currentUserId) return alert(">> 只有连接 Discord 的精英玩家才能使用云端仓库！");
+        
+        const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
+        const myDecks = vault[currentUserId] || [];
+        const list = document.getElementById('library-list');
+        
+        document.getElementById('deck-library-overlay').style.display = 'flex';
+        
+        if (myDecks.length === 0) {
+            list.innerHTML = `<div style="color:#444; text-align:center; padding:20px; font-family:monospace;">[ VAULT EMPTY ]<br>去组卡器保存几套卡组吧！</div>`;
+            return;
+        }
+
+        // 把卡组渲染成炫酷的列表条目
+        list.innerHTML = myDecks.map((d, idx) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px solid #333; transition: 0.2s;">
+                <div style="text-align: left;">
+                    <div style="color:var(--blue); font-weight:900; font-size:16px; text-transform:uppercase;">${d.name}</div>
+                    <div style="font-size:10px; color:#888; font-family:monospace; margin-top:5px;">CAPACITY: ${d.cards.length} CARDS</div>
+                </div>
+                <button class="ring-btn" style="padding:8px 15px; font-size:12px; border-color:var(--green); color:var(--green);" onclick="selectThisDeck(${idx})">DEPLOY</button>
+            </div>
+        `).join('');
+    }
+
+    // 选中卡组并发送给服务器
+    function selectThisDeck(idx) {
+        const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
+        const myDecks = vault[currentUserId] || [];
+        const selected = myDecks[idx];
+        
+        if (roomId && (myRole === 'p1' || myRole === 'p2')) {
+            socket.emit('updatePlayerDeck', { roomId, role: myRole, deck: selected.cards });
+            addLog(`>> <span style="color:var(--blue)">TACTICAL SWITCH: LOADED DECK [${selected.name}]</span>`);
+        }
+        closeDeckLibrary();
+    }
+
+    // 关闭面板
+    function closeDeckLibrary() {
+        document.getElementById('deck-library-overlay').style.display = 'none';
+    }
+
+    // 换座发送器
+    function switchRole(targetRole) {
+        socket.emit('switchRole', { roomId, toRole: targetRole });
+    }
+
+    // 监听自己身份发生变化
+    socket.on('roleSwitched', ({ socketId, newRole }) => {
+        if (socket.id === socketId) {
+            myRole = newRole;
+            const btn = document.getElementById('ready-btn');
+            // 如果变成观众，隐藏准备按钮；如果上桌了，恢复未准备状态
+            if (myRole === 'spectator') {
+                btn.style.display = 'none';
+            } else {
+                btn.style.display = 'block';
+                btn.innerText = '[ READY TO BATTLE ]';
+                btn.style.borderColor = 'var(--green)';
+                btn.style.color = 'var(--green)';
+            }
+        }
+    });
+
+    // 离开房间逻辑
+    // 离开房间逻辑
+    function leaveStagingRoom() {
+        socket.emit('leaveRoom', { roomId });
+        // 自己退回大厅
+        document.getElementById('staging-screen').style.display = 'none';
+        document.getElementById('chat-widget').style.display = 'none';
+        
+        // 🔥 就是这里！把 block 改成了 flex，骨架就不会塌！
+        document.getElementById('lobby-screen').style.display = 'flex'; 
+        
+        roomId = null;
+        myRole = null;
+    }
+
+    
+
+    // 被房主踢出（解散）
+    socket.on('roomClosed', (msg) => {
+        alert(">> " + msg);
+        document.getElementById('staging-screen').style.display = 'none';
+        document.getElementById('chat-widget').style.display = 'none';
+        
+        // 🔥 这里也一样！
+        document.getElementById('lobby-screen').style.display = 'flex'; 
+        
+        roomId = null;
+        myRole = null;
+    });
+
+    function toggleReady() {
+        if (myRole === 'p1' || myRole === 'p2') {
+            socket.emit('toggleReady', { roomId, role: myRole });
+            const btn = document.getElementById('ready-btn');
+            btn.innerText = btn.innerText.includes('CANCEL') ? '[ READY TO BATTLE ]' : '[ CANCEL READY ]';
+            btn.style.borderColor = btn.innerText.includes('CANCEL') ? 'var(--red)' : 'var(--green)';
+            btn.style.color = btn.innerText.includes('CANCEL') ? 'var(--red)' : 'var(--green)';
+        }
+    }
+
+    // ==========================================
+    // 💬 聊天系统
+    // ==========================================
+    function sendChat() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (text && roomId) {
+            socket.emit('sendChat', { roomId, sender: myName, message: text });
+            input.value = '';
+        }
+    }
+
+    socket.on('chatMessage', (data) => {
+        const log = document.getElementById('chat-log');
+        const color = data.sender === myName ? 'var(--blue)' : 'white';
+        log.innerHTML += `<div><strong style="color:${color}">${data.sender}:</strong> <span style="color:#ddd">${data.message}</span></div>`;
+        log.scrollTop = log.scrollHeight;
+    });
+
+    // ==========================================
+    // ⚔️ 比赛正式打响，炸开备战室！
+    // ==========================================
+    socket.on('gameStart', (data) => {
+        console.log("GAME INITIATED", data);
+        roomId = data.roomId; 
+        
+        // 分配物理视角
+        if (myRole === 'spectator') {
+            myId = 'spectator';
+            oppId = 'p1'; // 随便给个默认值，防止报错
+        } else {
+            myId = (socket.id === data.p1Id) ? 'p1' : 'p2';
+            oppId = (myId === 'p1') ? 'p2' : 'p1';
+        }
+        
+        // 隐藏备战室，露出杀戮战场 (聊天框不隐藏！)
+        document.getElementById('staging-screen').style.display = 'none';
+    });
+
+    socket.on('lobbyError', (msg) => {
+        document.getElementById('lobby-status').style.color = "var(--red)";
+        document.getElementById('lobby-status').innerText = `>> ERROR: ${msg}`;
+    });
+
+    // ⚔️ 比赛正式打响，炸开大厅遮罩！
+    socket.on('gameStart', (data) => {
+        console.log("GAME INITIATED", data);
+        roomId = data.roomId; 
+        
+        // 🔥 核心：根据后端的发牌，决定你是主视角还是对手视角
+        myId = (socket.id === data.p1Id) ? 'p1' : 'p2';
+        oppId = (myId === 'p1') ? 'p2' : 'p1';
+        
+        // 隐藏大厅，露出杀戮战场
+        document.getElementById('lobby-screen').style.display = 'none';
+        
+        addLog(`>> <span style="color:var(--green)">SYSTEM CONNECTED. YOU ARE [${myId.toUpperCase()}]. WEAPONS HOT.</span>`);
+    });
+
+    // 🌐 监听大厅雷达广播
+    socket.on('lobbyUpdate', (availableRooms) => {
+        const listObj = document.getElementById('public-room-list');
+        if (availableRooms.length === 0) {
+            listObj.innerHTML = `<div style="color: #444; font-size: 12px; text-align: center;">NO PUBLIC ROOMS AVAILABLE. BE THE FIRST TO CREATE ONE.</div>`;
+            return;
+        }
+        
+        // 渲染列表，挂载一键加入事件
+        listObj.innerHTML = availableRooms.map(r => `
+            <button class="ring-btn" style="border-color: #333; color: #aaa; font-size: 12px; padding: 12px; text-align: left; display: flex; justify-content: space-between; cursor: pointer;" onclick="joinPublicRoom('${r.roomId}')">
+                <span>HOST: <span style="color:white;">${r.hostName}</span></span>
+                <span style="color: var(--green);">[ JOIN MATCH ]</span>
+            </button>
+        `).join('');
+    });
+
+    // 一键截获并加入公共房间
+    function joinPublicRoom(rId) {
+        document.getElementById('join-room-id').value = rId;
+        joinRoom(); // 直接调用你之前写好的 joinRoom 方法！
+    }
+    
+    // 🔥 全局状态管控
+    let dragState = null; 
+    let lastState = null;
+    let activeCommandCard = null;
+    let targetingMode = null; 
+    let selectedTargets = []; 
+    let acePromptShown = false; 
+    let isBlockingMode = false;
+    let currentPendingTarget = null; // 🔥 新增：存放后端的火控目标数据
+
+    function addLog(msg) {
+        const box = document.getElementById('log-box');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        entry.innerHTML = `<span style="color:#666">[${time}]</span> ${msg}`;
+        box.appendChild(entry);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // ==========================================
+    // ⚔️ 战斗阶段智能处理系统 (由状态树驱动，不依赖额外事件)
+    // ==========================================
+    function autoCheckAceProtocol(hand, battleArea) {
+        let canBlast = false;
+        hand.forEach(handCard => {
+            if (handCard.overflow || handCard.isAce) {
+                battleArea.forEach(fieldCard => {
+                    const newLv = parseInt((handCard.lv || handCard.level || "0").toString().replace(/[^0-9]/g, ''));
+                    const oldLv = parseInt((fieldCard.lv || fieldCard.level || "0").toString().replace(/[^0-9]/g, ''));
+                    if (newLv === oldLv + 1 && newLv > 0) canBlast = true;
+                });
+            }
+        });
+
+        if (canBlast) {
+            document.getElementById('ace-overlay').style.display = 'flex';
+        } else {
+            // 无手牌可反击，自动流转到下一步 (BLOCKER)
+            socket.emit('action', { type: 'resolveCounter', roomId, playerId: myId, actionType: 'BYPASS' });
+        }
+    }
+
+    function bypassAceProtocol() { 
+        document.getElementById('ace-overlay').style.display = 'none'; 
+        socket.emit('action', { type: 'resolveCounter', roomId, playerId: myId, actionType: 'BYPASS' }); 
+    }
+
+    function initiateAceProtocol() { 
+        document.getElementById('ace-overlay').style.display = 'none'; 
+        startTargeting('BLAST'); 
+    }
+
+    function executeSkipBlock() {
+        document.getElementById('blocker-banner').style.display = 'none';
+        isBlockingMode = false;
+        socket.emit('action', { type: 'skipBlock', roomId, playerId: myId });
+    }
+
+    // ==========================================
+    // ✨ 效果堆栈渲染
+    // ==========================================
+    function renderEffectQueue(queue) {
+        const panel = document.getElementById('effect-panel');
+        const list = document.getElementById('effect-list');
+        if (!queue || queue.length === 0) { panel.style.display = 'none'; return; }
+        
+        panel.style.display = 'block';
+        list.innerHTML = queue.map((eff, i) => `
+            <div style="margin-bottom: 8px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">
+                <span style="color: ${eff.playerId === myId ? 'var(--blue)' : 'var(--red)'}">[${eff.playerId}] ${eff.sourceName}<br><span style="color:#aaa">${eff.type}</span></span>
+                ${(eff.playerId === myId && i === 0) ? `<button onclick="sendResolveEffect('${eff.id}')" style="background:var(--gold); border:none; padding:4px 8px; cursor:pointer; font-weight:bold; border-radius:3px;">结算</button>` : `<span style="color:#666">Wait</span>`}
+            </div>
+        `).join('');
+    }
+
+    function sendResolveEffect(id) {
+        socket.emit('action', { type: 'resolveEffect', roomId, playerId: myId, effectId: id });
+    }
+
+    // ==========================================
+    // 🎯 目标选择与环形菜单
+    // ==========================================
+    function openActionRing(card, event) {
+        if(targetingMode) { if(targetingMode === 'BLAST') handleHandCardClick(card, event.target); return; }
+        activeCommandCard = card;
+        const ring = document.getElementById('action-ring');
+        ring.style.display = 'flex'; ring.style.left = Math.min(event.pageX - 70, window.innerWidth - 150) + 'px'; ring.style.top = (event.pageY - 140) + 'px';
+    }
+    function closeActionRing() { document.getElementById('action-ring').style.display = 'none'; activeCommandCard = null; }
+
+    function startTargeting(mode) {
+        targetingMode = mode; selectedTargets = []; document.getElementById('action-ring').style.display = 'none';
+        document.body.classList.add('targeting-mode'); document.getElementById('targeting-banner').style.display = 'flex'; updateTargetingUI();
+    }
+    function cancelTargeting() {
+        targetingMode = null; selectedTargets = []; activeCommandCard = null;
+        document.body.classList.remove('targeting-mode'); document.getElementById('targeting-banner').style.display = 'none';
+        document.querySelectorAll('.targeted-1, .targeted-2').forEach(el => el.classList.remove('targeted-1', 'targeted-2'));
+        // 如果是在防守阶段取消了 BLAST 锁定，自动流转为跳过反击
+        if(lastState && lastState.counterTiming.isActive && lastState.counterTiming.defenderId === myId && lastState.counterTiming.step === 'COUNTER') {
+            bypassAceProtocol();
+        }
+    }
+
+    function handleFieldClick(instanceId, isMine) {
+        // 🔥 如果当前处于阻挡阶段... (保留原有代码)
+        if (isBlockingMode && isMine) {
+            socket.emit('action', { type: 'performBlock', roomId, playerId: myId, blockerInstanceId: instanceId });
+            isBlockingMode = false;
+            document.getElementById('blocker-banner').style.display = 'none';
+            return;
+        }
+
+        // 🔥 新增：如果引擎在等你选目标（无论敌我），点下去直接开火！
+        if (targetingMode === 'SERVER_TARGET') {
+            submitServerTarget(instanceId);
+            return;
+        }
+
+        if (!targetingMode || !isMine) return;
+        if (targetingMode === 'BLAST') {
+            if (selectedTargets.length >= 1 && selectedTargets[0] !== instanceId) selectedTargets[1] = instanceId; 
+            else if (selectedTargets.length === 0) selectedTargets[1] = instanceId;
+        } else {
+            const idx = selectedTargets.indexOf(instanceId);
+            if (idx > -1) selectedTargets.splice(idx, 1);
+            else if (selectedTargets.length < 2) selectedTargets.push(instanceId);
+        }
+        updateTargetingUI();
+    }
+
+    // 🔥 新增：向前线发送开火指令
+    function submitServerTarget(targetId) {
+        document.getElementById('main-layout').classList.add('shake-impact');
+        setTimeout(() => document.getElementById('main-layout').classList.remove('shake-impact'), 500);
+        
+        socket.emit('action', { type: 'submitTarget', roomId, playerId: myId, targetInstanceId: targetId });
+    }
+
+    // 🔮 向前线发送检索选择
+    function submitReveal(instanceId) {
+        document.getElementById('reveal-overlay').style.display = 'none';
+        socket.emit('action', { type: 'submitRevealChoice', roomId, playerId: myId, selectedCardInstanceId: instanceId });
+    }
+
+    function handleHandCardClick(card, element) {
+        if (targetingMode === 'BLAST') {
+            selectedTargets[0] = card.instanceId; 
+            document.querySelectorAll('.hand-card').forEach(el => el.classList.remove('targeted-1'));
+            element.classList.add('targeted-1'); activeCommandCard = card; updateTargetingUI();
+        }
+    }
+
+    function updateTargetingUI() {
+        const textObj = document.getElementById('targeting-text'); 
+        const btn = document.getElementById('execute-btn');
+        const fizzleBtn = document.getElementById('fizzle-btn'); // 抓取逃生按钮
+        document.querySelectorAll('.stack-wrap').forEach(el => el.classList.remove('targeted-1', 'targeted-2'));
+        
+        // 恢复默认按钮状态
+        btn.style.display = 'none';
+        if (fizzleBtn) fizzleBtn.style.display = 'none';
+
+        if (targetingMode === 'SERVER_TARGET' && currentPendingTarget) {
+            // 🔥 后端引擎托管模式：显示动作和 DP 限制
+            const action = currentPendingTarget.actionType;
+            let condText = "";
+            if (currentPendingTarget.conditions && currentPendingTarget.conditions.maxDp !== null && currentPendingTarget.conditions.maxDp !== Infinity) {
+                condText = `<br><span style="color:var(--red); font-size:12px;">(RESTRICTION: MAX ${currentPendingTarget.conditions.maxDp} DP)</span>`;
+            }
+            textObj.innerHTML = `>> 🎯 SYSTEM WAITING << <br> PLEASE SELECT TARGET FOR: [${action}] ${condText}`;
+            
+            // 显示放空按钮，隐藏普通的执行和取消按钮
+            if (fizzleBtn) fizzleBtn.style.display = 'block';
+            document.querySelector('#targeting-banner .ring-btn[onclick="cancelTargeting()"]').style.display = 'none';
+        }
+        else if (targetingMode === 'BLAST') {
+            // ... 原本的 BLAST 逻辑保持完全不变 ...
+            const hasHand = selectedTargets[0] ? 1 : 0; const hasField = selectedTargets[1] ? 1 : 0;
+            if(selectedTargets[1]) {
+                const el = document.querySelector(`[data-instance-id="${selectedTargets[1]}"]`);
+                if(el) el.classList.add('targeted-2');
+            }
+            textObj.innerHTML = `>> 💥 BLAST DIGIVOLVE << <br> SELECT ACE CARD & TARGET: [${hasHand + hasField} / 2]`;
+            btn.style.display = (hasHand && hasField) ? 'block' : 'none';
+            document.querySelector('#targeting-banner .ring-btn[onclick="cancelTargeting()"]').style.display = 'block';
+        } else {
+            // ... 原本的 DNA/BURST 逻辑保持完全不变 ...
+            selectedTargets.forEach((id, index) => {
+                const el = document.querySelector(`[data-instance-id="${id}"]`);
+                if(el) el.classList.add(index === 0 ? 'targeted-1' : 'targeted-2');
+            });
+            if (targetingMode === 'DNA') textObj.innerHTML = `>> 🧬 DNA FUSION PROTOCOL << <br> AWAITING MATERIALS: [${selectedTargets.length} / 2]`;
+            else if (targetingMode === 'BURST') textObj.innerHTML = `>> 🔥 BURST EVOLUTION << <br> AWAITING TARGET & TAMER: [${selectedTargets.length} / 2]`;
+            btn.style.display = (selectedTargets.length === 2) ? 'block' : 'none';
+            document.querySelector('#targeting-banner .ring-btn[onclick="cancelTargeting()"]').style.display = 'block';
+        }
+    }
+
+    function executeSpecialEvolution() {
+        if (targetingMode === 'BLAST' && (!selectedTargets[0] || !selectedTargets[1])) return;
+        if (targetingMode !== 'BLAST' && selectedTargets.length !== 2) return;
+
+        document.getElementById('main-layout').classList.add('shake-impact');
+        setTimeout(() => document.getElementById('main-layout').classList.remove('shake-impact'), 500);
+
+        if (targetingMode === 'DNA') {
+            socket.emit('action', { type: 'dnaDigivolve', roomId, playerId: myId, handCard: activeCommandCard, targetId1: selectedTargets[0], targetId2: selectedTargets[1] });
+        } else if (targetingMode === 'BLAST') {
+            socket.emit('action', { type: 'resolveCounter', roomId, playerId: myId, actionType: 'BLAST', blastData: { handCard: activeCommandCard, targetId: selectedTargets[1] } });
+        }
+
+        socket.emit('action', { type: 'digiXros', roomId, playerId: myId, handCard, targetIds: [id1, id2] })
+
+        socket.emit('action', { type: 'assembly', roomId, playerId: myId, sourceInstanceId, targetInstanceId })
+        
+        cancelTargeting(); 
+    }
+
+    // ==========================================
+    // 🎴 核心场地图形渲染
+    // ==========================================
+    function renderStack(card, isMine, isHatch) {
+        const wrap = document.createElement('div');
+        wrap.className = 'stack-wrap';
+        wrap.setAttribute('data-instance-id', card.instanceId); 
+        
+        if (card.isSuspended) wrap.classList.add('suspended');
+
+        wrap.onmouseenter = () => { 
+            if(card.img) {
+                document.getElementById('fixed-preview').style.backgroundImage = `url('${card.img}')`;
+                previewCardInfo(card); // 🔥 触发情报显示
+            }
+        };
+        wrap.onclick = () => { handleFieldClick(card.instanceId, isMine); }; // 修正：任何模式下都把点击事件发过去
+
+        if (isMine) {
+            wrap.draggable = true;
+            wrap.ondragstart = () => {
+                if(!targetingMode && !isBlockingMode) {
+                    if (isHatch) dragState = { type: 'hatch', data: card };
+                    else dragState = { type: 'attacker', data: card.instanceId };
+                }
+            };
+        } else {
+            wrap.classList.add('attack-target');
+            wrap.ondragover = (e) => e.preventDefault();
+            wrap.ondrop = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                if (dragState && dragState.type === 'attacker' && !targetingMode) {
+                    socket.emit('action', { type: 'declareAttack', roomId, playerId: myId, attackerInstanceId: dragState.data, targetType: 'digimon', targetInstanceId: card.instanceId });
+                    dragState = null;
+                }
+            };
+        }
+
+        if (isMine) {
+            wrap.ondragover = (e) => e.preventDefault();
+            wrap.ondrop = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                if (dragState && dragState.type === 'hand' && !targetingMode) {
+                    socket.emit('action', { type: 'play', roomId, playerId: myId, card: dragState.data, zone: isHatch ? 'hatch' : 'battle', targetInstanceId: card.instanceId });
+                    dragState = null;
+                }
+            };
+        }
+
+        const stack = card.stack || [];
+        stack.forEach((s, i) => {
+            const layer = document.createElement('div');
+            layer.className = 'card-layer'; layer.style.backgroundImage = `url('${s.img}')`;
+            layer.style.transform = `translateY(${(i+1)*15}px)`; layer.style.zIndex = 5 - i;
+            wrap.appendChild(layer);
+        });
+        const top = document.createElement('div'); top.className = 'card-layer top-card'; top.style.backgroundImage = `url('${card.img}')`; top.style.zIndex = 10;
+        wrap.appendChild(top); return wrap;
+    }
+
+    // ==========================================
+    // 📡 状态接收中枢：完全同步服务器引擎
+    // ==========================================
+    let latestGameState = null; // 全局战局快照
+
+    // 📡 数据雷达：根据 instanceId 扫描战局，提取卡牌全部资料
+    function previewCardInfo(instanceId) {
+    if (!latestGameState) return;
+    let found = null;
+    ['p1', 'p2'].forEach(p => {
+        const z = latestGameState.zones[p];
+        const all = [...z.hand, ...z.battleArea, ...z.breedingArea, ...z.trash, ...z.security];
+        all.forEach(c => {
+            if (c.instanceId === instanceId) found = c;
+            if (c.stack) c.stack.forEach(s => { if (s.instanceId === instanceId) found = s; });
+        });
+    });
+
+    if (found) {
+        document.getElementById('hover-card-info').style.display = 'flex';
+        document.getElementById('info-name').innerText = found.name || 'UNKNOWN';
+        document.getElementById('info-type-level').innerText = (found.type || '').toUpperCase() + (found.level ? ` / LV.${found.level}` : '');
+        document.getElementById('info-dp').innerText = found.dp ? `DP ${found.dp}` : '';
+        document.getElementById('info-cost').innerText = `PLAY: ${found.playCost || 0} | EVO: ${found.digivolveCost || 0}`;
+        const format = (t) => t ? t.replace(/\n/g, '<br>') : '';
+        document.getElementById('info-main-effect').innerHTML = found.mainEffect ? `<span style="color:var(--blue);">[MAIN]</span><br>${format(found.mainEffect)}` : '';
+        document.getElementById('info-source-effect').innerHTML = found.sourceEffect ? `<span style="color:var(--gold);">[INHERITED]</span><br>${format(found.sourceEffect)}` : '';
+    }
+}
+
+    socket.on('gameStateUpdate', (state) => {
+        latestGameState = state; // 🔥 新增：每次收到服务器数据，截取快照
+        if (state.phase === 'MULLIGAN' && myRole !== 'spectator') {
+            document.getElementById('mulligan-overlay').style.display = 'flex';
+            if (state.mulliganDecisions[myId] === null) {
+                document.getElementById('mulligan-btns').style.display = 'flex';
+                document.getElementById('mulligan-waiting').style.display = 'none';
+            }
+            return; // 调度阶段不渲染后面的战场，防止穿帮
+        } else {
+            document.getElementById('mulligan-overlay').style.display = 'none';
+        }
+        // --- 1. 日志与基础更新 ---
+        if (!lastState) { lastState = JSON.parse(JSON.stringify(state)); }
+        else {
+            if (lastState.turnPlayer !== state.turnPlayer) addLog(`>> <span style="color:var(--gold)">SIGNAL: ${state.turnPlayer.toUpperCase()} PHASE INITIATED</span>`);
+            if (lastState.memory !== state.memory) {
+                const cost = Math.abs(lastState.memory - state.memory);
+                const p = lastState.memory > state.memory ? "P1" : "P2";
+                addLog(`<span class="log-player">${p}</span> 消耗了 <span style="color:var(--red)">${cost}</span> 内存`);
+            }
+            lastState = JSON.parse(JSON.stringify(state));
+        }
+
+        const baHtml = zone.battleArea.map(c => {
+                const isSuspended = c.isSuspended ? 'transform: rotate(90deg); margin: 0 15px;' : '';
+                const isMyArea = playerKey === myId;
+                const isAttacking = state.counterTiming.pendingAttack && state.counterTiming.pendingAttack.attackerInstanceId === c.instanceId;
+                const activeClass = isAttacking ? 'active-attacker' : '';
+
+                // ❌ 就是这里！要把下面这个 return 块整体换掉
+                return `<div class="card-slot ${activeClass}" style="${isSuspended}" draggable="${isMyArea}" onmouseover="previewCardInfo('${c.instanceId}')" 
+                             onmouseover="previewCardInfo('${c.instanceId}')"
+                             ondragstart="handleDragStart(event, 'attacker', '${c.instanceId}')" 
+                             onclick="handleTargetSelection('${c.instanceId}', '${playerKey}', 'battleArea')">
+                </div>`;
+            }).join('');
+
+        // 拦截器：如果存在待处理的效果选择
+        if (state.pendingEffectSelection && state.pendingEffectSelection.playerId === myId) {
+            document.getElementById('effect-choice-overlay').style.display = 'flex';
+            const list = document.getElementById('effect-list');
+            list.innerHTML = state.pendingEffectSelection.effects.map((eff, idx) => `
+                <div style="background: rgba(255,255,255,0.05); border: 1px solid #444; padding: 15px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="color: var(--blue);">${eff.cardName}</strong>
+                        <span style="font-size: 10px; color: var(--gold); background: rgba(255,204,0,0.1); padding: 2px 6px;">${eff.timing}</span>
+                    </div>
+                    <div style="color: #bbb; font-size: 13px; margin-bottom: 15px; line-height: 1.4;">${eff.effectText}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="small-btn" style="flex: 1; border-color: var(--green); color: var(--green); padding: 8px;" onclick="chooseEffect(${idx}, true)">[ ACTIVATE ]</button>
+                        <button class="small-btn" style="flex: 1; border-color: var(--red); color: var(--red); padding: 8px;" onclick="chooseEffect(${idx}, false)">[ SKIP ]</button>
+                    </div>
+                </div>
+            `).join('');
+            return; // 挂起，不渲染后续画面
+        } else {
+            document.getElementById('effect-choice-overlay').style.display = 'none';
+        }
+
+        document.querySelectorAll('.mem-dot').forEach(d => d.classList.remove('mem-active'));
+        const active = document.getElementById(`mem-${state.memory}`);
+        if(active) active.classList.add('mem-active');
+
+        // --- 2. 渲染效果队列 ---
+        renderEffectQueue(state.effectQueue);
+
+        // --- 3. 渲染战场与手牌（带动画）---
+        [myId, oppId].forEach(id => {
+            const z = state.zones[id];
+            const isMe = (id === myId);
+            const prefix = isMe ? 'p1' : 'p2';
+
+            // 安保区（轻微抖动）
+            const secBox = document.getElementById(`${prefix}-security`);
+            secBox.innerHTML = z.security.map((_, i) => 
+                `<div class="sec-card-visual" style="left:${i*4}px; top:${i*2}px; z-index:${i}"></div>`
+            ).join('');
+
+            // 战场
+            const bArea = document.getElementById(`${prefix}-battle`);
+            bArea.innerHTML = "";
+            z.battleArea.forEach(c => {
+                const el = renderStack(c, isMe, false);
+                bArea.appendChild(el);
+            });
+
+            // 孵化区
+            const hBox = document.getElementById(`${prefix}-hatch`);
+            hBox.innerHTML = "";
+            if (z.breedingArea.length > 0) {
+                hBox.appendChild(renderStack(z.breedingArea[0], isMe, true));
+            } else if (isMe) {
+                hBox.innerText = "OPEN";
+            }
+
+            // === 手牌动画（只对我方生效）===
+            if (isMe) {
+                document.getElementById('egg-count').innerText = z.eggDeck.length;
+                document.getElementById('deck-count').innerText = z.deck.length;
+
+                const handBox = document.getElementById('hand');
+                handBox.innerHTML = "";
+
+                z.hand.forEach((c, index) => {
+                    const d = document.createElement('div');
+                    d.className = 'card-layer hand-card';
+                    d.style.position = 'relative';
+                    d.style.width = '70px';
+                    d.style.height = '98px';
+                    d.style.backgroundImage = `url('${c.img}')`;
+
+                    // 新抽到的卡加飞入动画
+                    if (c.justDrawn) {
+                        d.classList.add('card-fly-in');
+                        setTimeout(() => d.classList.remove('card-fly-in'), 800);
+                        delete c.justDrawn;
+                    }
+
+                    d.draggable = true;
+                    d.ondragstart = () => { if (!targetingMode) dragState = { type: 'hand', data: c }; };
+                    d.onclick = (e) => { e.stopPropagation(); openActionRing(c, e); };
+                    d.onmouseenter = () => { 
+                        document.getElementById('fixed-preview').style.backgroundImage = `url('${c.img}')`; 
+                        previewCardInfo(c.instanceId); 
+                    };
+                    handBox.appendChild(d);
+                });
+            }
+        });
+        
+        if(targetingMode) updateTargetingUI();
+
+        // --- 4. ⚔️ 战斗阶段 UI 调度中心 ---
+        const wBanner = document.getElementById('waiting-banner');
+        if (state.counterTiming && state.counterTiming.isActive) {
+            if (state.counterTiming.defenderId === myId) {
+                // 防御方视角
+                wBanner.style.display = 'none';
+                if (state.counterTiming.step === 'COUNTER') {
+                    if (!acePromptShown) {
+                        autoCheckAceProtocol(state.zones[myId].hand, state.zones[myId].battleArea);
+                        acePromptShown = true;
+                    }
+                } else if (state.counterTiming.step === 'BLOCKER') {
+                    acePromptShown = false; 
+                    document.getElementById('blocker-banner').style.display = 'block';
+                    isBlockingMode = true;
+                }
+            } else {
+                // 攻击方视角
+                wBanner.style.display = 'block';
+                document.getElementById('waiting-step').innerText = state.counterTiming.step;
+            }
+        } else {
+            // 战斗结束重置
+            acePromptShown = false;
+            isBlockingMode = false;
+            wBanner.style.display = 'none';
+            document.getElementById('blocker-banner').style.display = 'none';
+            document.getElementById('ace-overlay').style.display = 'none';
+        }
+
+        // --- 5. 🎯 引擎效果的火控雷达触发 ---
+        if (state.pendingTarget && state.pendingTarget.playerId === myId) {
+            if (targetingMode !== 'SERVER_TARGET') {
+                currentPendingTarget = state.pendingTarget;
+                startTargeting('SERVER_TARGET'); // 激活前端准星
+            }
+        } else if (!state.pendingTarget && targetingMode === 'SERVER_TARGET') {
+            // 后端引擎已经解除刹车，前端同步关闭准星
+            cancelTargeting();
+            currentPendingTarget = null;
+        }
+
+        // --- 6. 🔮 盲盒检索雷达接管 ---
+        const rOverlay = document.getElementById('reveal-overlay');
+        if (state.pendingReveal && state.pendingReveal.playerId === myId) {
+            rOverlay.style.display = 'flex';
+            const container = document.getElementById('reveal-cards-container');
+            // 将引擎发来的卡片渲染出来
+            container.innerHTML = state.pendingReveal.cards.map(c => 
+                `<div class="reveal-card" style="background-image:url('${c.img}')" 
+                      onclick="submitReveal('${c.instanceId}')" 
+                      onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
+                 </div>`
+            ).join('');
+        } else {
+            rOverlay.style.display = 'none';
+        }
+
+        // --- 7. 🦇 废弃区转生雷达接管 ---
+        const tOverlay = document.getElementById('trash-revive-overlay');
+        if (state.pendingTrashRevive && state.pendingTrashRevive.playerId === myId) {
+            tOverlay.style.display = 'flex';
+            const container = document.getElementById('trash-revive-cards-container');
+            // 将符合条件的尸体渲染出来，边框弄成高贵的基佬紫
+            container.innerHTML = state.pendingTrashRevive.cards.map(c => 
+                `<div class="reveal-card" style="background-image:url('${c.img}'); border-color: #a200ff; box-shadow: 0 10px 20px rgba(162,0,255,0.3);" 
+                      onclick="submitTrashReviveChoice('${c.instanceId}')" 
+                      onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
+                 </div>`
+            ).join('');
+        } else {
+            tOverlay.style.display = 'none';
+        }
+
+        // --- 8. 🛡️ 抗性雷达接管 ---
+        const pOverlay = document.getElementById('protection-overlay');
+        if (state.pendingProtection && state.pendingProtection.playerId === myId) {
+            pOverlay.style.display = 'flex';
+            const { instanceId, options } = state.pendingProtection;
+            // 找到被狙击的对象
+            const target = [...state.zones.p1.battleArea, ...state.zones.p2.battleArea].find(c => c.instanceId === instanceId);
+            document.getElementById('protection-target-img').style.backgroundImage = `url(${target.img})`;
+            
+            let btns = "";
+            if (options.evade) btns += `<button class="ring-btn" style="border-color:var(--blue); color:var(--blue);" onclick="submitProtection('EVADE')">USE [EVADE]</button>`;
+            if (options.armorPurge) btns += `<button class="ring-btn" style="border-color:var(--gold); color:var(--gold);" onclick="submitProtection('ARMOR_PURGE')">USE [ARMOR PURGE]</button>`;
+            btns += `<button class="ring-btn" style="border-color:var(--red); color:var(--red);" onclick="submitProtection('NONE')">ACCEPT DELETION</button>`;
+            document.getElementById('protection-btns').innerHTML = btns;
+        } else {
+            pOverlay.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', () => { if(!targetingMode) closeActionRing(); });
+
+    function submitMulligan(doMulligan) {
+        document.getElementById('mulligan-btns').style.display = 'none';
+        document.getElementById('mulligan-waiting').style.display = 'block';
+        socket.emit('action', { type: 'mulligan', roomId, playerId: myId, doMulligan: doMulligan });
+    }
+    
+    function allowDrop(e) { e.preventDefault(); }
+
+    // 🧬 处理卡牌直接拖拽到另一张卡牌上 (触发跨物种挂载)
+    function handleDropOnCard(e, targetInstanceId) {
+        e.preventDefault();
+        e.stopPropagation(); // 阻止事件冒泡到外层的区域 Drop
+        if (myRole === 'spectator' || !dragState) return;
+
+        const sourceId = dragState.data;
+        if (sourceId === targetInstanceId) return; // 物理法则：不能自己塞自己
+
+        if (dragState.type === 'hand' || dragState.type === 'attacker') {
+            if (confirm("🧬 跨物种挂载 (Save / Mind Link)：\n确认要将这张卡塞入目标卡牌的底部吗？")) {
+                socket.emit('action', { type: 'attachToStack', roomId, playerId: myId, sourceInstanceId: sourceId, targetInstanceId });
+            }
+        }
+        dragState = null;
+    }
+    
+    function handleDrop(e, zone) {
+        e.preventDefault(); if (!dragState || targetingMode || isBlockingMode) return;
+        if (dragState.type === 'hand') {
+            socket.emit('action', { roomId, playerId: myId, type: 'play', card: dragState.data, zone });
+        } else if (dragState.type === 'hatch' && zone === 'battle') {
+            socket.emit('action', { roomId, playerId: myId, type: 'moveBreeding' });
+        }
+        dragState = null;
+    }
+
+    function handleAttackSecurity(e) {
+        e.preventDefault();
+        if (dragState && dragState.type === 'attacker' && !targetingMode && !isBlockingMode) {
+            socket.emit('action', { type: 'declareAttack', roomId, playerId: myId, attackerInstanceId: dragState.data, targetType: 'security' });
+            dragState = null;
+        }
+    }
+
+    function chooseEffect(index, confirmed) {
+        socket.emit('action', { type: 'resolveManualEffect', roomId, playerId: myId, effectIndex: index, confirmed });
+    }
+
+    function submitProtection(choice) {
+        socket.emit('action', { type: 'submitProtectionChoice', roomId, playerId: myId, choice });
+    }
+
+    function sendAction(type) { 
+        if (myRole === 'spectator') return alert(">> 观众禁止操作！");
+        socket.emit('action', { type, roomId, playerId: myId }); 
+    }
+
+    // 🦇 向前线发送复活指令
+    function submitTrashReviveChoice(instanceId) {
+        document.getElementById('trash-revive-overlay').style.display = 'none';
+        socket.emit('action', { type: 'submitTrashRevive', roomId, playerId: myId, selectedCardInstanceId: instanceId });
+    }
+
+    // 初始化内存条
+    const bar = document.getElementById('memory-track'); bar.innerHTML = "";
+    for (let i = -10; i <= 10; i++) {
+        const d = document.createElement('div'); d.className = 'mem-dot'; d.id = `mem-${i}`; d.innerText = Math.abs(i);
+        bar.appendChild(d);
+    }
+
+    addLog(`>> <span style="color:var(--green)">SYSTEM INITIALIZED. WEAPONS HOT.</span>`);
+</script>
+</body>
+</html>

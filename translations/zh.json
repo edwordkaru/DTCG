@@ -1,0 +1,23 @@
+{
+  "DTCG_ARENA": "DTCG_ARENA",
+  "V36.5_MULTIPLAYER_NODE": "V36.5 MULTIPLAYER NODE",
+  "CONNECT_DISCORD": "连接 Discord",
+  "DECK_READY": "卡组就绪",
+  "DECK_BUILDER": "[ 🛠️ 组卡器 ]",
+  "CREATE_ROOM": "[ 🏠 创建房间 ]",
+  "JOIN_MATCH": "[ 加入对战 ]",
+  "ENTER_SECURE_ROOM_ID": "输入房间 ID",
+  "ACTIVE_NODES": ">> 可加入的房间",
+  "NO_ACTIVE_ROOMS": "暂无房间，赶快创建吧",
+  "LEAVE_CLOSE_ROOM": "[ 离开 / 关闭房间 ]",
+  "READY_TO_BATTLE": "[ 准备战斗 ]",
+  "CANCEL_READY": "[ 取消准备 ]",
+  "TACTICAL_MULLIGAN": "战术重抽",
+  "KEEP_DECK": "[ 保留手牌 ]",
+  "MULLIGAN": "[ 重抽 ]",
+  "PENDING_ABILITIES": ">> 待发动技能",
+  "DECK_REPOSITORY": "卡组仓库",
+  "CLOSE": "关闭",
+  "FINISH_TURN": "结束回合",
+  "SYSTEM_INITIALIZED": "系统初始化完成，武器已就绪。"
+}
