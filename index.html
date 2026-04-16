@@ -415,7 +415,24 @@
     // ==========================================
     // 🔑 身份引擎：读取 Discord 数据并接管大厅
     // ==========================================
-    
+    // 启动时查询登录状态
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const res = await fetch('/auth/status');
+            const data = await res.json();
+            
+            if (data.loggedIn) {
+                console.log("🔥 Discord 链接成功:", data.user.username);
+                // 这里写你的 UI 逻辑：
+                // 比如把那个“Connect Discord”的按钮隐藏掉
+                // 把玩家的头像和名字显示在角落
+                // document.getElementById('login-btn').style.display = 'none';
+                // document.getElementById('player-name').innerText = data.user.username;
+            }
+        } catch (e) {
+            console.error("查状态失败", e);
+        }
+    });
     // 默认代号
     myName = "Anon_" + Math.floor(Math.random() * 9999); 
 
