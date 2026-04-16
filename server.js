@@ -8,13 +8,18 @@ const axios = require('axios');
 const GameState = require('./game-state.js'); 
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(cors());
 
 app.use(session({
     secret: 'dtcg-hardcore-degen-secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === 'production' } 
+    cookie: { 
+        secure: true, // 因为 Render 是强制 HTTPS 的，这里直接写死 true
+        sameSite: 'lax', // 🔥 2. 允许跨域跳转（从 Discord 跳回来）时携带 Cookie
+        maxAge: 1000 * 60 * 60 * 24 * 7 // 保持登录 7 天
+    }
 }));
 
 app.use('/img', express.static(path.join(__dirname, 'img')));
@@ -40,6 +45,15 @@ if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
 app.get('/auth/discord', (req, res) => {
     const url = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
     res.redirect(url);
+});
+
+// 🔥 3. 给前端查询登录状态的接口
+app.get('/auth/status', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({ loggedIn: true, user: req.session.user });
+    } else {
+        res.json({ loggedIn: false });
+    }
 });
 
 app.get('/auth/discord/callback', async (req, res) => {
@@ -170,6 +184,7 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('stagingUpdate', getRoomState(room));
         broadcastLobbyState();
     });
+    
 
     // 4. 退出房间
     socket.on('leaveRoom', ({ roomId }) => {
