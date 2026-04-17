@@ -593,15 +593,15 @@ class GameState {
             if (handIdx !== -1) cur.hand.splice(handIdx, 1);
 
             // 扣减后的费用
-                        // 扣减后的费用
             const finalCost = Math.max(0, (handCard.playCost || 0) - reduction);
             
+            console.log(`%c[DIGIXROS COST] ${handCard.name} | finalCost=${finalCost}`, 'color:#ff9900');
             if (!this.canPay(playerId, finalCost)) {
                 console.warn(`🚫 [Rules] DigiXros 内存不足！`);
                 return;
             }
             const delta = (playerId === 'p1') ? finalCost : -finalCost;
-            this.updateMemory(delta);
+            this.updateMemory(delta, `DIGIXROS ${handCard.name}`);
 
             // 创建新实例 + 合并素材 stack
             const newStack = [];
@@ -1442,16 +1442,19 @@ class GameState {
         }
 
         // 🔥 2. 确认合法后，再执行支付（不再出现扣费不结算的死锁）
+                // 🔥 3. 【加强调试版】支付成本
         if (!isBlast) {
+            console.log(`%c[COST CALC] Player=${playerId} | Card=${card.name} | Type=${cardType} | isEvolve=${isEvolve} | finalCost=${finalCost} | playCost=${card.playCost} | digivolveCost=${card.digivolveCost || 'N/A'}`, 
+                        'color:#00ffcc; font-weight:bold');
+
             if (!this.canPay(playerId, finalCost)) {
-                console.warn(`🚫 [Rules] 内存不足！无法支付 ${finalCost} 费`);
-                return; // 阻止非法出牌
+                console.warn(`🚫 [Rules] 内存不足！无法支付 ${finalCost} 费 (当前 memory=${this.memory})`);
+                return;
             }
-            const delta = (playerId === 'p1') ? finalCost : -finalCost;   // ← 关键修正！
-            console.log(`💰 实际扣除内存：${delta}（P${playerId === 'p1' ? '1' : '2'} 视角）`);
-            this.updateMemory(delta);
+            const delta = (playerId === 'p1') ? finalCost : -finalCost;
+            this.updateMemory(delta, isEvolve ? `EVOLVE ${card.name}` : `PLAY ${card.name}`);
         } else {
-            console.log(`💥 BLAST 进化 → 免单，不扣内存`);
+            console.log(`%c💥 BLAST 进化 → 免单，不扣内存`, 'color:#ff00ff');
         }
 
         // ====================== 进化分支 ======================
@@ -1530,11 +1533,15 @@ class GameState {
         return totalDp;
     }
 
-    // 🔥 新增：绝对安全的内存增减方法，强制锁定在 -10 到 10 之间
-    updateMemory(amount) {
+    // 🔥 加强版内存更新（带彩色调试日志）
+    updateMemory(amount, reason = "unknown") {
+        const old = this.memory;
         this.memory += amount;
         if (this.memory > 10) this.memory = 10;
         if (this.memory < -10) this.memory = -10;
+
+        console.log(`%c[MEMORY UPDATE] ${reason} | ${old} → ${this.memory} (delta=${amount}) | turnPlayer=${this.turnPlayer}`, 
+                    'color:#ffcc00; font-weight:bold; background:#111');
     }
 
         // 🔥 新增：官方规则 - 判断是否能支付费用（防止 P1 第一回合无限出牌）
