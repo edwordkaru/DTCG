@@ -819,6 +819,25 @@ class GameState {
                 }
             }
 
+            if (text.includes("Reveal") && text.includes("top 3")) {
+                const cards = cur.deck.splice(0, 3);
+                this.revealedCards = cards;
+        
+                // 🔥 特别适配 Gatomon: 识别 "1 yellow and 1 purple"
+                let selectionCount = 1;
+                if (text.includes("1 yellow") && text.includes("1 purple")) {
+                    selectionCount = 2; // 需要选两张
+                }
+
+                this.pendingReveal = {
+                    playerId: playerId,
+                    count: selectionCount, 
+                    remaining: selectionCount, // 剩余需要选的数量
+                    filter: selectionCount === 2 ? "YELLOW_PURPLE" : "ANY" 
+                };
+                return;
+            }
+
             // 🦇 解析：从废弃区登场 (Play from Trash)
             // 兼容格式: "play 1 purple digimon card from your trash without paying its memory cost"
             const reviveMatch = text.match(/play\s*(?:1|an?)\s*(?:([a-z]+)\s*)?digimon\s*card\s*from\s*your\s*trash/i);
@@ -1054,6 +1073,27 @@ class GameState {
             }
 
             this.checkTurnEnd(); 
+        }
+    }
+
+    // 🔥 修复断线的关键：submitRevealChoice
+    submitRevealChoice(playerId, selectedCardInstanceId) {
+        if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
+
+        const cardIdx = this.revealedCards.findIndex(c => c.instanceId === selectedCardInstanceId);
+        if (cardIdx !== -1) {
+            const [selectedCard] = this.revealedCards.splice(cardIdx, 1);
+            this.zones[playerId].hand.push(selectedCard);
+            this.pendingReveal.remaining--; // 减少待选数量
+        }
+
+        // 只有当所有该选的卡都选完了，才关闭状态并继续引擎
+        if (this.pendingReveal.remaining <= 0) {
+            // 剩下的放回库底
+            this.zones[playerId].deck.push(...this.revealedCards);
+            this.revealedCards = [];
+            this.pendingReveal = null;
+            this.resolveEffect(); // 继续解析队列中的下一个效果
         }
     }
 
