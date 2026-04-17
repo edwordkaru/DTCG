@@ -1285,36 +1285,53 @@ class GameState {
         }
     }
 
-    // ==================== 【修复版】playOrEvolve ====================
+        // ==================== 【最终调试版】playOrEvolve ====================
     playOrEvolve(playerId, card, zone, targetInstanceId = null, isBlast = false) {
         if (this.gameOver || this.turnPlayer !== playerId) return;
-        const cur = this.zones[playerId];
-        const cardType = String(card.type || "").toLowerCase();
 
-        // 🔥 核心修复1：进化永远优先读取 digivolveCost（Patamon 现在扣0）
+        console.log(`🔍 [playOrEvolve] 开始执行 → Player: ${playerId} | TargetID: ${targetInstanceId || '无'} | Card: ${card.name} (${card.type})`);
+
+        const cur = this.zones[playerId];
+        const cardType = String(card.type || card.cardType || "").toLowerCase();
+
+        // 🔥 核心成本计算（强制优先 digivolveCost）
         let finalCost = 0;
         let isEvolve = false;
 
         if (targetInstanceId && (cardType.includes('digimon') || cardType.includes('egg'))) {
             isEvolve = true;
-            finalCost = parseInt(card.digivolveCost) || 0;   // ← 官方规则：进化只看 Digivolution Cost
+            finalCost = parseInt(card.digivolveCost) || 0;   // ← 官方规则
+            console.log(`✅ 判定为【进化】 → digivolveCost = ${card.digivolveCost} → finalCost = ${finalCost}`);
         } else {
             finalCost = parseInt(card.playCost) || 0;
+            console.log(`⚠️ 判定为【普通出牌】 → playCost = ${card.playCost} → finalCost = ${finalCost}`);
         }
 
-        // 特殊进化（如 DNA）额外判断（保留原有逻辑）
+        // 特殊免费进化判断
         if (isEvolve && card.mainEffect) {
             const txt = card.mainEffect.toLowerCase();
-            if (txt.includes('free') || txt.includes('no cost')) finalCost = 0;
+            if (txt.includes('free') || txt.includes('no cost') || txt.includes('不支付')) {
+                finalCost = 0;
+                console.log(`🆓 卡牌文本包含免费进化，强制 finalCost = 0`);
+            }
         }
 
         // 支付费用（Blast 进化免单）
-        if (!isBlast) this.updateMemory(playerId === 'p1' ? -finalCost : finalCost);
+        if (!isBlast) {
+            const delta = (playerId === 'p1') ? -finalCost : finalCost;
+            console.log(`💰 实际扣除内存：${delta}（P${playerId === 'p1' ? '1' : '2'} 视角）`);
+            this.updateMemory(delta);
+        } else {
+            console.log(`💥 BLAST 进化 → 免单，不扣内存`);
+        }
 
         // ====================== 进化分支 ======================
         if (isEvolve) {
             const target = cur.battleArea.find(c => c.instanceId === targetInstanceId);
-            if (!target) return;
+            if (!target) {
+                console.warn(`❌ 进化失败：目标卡不存在！`);
+                return;
+            }
 
             const handIdx = cur.hand.findIndex(c => c.instanceId === card.instanceId);
             if (handIdx === -1) return;
@@ -1328,7 +1345,7 @@ class GameState {
                 stack: target.stack 
             });
 
-            // 🔥 官方规则：进化后强制抽 1 张
+            console.log(`✅ 进化成功！${target.name} 已堆叠 → 强制抽 1 张`);
             this.drawCard(playerId, 1);
             this.triggerEffect(playerId, target, "When Digivolving");
             this.checkGlobalRules();
@@ -1337,13 +1354,12 @@ class GameState {
         }
 
         // ====================== 普通出牌 ======================
-        // （Option / Tamer / 普通 Digimon）保持原逻辑不变
+        // （Option / Tamer / 普通 Digimon）
         const handIdx = cur.hand.findIndex(c => c.instanceId === card.instanceId);
         if (handIdx === -1) return;
         const [movedCard] = cur.hand.splice(handIdx, 1);
 
         if (cardType.includes('option')) {
-            // ...（Option 颜色检查等原有代码不变）
             cur.trash.push(movedCard);
             this.triggerEffect(playerId, movedCard, "Main");
         } else {
