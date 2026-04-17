@@ -1037,7 +1037,7 @@
         wrap.onmouseenter = () => { 
             if(card.img) {
                 document.getElementById('fixed-preview').style.backgroundImage = `url('${card.img}')`;
-                previewCardInfo(card); // 🔥 触发情报显示
+                previewCardInfo(card.instanceId); // 🔥 触发情报显示
             }
         };
         // 支持从 breedingArea 直接进化
@@ -1108,6 +1108,7 @@
     // 📡 状态接收中枢：完全同步服务器引擎
     // ==========================================
     let latestGameState = null; // 全局战局快照
+    let lastLogCount = 0; // 🔥 新增：用于记录上次读取了多少条日志
 
     // 📡 数据雷达：根据 instanceId 扫描战局，提取卡牌全部资料
     function previewCardInfo(instanceId) {
@@ -1172,6 +1173,12 @@
                 const p = lastState.memory > state.memory ? "P1" : "P2";
                 addLog(`<span class="log-player">${p}</span> 消耗了 <span style="color:var(--red)">${cost}</span> 内存`);
             }
+            if (state.actionLogs && state.actionLogs.length > lastLogCount) {
+            for (let i = lastLogCount; i < state.actionLogs.length; i++) {
+                addLog(state.actionLogs[i]);
+            }
+            lastLogCount = state.actionLogs.length;
+        }
             lastState = JSON.parse(JSON.stringify(state));
         }
 
