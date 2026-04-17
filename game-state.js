@@ -60,9 +60,15 @@ class GameState {
             }
         }
 
-        // 双方都决定完毕，比赛正式开始，进入先攻的孵化阶段
         if (this.mulliganDecisions.p1 !== null && this.mulliganDecisions.p2 !== null) {
-            this.phase = 'HATCH';
+            // 🔥 修复：双方调度完成后，才从卡组顶部各拿 5 张放进安保区
+            for (let i = 0; i < 5; i++) {
+                if (this.zones.p1.deck.length > 0) this.zones.p1.security.push(this.zones.p1.deck.shift());
+                if (this.zones.p2.deck.length > 0) this.zones.p2.security.push(this.zones.p2.deck.shift());
+            }
+            
+            // 然后再进入正常回合
+            this.startNewTurn();
         }
     }
 
@@ -90,10 +96,7 @@ class GameState {
     setupGame() {
         ['p1', 'p2'].forEach(pId => {
             const zone = this.zones[pId];
-            // 1. 设置 5 张安保卡
-            for(let i=0; i<5; i++) {
-                if(zone.deck.length > 0) zone.security.push(zone.deck.pop());
-            }
+            
             // 2. 抽取 5 张起始手牌
             for(let i=0; i<5; i++) {
                 if(zone.deck.length > 0) zone.hand.push(zone.deck.pop());
@@ -102,20 +105,31 @@ class GameState {
     }
 
     nextPhase() {
-        if (this.phase === 'HATCH') this.phase = 'MAIN';
-        else if (this.phase === 'MAIN') {
-            this.phase = 'END';
-            this.handleEndOfTurn();
-        } else {
-            // 回合转换
-            this.turnPlayer = this.turnPlayer === 'p1' ? 'p2' : 'p1';
-            this.phase = 'HATCH';
-            this.turnCount++;
-            
-            // 规则校准：只有从第 2 回合开始（或后攻第一回合）才执行 Draw Phase
-            if (this.turnCount > 1) {
-                this.drawCard(this.turnPlayer, 1);
-            }
+        switch(this.phase) {
+            case 'UNSUSPEND':
+                this.phase = 'DRAW';
+                // 抽卡阶段：先手第一回合不抽卡
+                if (!(this.turnCount === 1 && this.turnPlayer === 'p1')) {
+                    this.drawCard(this.turnPlayer, 1);
+                }
+                this.nextPhase(); // 抽完自动进入培育
+                break;
+                
+            case 'DRAW':
+                this.phase = 'BREEDING'; // 就是你原本的 HATCH
+                this.hasActionedInHatch = false;
+                // 停在这里，等待玩家操作孵化区，或者玩家点跳过进入 MAIN
+                break;
+                
+            case 'BREEDING':
+                this.phase = 'MAIN';
+                // 进入主阶段，可以出牌、攻击等
+                break;
+                
+            case 'MAIN':
+                // 主阶段结束进入结束阶段，通常由 checkTurnEnd() 触发
+                this.phase = 'END';
+                break;
         }
     }
 
@@ -165,35 +179,32 @@ class GameState {
         });
     }
 
-    // 🔥 官方最终版 checkTurnEnd（100% 符合手册第15页 G. Passing and Turn End Conditions）
     checkTurnEnd() {
-        if (this.gameOver) return;
-
-        // 🔥 已移除所有强制 Memory Over 逻辑
-        // 回合只在玩家主动点击 PASS 时结束（官方唯一结束条件）
-
-        if (this.counterTiming.isActive || this.effectQueue.length > 0) return;
-
-        if (!this.eotTriggered) {
-            this.eotTriggered = true;
-            console.log("⏳ 扫描 [End of Turn] 效果...");
-        
-            // 触发双方所有 End of Turn 效果（官方顺序）
-            this.zones[this.turnPlayer].battleArea.forEach(card =>
-                this.triggerEffect(this.turnPlayer, card, "End of Turn")
-            );
-            const opp = this.turnPlayer === 'p1' ? 'p2' : 'p1';
-            this.zones[opp].battleArea.forEach(card =>
-                this.triggerEffect(opp, card, "End of Turn")
-            );
-
-            if (this.effectQueue.length > 0) return; // 有待处理效果就先挂起
+        // 1. 如果还有待结算的技能、正在进行的攻击、或者反击阶段，绝对不能结束回合
+        if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
+            return false; 
         }
 
-        console.log("✅ 效果清空 → 正式结束回合");
-        this.passTurn();   // 只有这里才真正切换回合
-    }
+        // 2. 检查内存是否越界 (假设你的逻辑是：P1 回合 memory > 0 算越界，P2 回合 memory < 0 算越界)
+        // 请根据你项目里实际的坐标系（负数是谁、正数是谁）确认这行
+        const isP1TurnOver = (this.turnPlayer === 'p1' && this.memory > 0);
+        const isP2TurnOver = (this.turnPlayer === 'p2' && this.memory < 0);
 
+        if (isP1TurnOver || isP2TurnOver) {
+            if (!this.eotTriggered) {
+                // 触发 [回合结束时] 的效果
+                this.eotTriggered = true;
+                this.triggerEffects('endOfTurn', this.turnPlayer);
+                return false; // 等待结束效果结算
+            }
+            
+            // 效果结算完，真正切换回合
+            this.switchTurnPlayer();
+            return true;
+        }
+        return false;
+    }
+    
     processEffectQueue() {
         if (this.effectQueue.length === 0) {
             this.pendingEffectSelection = null;
@@ -232,11 +243,6 @@ class GameState {
     declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId = null) {
         if (this.gameOver || this.turnPlayer !== playerId) return; 
         if (this.counterTiming.isActive || this.effectQueue.length > 0) return; 
-        if ((this.turnPlayer === 'p1' && this.memory < 0) || (this.turnPlayer === 'p2' && this.memory > 0)) {
-            console.warn("🚫 内存已透支，无法发起攻击！");
-            return;
-        }
-
         if (this.phase === 'HATCH') {
             this.phase = 'MAIN';
             this.hasActionedInHatch = true;
@@ -454,7 +460,7 @@ class GameState {
         if (!mat1 || !mat2 || !handCard) return;
 
         let canDNA = false;
-        let drawAmount = 2;   // 默认 2（手册通常值）
+        let drawAmount = 1;   // 默认 2（手册通常值）
 
         // ==========================================
         // 🔥 DNA 合法性 + 抽牌数量动态解析
@@ -1952,8 +1958,20 @@ class GameState {
     }
 
     startNewTurn() {
-        // 可选：如果你想更贴合官方 4 阶段，可以在这里做进一步扩展
-        console.log(`[DEBUG] 新回合启动 - Turn ${this.turnCount}, Player ${this.turnPlayer}`);
+        this.turnCount++;
+        this.eotTriggered = false;
+        this.phase = 'UNSUSPEND';
+        
+        // 执行所有怪兽重置 (Active)
+        this.unsuspendAll(this.turnPlayer);
+        
+        // 触发 [回合开始时] 效果
+        this.triggerEffects('startOfTurn', this.turnPlayer);
+        
+        // 如果没有要结算的效果，就自动进入下一阶段 (抽卡)
+        if (this.effectQueue.length === 0) {
+            this.nextPhase();
+        }
     }
     
     handleBurstRegression(playerId) {
