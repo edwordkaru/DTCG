@@ -1041,22 +1041,24 @@
             }
         };
         // 支持从 breedingArea 直接进化
-        if (isHatch) {
-            wrap.onclick = (e) => {
-                e.stopPropagation();
-                // 直接调用进化（前端已选中 breeding 卡作为 target）
-                if (activeCommandCard) {
-                    socket.emit('action', { 
-                        type: 'play', 
-                        roomId, 
-                        playerId: myId, 
-                        card: activeCommandCard, 
-                        zone: 'battle', 
-                        targetInstanceId: card.instanceId 
-                    });
-                }
-            };
-        }
+        wrap.onclick = (e) => {
+            e.stopPropagation();
+
+            if (isHatch && activeCommandCard) {
+                // 🔥 Breeding Area 进化专用逻辑
+                socket.emit('action', { 
+                    type: 'play', 
+                    roomId, 
+                    playerId: myId, 
+                    card: activeCommandCard, 
+                    zone: 'battle', 
+                    targetInstanceId: card.instanceId 
+                });
+            } else {
+                // 普通战场点击（攻击/阻挡/目标选择等）
+                handleFieldClick(card.instanceId, isMine);
+            }
+        };
         
         wrap.onclick = () => { handleFieldClick(card.instanceId, isMine); }; // 修正：任何模式下都把点击事件发过去
 
@@ -1146,13 +1148,10 @@
         }
 
         // 🔥 让 P2 视角的内存条自动翻转（更专业）
+        // 🔥 Memory Bar 智能翻转（P2视角自动镜像）
         const memTrack = document.getElementById('memory-track');
         if (myId === 'p2') {
-            memTrack.style.transform = 'rotate(180deg)';
-            // 同时反转所有 dot 的文字方向
-            document.querySelectorAll('.mem-dot').forEach(dot => {
-                dot.style.transform = 'rotate(180deg)';
-            });
+            memTrack.style.transform = 'rotate(180deg) scaleX(-1)';   // scaleX(-1) 让数字也正确翻转
         } else {
             memTrack.style.transform = 'none';
         }
