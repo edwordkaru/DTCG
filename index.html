@@ -1208,9 +1208,10 @@
         else {
             if (lastState.turnPlayer !== state.turnPlayer) addLog(`>> <span style="color:var(--gold)">SIGNAL: ${state.turnPlayer.toUpperCase()} PHASE INITIATED</span>`);
             if (lastState.memory !== state.memory) {
-                const cost = Math.abs(lastState.memory - state.memory);
-                const p = lastState.memory > state.memory ? "P1" : "P2";
-                addLog(`<span class="log-player">${p}</span> 消耗了 <span style="color:var(--red)">${cost}</span> 内存`);
+                const diff = state.memory - lastState.memory;   // 正数 = P1支付，负数 = P2支付
+                const cost = Math.abs(diff);
+                const player = (diff > 0) ? "P1" : "P2";
+                addLog(`<span class="log-player">${player}</span> 消耗了 <span style="color:var(--red)">${cost}</span> 内存`);
             }
             if (state.actionLogs && state.actionLogs.length > lastLogCount) {
             for (let i = lastLogCount; i < state.actionLogs.length; i++) {
