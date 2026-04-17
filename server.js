@@ -347,7 +347,10 @@ io.on('connection', (socket) => {
             case 'hatch': game.hatchEgg(playerId); break;
             case 'play': game.playOrEvolve(playerId, card, zone, targetInstanceId); break;
             case 'moveBreeding': game.moveBreedingToBattle(playerId); break;
-            case 'pass': game.passTurn(); break;
+            case 'pass': 
+                if (game.turnPlayer === playerId) game.passTurn(); 
+                else console.warn(`🚫 ${playerId} 试图结束非自己回合！`);
+                break;
             case 'declareAttack': game.declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId); break;
             case 'resolveCounter': game.resolveCounter(playerId, actionType, blastData); break;
             case 'performBlock': game.performBlock(playerId, blockerInstanceId); break;
