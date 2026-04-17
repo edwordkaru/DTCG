@@ -192,18 +192,25 @@ class GameState {
 
         if (isP1TurnOver || isP2TurnOver) {
             if (!this.eotTriggered) {
-                // 触发 [回合结束时] 的效果
                 this.eotTriggered = true;
-                this.triggerEffects('endOfTurn', this.turnPlayer);
-        
-                // 🔥 修复：如果场上没有任何回合结束的效果被触发，必须立刻移交回合！
+
+                // 🔥 修复：用现有的单张卡触发方法
+                const area = this.zones[this.turnPlayer].battleArea;
+                area.forEach(card => {
+                    this.triggerEffect(this.turnPlayer, card, "End of Turn");
+                });
+
+                // （可选）如果你的 Breeding Area 也有 End of Turn 效果，也一起触发
+                if (this.zones[this.turnPlayer].breedingArea.length > 0) {
+                    this.triggerEffect(this.turnPlayer, this.zones[this.turnPlayer].breedingArea[0], "End of Turn");
+                }
+
                 if (this.effectQueue.length === 0) {
                     this.passTurn();
                     return true;
                 }
-                return false; // 只有当 effectQueue 里真的有效果时，才返回 false 等待结算
+                 return false;
             }
-            // 效果结算完，真正切换回合
             this.passTurn();
             return true;
         }
@@ -1635,9 +1642,6 @@ class GameState {
         };
     }
 
-    // ==========================================
-    // 🔥 完整修复版 triggerEffect（已解决所有报错 + 100%对齐手册）
-    // ==========================================
     triggerEffect(playerId, card, timing) {
         if (!card) return;
 
@@ -1645,51 +1649,49 @@ class GameState {
 
         // 1. 主效果
         if (card.mainEffect) {
-            effectsToTrigger.push({
-                source: card,
-                text: card.mainEffect,
-                inherited: false
-            });
+            effectsToTrigger.push({ source: card, text: card.mainEffect, inherited: false });
         }
 
-        // 2. 所有继承效果（Inherited）
+        // 2. 继承效果
         if (card.stack && card.stack.length > 0) {
             card.stack.forEach(sourceCard => {
                 const inheritedText = sourceCard.inheritedEffect || sourceCard.sourceEffect;
                 if (inheritedText) {
-                    effectsToTrigger.push({
-                        source: sourceCard,
-                        text: inheritedText,
-                        inherited: true
-                    });
+                    effectsToTrigger.push({ source: sourceCard, text: inheritedText, inherited: true });
                 }
             });
         }
 
-        // 3. 时点匹配 + 触发
+        // 3. 时点匹配 + 触发（核心部分）
         effectsToTrigger.forEach(effect => {
             const text = effect.text.toLowerCase();
             let shouldTrigger = false;
 
-            if (timing === "On Play" && text.includes("on play")) shouldTrigger = true;
-            if (timing === "When Digivolving" && text.includes("when digivolving")) shouldTrigger = true;
-            if (timing === "When Attacking" && text.includes("when attacking")) shouldTrigger = true;
-            if (timing === "When Blocking" && text.includes("when blocking")) shouldTrigger = true;
-            if (timing === "On Deletion" && text.includes("on deletion")) shouldTrigger = true;
-            if (timing === "Security" && text.includes("security")) shouldTrigger = true;
-            if (timing === "End of Turn" && text.includes("end of turn")) shouldTrigger = true;
-            if (timing === "Start of Turn" && text.includes("start of turn")) shouldTrigger = true;
+            const timingMap = {
+                "On Play": ["on play"],
+                "When Digivolving": ["when digivolving"],
+                "When Attacking": ["when attacking"],
+                "When Blocking": ["when blocking"],
+                "On Deletion": ["on deletion"],
+                "Security": ["security"],
+                "End of Turn": ["end of turn", "end of your turn"],
+                "Start of Turn": ["start of turn"]
+            };
+
+            if (timingMap[timing]) {
+                shouldTrigger = timingMap[timing].some(keyword => text.includes(keyword));
+            }
 
             if (!shouldTrigger) return;
 
-            // 4. Once per Turn 防护
+            // Once per Turn 防护
             if (this.isEffectUsedThisTurn(card, timing)) {
-                console.log(`⏳ [ONCE] ${card.name} 的 ${timing} 效果本回合已使用，跳过`);
+                console.log(`⏳ [ONCE] ${card.name} 的 ${timing} 效果本回合已使用`);
                 return;
             }
             this.markEffectUsed(card, timing);
 
-            // 5. 加入队列（让玩家选择顺序或跳过）
+            // 加入队列
             this.effectQueue.push({
                 id: `eff_${Math.random().toString(36).substr(2, 8)}`,
                 playerId: playerId,
@@ -1702,8 +1704,7 @@ class GameState {
             });
         });
 
-        // 6. 处理队列
-        this.resolveEffect();
+        this.resolveEffect();   // 关键：处理队列
     }
 
     // ====================== 配套辅助方法（已修复） ======================
