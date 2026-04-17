@@ -540,10 +540,11 @@
         joinRoom();
     }
 
-    // 备战室状态刷新 (谁进来了，谁准备了)
+    // 🔥 2. 最终融合版 stagingUpdate（保留你原本的 renderStaging + 加日志）
     socket.on('stagingUpdate', (state) => {
         if (!state) return;
-        renderStaging(state);
+        console.log("📡 [stagingUpdate] 收到服务器备战室状态", state);
+        renderStaging(state);   // 你原本的核心渲染函数，保持不变
     });
 
     // 🔥 renderStaging 小优化版（已修复 spectators 显示 + 更稳健）
@@ -711,12 +712,20 @@
     });
 
     function toggleReady() {
-        if (myRole === 'p1' || myRole === 'p2') {
-            socket.emit('toggleReady', { roomId, role: myRole });
-            const btn = document.getElementById('ready-btn');
-            btn.innerText = btn.innerText.includes('CANCEL') ? '[ READY TO BATTLE ]' : '[ CANCEL READY ]';
-            btn.style.borderColor = btn.innerText.includes('CANCEL') ? 'var(--red)' : 'var(--green)';
-            btn.style.color = btn.innerText.includes('CANCEL') ? 'var(--red)' : 'var(--green)';
+        if (!roomId || !myRole) {
+            return alert("⚠️ 房间信息异常，请重新加入房间！");
+        }
+        console.log(`📤 [toggleReady] 发送准备信号 → 房间:${roomId} 角色:${myRole}`);
+
+        socket.emit('toggleReady', { roomId: roomId, role: myRole });
+
+        // 你原本的本地乐观更新（体验最好）
+        const btn = document.getElementById('ready-btn');
+        if (btn) {
+            const isCancel = btn.innerText.includes('CANCEL');
+            btn.innerText = isCancel ? '[ READY TO BATTLE ]' : '[ CANCEL READY ]';
+            btn.style.borderColor = isCancel ? 'var(--red)' : 'var(--green)';
+            btn.style.color = isCancel ? 'var(--red)' : 'var(--green)';
         }
     }
 
