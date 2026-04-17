@@ -478,42 +478,42 @@
         socket.emit('createRoom', { playerName: myName, deck: deck, avatar: myAvatar });
     }
 
-    // 🔥 最终版 joinRoom（已带头像和卡组）
+    // 🔥 最终融合版 joinRoom（保留你所有好功能 + 修复致命 bug）
     function joinRoom() {
         const input = document.getElementById('join-room-id');
         let targetId = input ? input.value.trim().toUpperCase() : '';
-
+    
         if (!targetId) {
             alert("⚠️ 请输入房间号！");
             if (input) input.focus();
             return;
         }
-
         if (targetId.length !== 6) {
             alert("⚠️ 房间号必须是 6 位字符！");
+            if (input) input.focus();
             return;
         }
 
-        console.log("🚀 正在加入房间:", targetId);
+        // 从 deck-builder 读取卡组（安全版）
+        let currentDeck = [];
+        try {
+            const saved = localStorage.getItem('currentDeck');
+            if (saved) currentDeck = JSON.parse(saved);
+        } catch (e) {
+            console.warn("⚠️ 读取 currentDeck 失败，使用空卡组");
+        }
 
-        roomId = targetId;
-        myRole = 'p2';
+        console.log(`🚀 正在加入房间: ${targetId} | 卡组数量: ${currentDeck.length} 张`);
 
-        // 切换 UI
-        document.getElementById('lobby-screen').style.display = 'none';
-        document.getElementById('staging-screen').style.display = 'flex';
-
-        // 🔥 关键：同时传 avatar 和当前 deck
-        const currentDeck = JSON.parse(localStorage.getItem('currentDeck')) || [];
-
-        socket.emit('joinRoom', { 
-            roomId: roomId, 
-            playerName: myName,
-            avatar: myAvatar,
+        // 只发请求，不提前切换画面
+        socket.emit('joinRoom', {
+            roomId: targetId,
+            playerName: myName || "Guest",
+            avatar: myAvatar || null,
             deck: currentDeck
         });
 
-        if (input) input.value = '';
+        if (input) input.value = '';   // 清空输入框
     }
 
     // 刚进入房间，切换到备战室 UI
@@ -739,33 +739,26 @@
         log.scrollTop = log.scrollHeight;
     });
 
-    // 🔥 新增：双方READY后真正启动游戏
+    // 🔥 完整版 gameStart 监听器（收到服务器信号后正式进入战场）
     socket.on('gameStart', (data) => {
-        console.log("🎮 [GAME START] 收到服务器信号，开始战斗！", data);
+        console.log("🎮 [GAME START] 收到服务器开局信号！", data);
 
         roomId = data.roomId;
     
-        // 确定自己是 P1 还是 P2
+        // 由服务器决定角色（最安全）
         myId = (socket.id === data.p1Id) ? 'p1' : 'p2';
         oppId = (myId === 'p1') ? 'p2' : 'p1';
 
-        // 隐藏备战室 + 大厅
-        const staging = document.getElementById('staging-screen');
-        if (staging) staging.style.display = 'none';
+        // 隐藏备战室
+        const stagingScreen = document.getElementById('staging-screen');
+        if (stagingScreen) stagingScreen.style.display = 'none';
     
-        const lobby = document.getElementById('lobby-screen');
-        if (lobby) lobby.style.display = 'none';
+        const lobbyScreen = document.getElementById('lobby-screen');
+        if (lobbyScreen) lobbyScreen.style.display = 'none';
 
-        // 初始化全局状态
-        latestGameState = data.state;
+        latestGameState = data.state || null;
 
-        addLog(`>> <span style="color:var(--green)">SYSTEM CONNECTED. YOU ARE [${myId.toUpperCase()}]. WEAPONS HOT.</span>`);
-
-        // 触发一次 gameStateUpdate 来渲染战场（保险起见）
-        if (data.state) {
-            // 如果你已经有 gameStateUpdate 监听器，它会自动接管渲染
-            console.log("✅ 战场初始化完成");
-        }
+        addLog(`>> <span style="color:var(--green)">SYSTEM CONNECTED. YOU ARE [${myId.toUpperCase()}]. DECK LOADED SUCCESSFULLY.</span>`);
     });
     
     // 🔥 大厅实时房间列表（已修正事件名 + 容器 ID）
