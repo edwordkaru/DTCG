@@ -130,23 +130,58 @@ io.on('connection', (socket) => {
         broadcastLobbyState();
     });
 
-    // 2. 加入房间
-    socket.on('joinRoom', ({ roomId, playerName, customDeck, avatar }) => {
-        const room = rooms[roomId];
-        if (!room) return socket.emit('lobbyError', 'ROOM INVALID (房间不存在)');
-
-        if (!room.players.p2) {
-            room.players.p2 = { id: socket.id, name: playerName, deck: customDeck, avatar: avatar, ready: false };
-            socket.join(roomId);
-            socket.emit('roomJoined', { roomId, role: 'p2', state: getRoomState(room) });
-            broadcastLobbyState(); 
-        } else {
-            room.spectators.push({ id: socket.id, name: playerName, deck: customDeck, avatar: avatar });
-            socket.join(roomId);
-            socket.emit('roomJoined', { roomId, role: 'spectator', state: getRoomState(room) });
-            if (room.game) socket.emit('gameStart', { p1Id: room.players.p1.id, p2Id: room.players.p2.id, roomId, state: room.game });
+    socket.on('joinRoom', ({ roomId, playerName }) => {
+        socket.join(roomId);
+        // 🔥 修改：增加 readyPlayers 记录
+        if (!rooms[roomId]) {
+            rooms[roomId] = { 
+                players: {}, 
+                game: null, 
+                readyPlayers: new Map() 
+            };
         }
-        io.to(roomId).emit('stagingUpdate', getRoomState(room));
+        
+        const room = rooms[roomId];
+        const p1 = room.players.p1;
+        const p2 = room.players.p2;
+
+        if (!p1) {
+            room.players.p1 = { id: socket.id, name: playerName };
+        } else if (!p2 && p1.id !== socket.id) {
+            room.players.p2 = { id: socket.id, name: playerName };
+            // ❌ 注意：把这里原本的 new GameState 那行删掉！我们改用下面的 ready 事件触发开局
+        }
+        
+        // 保持你原有的 roomData 发送逻辑
+        const roomData = {
+            p1Name: room.players.p1 ? room.players.p1.name : null,
+            p2Name: room.players.p2 ? room.players.p2.name : null
+        };
+        io.to(roomId).emit('roomData', roomData);
+    });
+
+    // ⚔️ 核心准备逻辑：接收卡组并触发开局
+    socket.on('ready', (data) => {
+        const { roomId, playerId, name, avatar, role, deck } = data;
+        const room = rooms[roomId];
+        if (!room) return;
+
+        // 存入准备名单
+        room.readyPlayers.set(playerId, { name, avatar, role, deck });
+
+        if (room.readyPlayers.size === 2) {
+            const players = Array.from(room.readyPlayers.values());
+            
+            // 🔥 这里的关键：把头像和名字作为对象传进去
+            room.game = new GameState(
+                { name: players[0].name, avatar: players[0].avatar }, // P1 资料
+                { name: players[1].name, avatar: players[1].avatar }, // P2 资料
+                players[0].deck, 
+                players[1].deck
+            );
+
+            io.to(roomId).emit('gameStateUpdate', room.game);
+        }
     });
 
     // 3. 自由换座
