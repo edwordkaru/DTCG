@@ -199,7 +199,7 @@ class GameState {
             }
             
             // 效果结算完，真正切换回合
-            this.switchTurnPlayer();
+            this.passTurn();
             return true;
         }
         return false;
@@ -1962,15 +1962,20 @@ class GameState {
     }
 
     startNewTurn() {
-        this.turnCount++;
+        // this.turnCount++;  // ⚠️ 删掉这一行！开局已经在 constructor 设为 1 了，加 1 会导致直接变成第 2 回合
         this.eotTriggered = false;
         this.phase = 'UNSUSPEND';
         
-        // 执行所有怪兽重置 (Active)
-        this.unsuspendAll(this.turnPlayer);
+        // 1. 修复：手动重置全场状态，替代不存在的 unsuspendAll()
+        this.zones[this.turnPlayer].battleArea.forEach(c => {
+            c.isSuspended = false;
+            c.playedThisTurn = false;
+        });
         
-        // 触发 [回合开始时] 效果
-        this.triggerEffects('startOfTurn', this.turnPlayer);
+        // 2. 修复：使用实际存在的单体触发方法，替代不存在的群体 triggerEffects()
+        this.zones[this.turnPlayer].battleArea.forEach(card => 
+            this.triggerEffect(this.turnPlayer, card, "Start of Turn")
+        );
         
         // 如果没有要结算的效果，就自动进入下一阶段 (抽卡)
         if (this.effectQueue.length === 0) {
