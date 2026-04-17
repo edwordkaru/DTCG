@@ -163,34 +163,39 @@ class GameState {
 
     // 🔥 替换原来的 checkTurnEnd（核心修复）
     checkTurnEnd() {
-        if (this.counterTiming.isActive || this.effectQueue.length > 0) return;
+        if (this.gameOver) return;
 
+        // 🔥 强制 Memory Over 检测（无论有没有 pending effect，都立即切回合）
         const isP1Turn = this.turnPlayer === 'p1';
-        const opponentSide = isP1Turn ? this.memory < 0 : this.memory > 0;  // 指针在对手侧
+        const opponentSide = isP1Turn ? this.memory < 0 : this.memory > 0;
         const opponentMemory = Math.abs(this.memory);
 
         if (opponentSide && opponentMemory >= 1) {
-            if (!this.eotTriggered) {
-                this.eotTriggered = true;
-                console.log("⏳ 内存过线 → 扫描 [End of Turn] 效果...");
-
-                // 回合玩家优先触发
-                this.zones[this.turnPlayer].battleArea.forEach(card => 
-                    this.triggerEffect(this.turnPlayer, card, "End of Turn")
-                );
-                // 再触发对手的
-                const opp = this.turnPlayer === 'p1' ? 'p2' : 'p1';
-                this.zones[opp].battleArea.forEach(card => 
-                    this.triggerEffect(opp, card, "End of Turn")
-                );
-
-                if (this.effectQueue.length > 0) return;
-            }
-            console.log("✅ 效果清空 → 正式结束回合");
+            console.log("🔥 [MEMORY OVER] 立即结束当前回合，转给对方！");
             this.passTurn();
-        } else {
-            this.eotTriggered = false;
+            return;   // 强制退出
         }
+
+        // 下面是【你原本的全部逻辑】，完全不动
+        if (this.counterTiming.isActive || this.effectQueue.length > 0) return;
+
+        if (!this.eotTriggered) {
+            this.eotTriggered = true;
+            console.log("⏳ 内存过线 → 扫描 [End of Turn] 效果...");
+            this.zones[this.turnPlayer].battleArea.forEach(card =>
+                this.triggerEffect(this.turnPlayer, card, "End of Turn")
+            );
+            const opp = this.turnPlayer === 'p1' ? 'p2' : 'p1';
+            this.zones[opp].battleArea.forEach(card =>
+                this.triggerEffect(opp, card, "End of Turn")
+            );
+
+            if (this.effectQueue.length > 0) return;
+        }
+        console.log("✅ 效果清空 → 正式结束回合");
+        this.passTurn();
+    } else {
+        this.eotTriggered = false;
     }
 
     processEffectQueue() {
