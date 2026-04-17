@@ -478,30 +478,38 @@
         socket.emit('createRoom', { playerName: myName, deck: deck, avatar: myAvatar });
     }
 
-    function joinRoom(joinId) {
-        let targetId = joinId;
-        
-        // 如果是从输入框点按钮进来的，joinId 可能是空或者是鼠标事件对象
-        if (!targetId || typeof targetId === 'object') {
-            // 🔥 致命修复：改成了 'join-id'，精准对齐你 HTML 里的输入框！
-            const inputEl = document.getElementById('join-id'); 
-            if (inputEl) {
-                targetId = inputEl.value.trim();
-            }
+    // 🔥 替换整个 joinRoom 函数为下面这个（已完美适配你当前的 HTML）
+    function joinRoom() {
+        const input = document.getElementById('join-room-id');
+        let targetId = input ? input.value.trim().toUpperCase() : '';
+
+        if (!targetId) {
+            alert("⚠️ 请输入房间号！");
+            if (input) input.focus();
+            return;
         }
 
-        if (!targetId) return alert("⚠️ 请输入房间号！");
+        if (targetId.length !== 6) {
+            alert("⚠️ 房间号必须是 6 位字符！");
+            return;
+        }
 
-        // 强行转成大写，防止大小写不匹配
-        roomId = targetId.toUpperCase();
-        myRole = 'p2'; 
+        console.log("🚀 正在加入房间:", targetId);
 
-        // 切换 UI 界面
-        document.getElementById('lobby-screen').style.display = 'none'; 
+        roomId = targetId;
+        myRole = 'p2';
+
+        // 切换 UI
+        document.getElementById('lobby-screen').style.display = 'none';
         document.getElementById('staging-screen').style.display = 'flex';
 
-        // 发射入房信号
-        socket.emit('joinRoom', { roomId: roomId, playerName: myName });
+        socket.emit('joinRoom', { 
+            roomId: roomId, 
+            playerName: myName 
+        });
+
+        // 清空输入框
+        if (input) input.value = '';
     }
 
     // 刚进入房间，切换到备战室 UI
@@ -521,6 +529,12 @@
         }
         renderStaging(data.state);
     });
+
+    // 一键点击房间列表加入
+    function quickJoin(roomId) {
+        document.getElementById('join-room-id').value = roomId;
+        joinRoom();
+    }
 
     // 备战室状态刷新 (谁进来了，谁准备了)
     socket.on('stagingUpdate', (state) => {
@@ -761,24 +775,27 @@
         
         addLog(`>> <span style="color:var(--green)">SYSTEM CONNECTED. YOU ARE [${myId.toUpperCase()}]. WEAPONS HOT.</span>`);
     });
-
-    // 🌐 监听大厅雷达广播
-    socket.on('lobbyUpdate', (availableRooms) => {
-        const listObj = document.getElementById('public-room-list');
+    
+    // 🔥 大厅实时房间列表（已修正事件名 + 容器 ID）
+    socket.on('roomListUpdate', (availableRooms) => {
+        const container = document.getElementById('available-rooms');
+    
         if (availableRooms.length === 0) {
-            listObj.innerHTML = `<div style="color: #444; font-size: 12px; text-align: center;">NO PUBLIC ROOMS AVAILABLE. BE THE FIRST TO CREATE ONE.</div>`;
+            container.innerHTML = `<div style="color: #555; font-size: 12px; text-align: center; padding: 15px;">NO ACTIVE ROOMS<br>快去创建一间吧！</div>`;
             return;
         }
-        
-        // 渲染列表，挂载一键加入事件
-        listObj.innerHTML = availableRooms.map(r => `
-            <button class="ring-btn" style="border-color: #333; color: #aaa; font-size: 12px; padding: 12px; text-align: left; display: flex; justify-content: space-between; cursor: pointer;" onclick="joinPublicRoom('${r.roomId}')">
-                <span>HOST: <span style="color:white;">${r.hostName}</span></span>
-                <span style="color: var(--green);">[ JOIN MATCH ]</span>
-            </button>
+
+        container.innerHTML = availableRooms.map(room => `
+            <div onclick="quickJoin('${room.id}')" 
+                 style="background: rgba(255,255,255,0.05); border: 1px solid #333; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div>
+                    <span style="color:var(--blue); font-weight:bold;">ROOM ${room.id}</span><br>
+                    <span style="color:#aaa; font-size:11px;">P1: ${room.p1Name}　P2: ${room.p2Name}</span>
+                </div>
+                <button class="ring-btn" style="padding:8px 16px; font-size:12px;">JOIN</button>
+            </div>
         `).join('');
     });
-
     // 一键截获并加入公共房间
     function joinPublicRoom(rId) {
         document.getElementById('join-room-id').value = rId;
