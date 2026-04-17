@@ -739,31 +739,6 @@
         log.scrollTop = log.scrollHeight;
     });
 
-    // ==========================================
-    // ⚔️ 比赛正式打响，炸开备战室！
-    // ==========================================
-    socket.on('gameStart', (data) => {
-        console.log("GAME INITIATED", data);
-        roomId = data.roomId; 
-        
-        // 分配物理视角
-        if (myRole === 'spectator') {
-            myId = 'spectator';
-            oppId = 'p1'; // 随便给个默认值，防止报错
-        } else {
-            myId = (socket.id === data.p1Id) ? 'p1' : 'p2';
-            oppId = (myId === 'p1') ? 'p2' : 'p1';
-        }
-        
-        // 隐藏备战室，露出杀戮战场 (聊天框不隐藏！)
-        document.getElementById('staging-screen').style.display = 'none';
-    });
-
-    socket.on('lobbyError', (msg) => {
-        document.getElementById('lobby-status').style.color = "var(--red)";
-        document.getElementById('lobby-status').innerText = `>> ERROR: ${msg}`;
-    });
-
     // ⚔️ 比赛正式打响，炸开大厅遮罩！
     socket.on('gameStart', (data) => {
         console.log("GAME INITIATED", data);
@@ -1145,20 +1120,6 @@
             }
             lastState = JSON.parse(JSON.stringify(state));
         }
-
-        const baHtml = zone.battleArea.map(c => {
-                const isSuspended = c.isSuspended ? 'transform: rotate(90deg); margin: 0 15px;' : '';
-                const isMyArea = playerKey === myId;
-                const isAttacking = state.counterTiming.pendingAttack && state.counterTiming.pendingAttack.attackerInstanceId === c.instanceId;
-                const activeClass = isAttacking ? 'active-attacker' : '';
-
-                // ❌ 就是这里！要把下面这个 return 块整体换掉
-                return `<div class="card-slot ${activeClass}" style="${isSuspended}" draggable="${isMyArea}" onmouseover="previewCardInfo('${c.instanceId}')" 
-                             onmouseover="previewCardInfo('${c.instanceId}')"
-                             ondragstart="handleDragStart(event, 'attacker', '${c.instanceId}')" 
-                             onclick="handleTargetSelection('${c.instanceId}', '${playerKey}', 'battleArea')">
-                </div>`;
-            }).join('');
 
         // 拦截器：如果存在待处理的效果选择
         if (state.pendingEffectSelection && state.pendingEffectSelection.playerId === myId) {
