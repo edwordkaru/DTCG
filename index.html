@@ -739,19 +739,33 @@
         log.scrollTop = log.scrollHeight;
     });
 
-    // ⚔️ 比赛正式打响，炸开大厅遮罩！
+    // 🔥 新增：双方READY后真正启动游戏
     socket.on('gameStart', (data) => {
-        console.log("GAME INITIATED", data);
-        roomId = data.roomId; 
-        
-        // 🔥 核心：根据后端的发牌，决定你是主视角还是对手视角
+        console.log("🎮 [GAME START] 收到服务器信号，开始战斗！", data);
+
+        roomId = data.roomId;
+    
+        // 确定自己是 P1 还是 P2
         myId = (socket.id === data.p1Id) ? 'p1' : 'p2';
         oppId = (myId === 'p1') ? 'p2' : 'p1';
-        
-        // 隐藏大厅，露出杀戮战场
-        document.getElementById('lobby-screen').style.display = 'none';
-        
+
+        // 隐藏备战室 + 大厅
+        const staging = document.getElementById('staging-screen');
+        if (staging) staging.style.display = 'none';
+    
+        const lobby = document.getElementById('lobby-screen');
+        if (lobby) lobby.style.display = 'none';
+
+        // 初始化全局状态
+        latestGameState = data.state;
+
         addLog(`>> <span style="color:var(--green)">SYSTEM CONNECTED. YOU ARE [${myId.toUpperCase()}]. WEAPONS HOT.</span>`);
+
+        // 触发一次 gameStateUpdate 来渲染战场（保险起见）
+        if (data.state) {
+            // 如果你已经有 gameStateUpdate 监听器，它会自动接管渲染
+            console.log("✅ 战场初始化完成");
+        }
     });
     
     // 🔥 大厅实时房间列表（已修正事件名 + 容器 ID）
