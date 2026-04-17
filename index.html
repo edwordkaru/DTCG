@@ -826,6 +826,37 @@
         box.scrollTop = box.scrollHeight;
     }
 
+    let selectedRevealIds = [];
+
+    function submitReveal(instanceId) {
+        if (selectedRevealIds.includes(instanceId)) {
+            selectedRevealIds = selectedRevealIds.filter(id => id !== instanceId);
+        } else {
+            selectedRevealIds.push(instanceId);
+        }
+    
+        // 高亮已选
+        document.querySelectorAll('.reveal-card').forEach(el => {
+            el.style.borderColor = selectedRevealIds.includes(el.getAttribute('data-id')) ? '#ffcc00' : 'transparent';
+        });
+
+        // 显示确认按钮（当选够数量时）
+        const required = latestGameState.pendingReveal.constraints?.selectCount || 1;
+        document.getElementById('reveal-confirm-btn').style.display = 
+            (selectedRevealIds.length === required) ? 'block' : 'none';
+    }
+
+    function submitRevealSelection() {
+        socket.emit('action', { 
+            type: 'submitRevealChoice', 
+            roomId, 
+            playerId: myId, 
+            selectedCardInstanceIds: selectedRevealIds 
+        });
+        selectedRevealIds = [];
+        document.getElementById('reveal-overlay').style.display = 'none';
+    }
+
     // ==========================================
     // ⚔️ 战斗阶段智能处理系统 (由状态树驱动，不依赖额外事件)
     // ==========================================
