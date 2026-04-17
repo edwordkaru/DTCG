@@ -542,18 +542,13 @@
         renderStaging(state);
     });
 
-    // ==========================================
-    // ⚔️ 动态备战室渲染 (带换座与房主识别)
-    // ==========================================
-    // 1. 动态渲染备战室（根据身份显示不同的按钮）
+    // 🔥 renderStaging 小优化版（已修复 spectators 显示 + 更稳健）
     function renderStaging(state) {
         const renderPanel = (playerData, roleKey, borderColor) => {
             if (playerData) {
-                // 座位有人：显示头像、名字、准备状态
                 const isHost = state.hostId === playerData.id;
                 const hostTag = isHost ? `<div style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); background:var(--gold); color:black; font-size:10px; font-weight:900; padding:2px 10px; border-radius:10px;">👑 HOST</div>` : '';
                 const isMe = (playerData.id === socket.id);
-                // 🔥 如果是自己，增加“选牌”和“切观众”按钮
                 const actionBtns = isMe ? `
                     <div style="margin-top:10px; display:flex; gap:5px; justify-content:center;">
                         <button class="small-btn" onclick="openDeckLibrary()">[ 📂 CHANGE DECK ]</button>
@@ -569,18 +564,22 @@
                     ${actionBtns}
                 `;
             } else {
-                // 座位空缺：如果我是观众，显示“上场”按钮
                 const takeSeatBtn = (myRole === 'spectator') ? `<button class="ring-btn" style="font-size:12px; padding:10px; margin-top:10px;" onclick="switchRole('${roleKey}')">[ ⚔️ TAKE SEAT ]</button>` : '';
                 return `<h2 style="color:#444;">EMPTY SEAT</h2>${takeSeatBtn}`;
             }
         };
 
-        // 这里的 panel-p1 和 panel-p2 需要你去 HTML 里给那两个 div 加上对应的 ID
+        // 渲染 P1 / P2 面板
         document.getElementById('panel-p1').innerHTML = renderPanel(state.p1, 'p1', 'var(--blue)');
         document.getElementById('panel-p2').innerHTML = renderPanel(state.p2, 'p2', 'var(--purple)');
-        
-        if (state.spectators.length > 0) {
-            document.getElementById('spectator-list').innerText = `SPECTATORS: ${state.spectators.join(', ')}`;
+
+        // 🔥 小优化：spectators 现在是对象数组，必须提取 name
+        const specList = document.getElementById('spectator-list');
+        if (state.spectators && state.spectators.length > 0) {
+            const names = state.spectators.map(s => s.name || 'Unknown').join(', ');
+            specList.innerText = `SPECTATORS: ${names}`;
+        } else {
+            specList.innerText = 'SPECTATORS: NONE';
         }
     }
 
