@@ -295,22 +295,34 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 6. 准备按钮
+    // 6. 准备按钮（最终修复版：保证 deck 正确传入 GameState）
     socket.on('toggleReady', ({ roomId, role }) => {
         const room = rooms[roomId];
         if (!room || !room.players[role] || room.game) return;
-        
+    
         room.players[role].ready = !room.players[role].ready;
         io.to(roomId).emit('stagingUpdate', getRoomState(room));
 
+        // 🔥 关键修复：双方都准备好时，正确创建 GameState
         if (room.players.p1.ready && room.players.p2 && room.players.p2.ready) {
-            room.game = new GameState(room.players.p1.name, room.players.p2.name, room.players.p1.deck, room.players.p2.deck); 
+            const p1 = room.players.p1;
+            const p2 = room.players.p2;
+
+            room.game = new GameState(
+                { name: p1.name, avatar: p1.avatar || null },   // P1 完整对象
+                { name: p2.name, avatar: p2.avatar || null },   // P2 完整对象
+                p1.deck || [],                                  // 确保 deck 不为空
+                p2.deck || []
+            );
+
             io.to(roomId).emit('gameStart', {
-                p1Id: room.players.p1.id, 
-                p2Id: room.players.p2.id, 
+                p1Id: p1.id, 
+                p2Id: p2.id, 
                 roomId: roomId, 
                 state: room.game
             });
+
+            console.log(`✅ [ROOM ${roomId}] 双方准备就绪，卡组已加载！`);
         }
     });
 
