@@ -1275,8 +1275,7 @@ class GameState {
             this.zones[playerId].battleArea.push(cur.breedingArea.splice(0, 1)[0]);
             this.hasActionedInHatch = true;
             this.phase = 'MAIN';
-            
-            console.log("➡️ 移动完毕，自动进入主要阶段 (MAIN PHASE)。");
+            console.log("➡️ 移动孵化区卡牌到战场，进入 MAIN PHASE");
             const currentPlayerArea = this.zones[this.turnPlayer].battleArea;
             currentPlayerArea.forEach(card => this.triggerEffect(this.turnPlayer, card, "Start of Main Phase"));
         }
