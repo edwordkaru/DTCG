@@ -207,29 +207,29 @@ class GameState {
         const first = this.effectQueue[0];
         this.pendingEffectSelection = {
             playerId: first.playerId,
-            effects: [...this.effectQueue] // 把当前排队的所有效果发给前端
+            effects: this.effectQueue.filter(e => e.type !== 'System' && e.type !== 'System_Exec') // 把当前排队的所有效果发给前端
         };
     }
 
-    // 🔥 处理玩家的排序与发动选择
     resolveManualEffect(playerId, effectIndex, confirmed) {
         if (!this.pendingEffectSelection || this.pendingEffectSelection.playerId !== playerId) return;
 
-        const effect = this.effectQueue[effectIndex];
+        // 从队列中切出玩家点击的那个效果
+        const effect = this.effectQueue.splice(effectIndex, 1)[0];
         if (!effect) return;
 
         if (confirmed) {
-            console.log(`>> [EFFECT] 玩家确认发动: ${effect.cardName}`);
-            this.applyEffect(effect);
+            console.log(`>> [EFFECT] 玩家确认发动: ${effect.sourceName}`);
+            // 🔥 核心魔法：贴上系统执行标签，塞回队列最前面！
+            effect.type = 'System_Exec';
+            this.effectQueue.unshift(effect);
         } else {
-            console.log(`>> [EFFECT] 玩家选择跳过: ${effect.cardName}`);
+            console.log(`>> [EFFECT] 玩家选择跳过: ${effect.sourceName}`);
         }
 
-        // 处理完一个，从队列里踢走
-        this.effectQueue.splice(effectIndex, 1);
-        
-        // 继续处理剩下的效果
-        this.processEffectQueue();
+        // 清空 UI 锁，重新点燃核动力引擎！
+        this.pendingEffectSelection = null;
+        this.resolveEffect(); 
     }
 
     declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId = null) {
@@ -714,6 +714,12 @@ class GameState {
         while (this.effectQueue.length > 0) {
             // 🔥 四锁合一：瞄准、盲盒、招魂、免死。任何一个在等待，引擎必须静止！
             if (this.pendingTarget || this.pendingReveal || this.pendingTrashRevive || this.pendingProtection) {
+                return; 
+            }
+
+            // 🛑 新增拦截器：如果队列顶端是玩家卡牌效果，立刻暂停解析，转交前端弹窗！
+            if (this.effectQueue[0].type !== 'System' && this.effectQueue[0].type !== 'System_Exec') {
+                this.processEffectQueue();
                 return; 
             }
             
@@ -1315,10 +1321,35 @@ class GameState {
                 }
             }
 
-            // 找不到目标，拦截并阻止扣费 (修复疯狂扣费死锁 BUG)
+            // ... (前面获取 target 的代码保留)
+
+            // 找不到目标，拦截并阻止扣费
             if (!target) {
                 console.warn(`❌ 进化失败：在战斗区和蛋区均未找到目标卡 (ID: ${targetInstanceId})！`);
                 return; 
+            }
+
+            // 🛡️ 新增：官方规则等级与颜色强制校验！
+            const cardLv = this.getLv(card);
+            const targetLv = this.getLv(target);
+            const cardColor = String(card.color || "").toLowerCase();
+            const targetColor = String(target.color || "").toLowerCase();
+
+            // 1. 等级越级校验 (目标必须是当前卡牌等级 - 1)
+            if (cardLv > 0 && targetLv > 0 && targetLv !== cardLv - 1) {
+                console.warn(`🚫 规则拦截：等级越级！无法将 Lv.${targetLv} 进化为 Lv.${cardLv}`);
+                return;
+            }
+
+            // 2. 颜色排斥校验 (卡牌颜色必须包含目标的颜色)
+            if (cardColor && targetColor) {
+                const cColors = cardColor.split(/[\/\s,]+/);
+                const tColors = targetColor.split(/[\/\s,]+/);
+                const colorMatch = cColors.some(cc => tColors.includes(cc)) || tColors.some(tc => cColors.includes(tc));
+                if (!colorMatch) {
+                    console.warn(`🚫 规则拦截：颜色排斥！目标颜色(${target.color}) 与 进化牌颜色(${card.color}) 不匹配`);
+                    return;
+                }
             }
             
             finalCost = parseInt(card.digivolveCost) || 0;
@@ -1548,7 +1579,7 @@ class GameState {
         });
 
         // 6. 处理队列
-        this.processEffectQueue();
+        this.resolveEffect();
     }
 
     // ====================== 配套辅助方法（已修复） ======================
