@@ -1327,7 +1327,11 @@ class GameState {
         if (cur.breedingArea.length > 0) {
             const topCard = cur.breedingArea[0];
             if (this.getLv(topCard) < 3) return;
-            this.zones[playerId].battleArea.push(cur.breedingArea.splice(0, 1)[0]);
+            const movedCard = cur.breedingArea.splice(0, 1)[0];
+            // 🔥 核心修正：抹除“本回合登场”的限制，并确保为未横置状态，以允许当回合直接攻击
+            movedCard.playedThisTurn = false; 
+            movedCard.isSuspended = false;
+            this.zones[playerId].battleArea.push(movedCard);
             this.hasActionedInHatch = true;
             this.phase = 'MAIN';
             console.log("➡️ 移动孵化区卡牌到战场，进入 MAIN PHASE");
@@ -1338,7 +1342,7 @@ class GameState {
 
     // ==================== 【最终调试版】playOrEvolve ====================
     playOrEvolve(playerId, card, zone, targetInstanceId = null, isBlast = false) {
-        if (this.gameOver || this.turnPlayer !== playerId) return;
+        if (this.gameOver || (this.turnPlayer !== playerId && !isBlast)) return;
 
         console.log(`🔍 [playOrEvolve] 开始执行 → Player: ${playerId} | TargetID: ${targetInstanceId || '无'} | Card: ${card.name} (${card.type})`);
 
