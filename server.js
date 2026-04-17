@@ -16,10 +16,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: true, // 因为 Render 是强制 HTTPS 的，这里直接写死 true
-        sameSite: 'lax', // 🔥 2. 允许跨域跳转（从 Discord 跳回来）时携带 Cookie
-        maxAge: 1000 * 60 * 60 * 24 * 7 // 保持登录 7 天
-    }
+        secure: true, // Render 是 HTTPS，必须设为 true
+        sameSite: 'lax' // 允许 OAuth 跳转回来后依然带有权限
+    } 
 }));
 
 app.use('/img', express.static(path.join(__dirname, 'img')));
