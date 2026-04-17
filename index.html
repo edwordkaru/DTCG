@@ -1145,6 +1145,18 @@
             document.getElementById('mulligan-overlay').style.display = 'none';
         }
 
+        // 🔥 让 P2 视角的内存条自动翻转（更专业）
+        const memTrack = document.getElementById('memory-track');
+        if (myId === 'p2') {
+            memTrack.style.transform = 'rotate(180deg)';
+            // 同时反转所有 dot 的文字方向
+            document.querySelectorAll('.mem-dot').forEach(dot => {
+                dot.style.transform = 'rotate(180deg)';
+            });
+        } else {
+            memTrack.style.transform = 'none';
+        }
+
         // 在 index.html 渲染玩家信息的地方
         const p1Info = document.getElementById('p1-info');
         if (p1Info) {  // 👈 加上这层判定，确保找不到元素时不会崩溃
@@ -1348,10 +1360,10 @@
             if (options.armorPurge) btns += `<button class="ring-btn" style="border-color:var(--gold); color:var(--gold);" onclick="submitProtection('ARMOR_PURGE')">USE [ARMOR PURGE]</button>`;
             btns += `<button class="ring-btn" style="border-color:var(--red); color:var(--red);" onclick="submitProtection('NONE')">ACCEPT DELETION</button>`;
             document.getElementById('protection-btns').innerHTML = btns;
-        } else {
-            pOverlay.style.display = 'none';
-        }
-    });
+            } else {
+                pOverlay.style.display = 'none';
+            }
+        });
 
     document.addEventListener('click', () => { if(!targetingMode) closeActionRing(); });
 
