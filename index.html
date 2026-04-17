@@ -313,8 +313,10 @@
     <div id="reveal-panel">
         <div class="reveal-title">>> DECK SEARCH PROTOCOL <<</div>
         <div class="reveal-desc">AWAITING TARGET SELECTION. CHOOSE 1 CARD TO ADD TO HAND.</div>
-        <div id="reveal-cards-container"></div>
-        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitReveal(null)">[ SKIP / 放弃检索引擎并归还卡牌 ]</button>
+        <div id="reveal-cards-container" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;">
+            <!-- JS 会动态生成 -->
+        </div>
+        <button id="reveal-confirm-btn" class="ring-btn" style="display:none; margin-top:20px;" onclick="submitRevealSelection()">CONFIRM SELECTION</button>
     </div>
 </div>
 
