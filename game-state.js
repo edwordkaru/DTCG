@@ -207,6 +207,7 @@ class GameState {
             this.passTurn();
             return true;
         }
+    }
     
     processEffectQueue() {
         if (this.effectQueue.length === 0) {
