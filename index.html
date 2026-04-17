@@ -472,13 +472,30 @@
     // ==========================================
     // ⚔️ 备战室核心交互
     // ==========================================
-    function createRoom() {
-        //document.getElementById('lobby-status').innerText = ">> INITIATING NODE...";
-        const deck = JSON.parse(localStorage.getItem('currentDeck')) || [];
-        socket.emit('createRoom', { playerName: myName, deck: deck, avatar: myAvatar });
+    // 🔥 辅助函数：安全读取卡组（防止 JSON 出错）
+    function getCurrentDeck() {
+        try {
+            const saved = localStorage.getItem('currentDeck');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.warn("⚠️ 读取 currentDeck 失败，使用空卡组");
+            return [];
+        }
     }
 
-    // 🔥 最终融合版 joinRoom（保留你所有好功能 + 修复致命 bug）
+    // 🔥 创建房间（强制发卡组）
+    function createRoom() {
+        const currentDeck = getCurrentDeck();
+        console.log(`🚀 [CREATE ROOM] 发送卡组 → 数量: ${currentDeck.length} 张`);
+
+        socket.emit('createRoom', {
+            playerName: myName || "Guest",
+            avatar: myAvatar || null,
+            deck: currentDeck
+        });
+    }
+
+    // 🔥 加入房间（保留你喜欢的验证 + 强制发卡组）
     function joinRoom() {
         const input = document.getElementById('join-room-id');
         let targetId = input ? input.value.trim().toUpperCase() : '';
@@ -494,18 +511,9 @@
             return;
         }
 
-        // 从 deck-builder 读取卡组（安全版）
-        let currentDeck = [];
-        try {
-            const saved = localStorage.getItem('currentDeck');
-            if (saved) currentDeck = JSON.parse(saved);
-        } catch (e) {
-            console.warn("⚠️ 读取 currentDeck 失败，使用空卡组");
-        }
+        const currentDeck = getCurrentDeck();
+        console.log(`🚀 [JOIN ROOM] 发送卡组 → 房间:${targetId} | 卡组数量: ${currentDeck.length} 张`);
 
-        console.log(`🚀 正在加入房间: ${targetId} | 卡组数量: ${currentDeck.length} 张`);
-
-        // 只发请求，不提前切换画面
         socket.emit('joinRoom', {
             roomId: targetId,
             playerName: myName || "Guest",
@@ -513,7 +521,7 @@
             deck: currentDeck
         });
 
-        if (input) input.value = '';   // 清空输入框
+        if (input) input.value = '';
     }
 
     // 刚进入房间，切换到备战室 UI
