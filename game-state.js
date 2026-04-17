@@ -165,27 +165,20 @@ class GameState {
         });
     }
 
-    // 🔥 替换原来的 checkTurnEnd（核心修复）
+    // 🔥 官方最终版 checkTurnEnd（100% 符合手册第15页 G. Passing and Turn End Conditions）
     checkTurnEnd() {
         if (this.gameOver) return;
 
-        // 🔥 强制 Memory Over 检测（最高优先级）
-        const isP1Turn = this.turnPlayer === 'p1';
-        const opponentSide = isP1Turn ? this.memory < 0 : this.memory > 0;
-        const opponentMemory = Math.abs(this.memory);
+        // 🔥 已移除所有强制 Memory Over 逻辑
+        // 回合只在玩家主动点击 PASS 时结束（官方唯一结束条件）
 
-        if (opponentSide && opponentMemory >= 1) {
-            console.log(`🔥 [MEMORY OVER] ${this.turnPlayer.toUpperCase()} 回合结束！Memory 指向对方 ${opponentMemory}，立即切换`);
-            this.passTurn();
-            return;
-        }
-
-        // 下面是【你原本的全部逻辑】，完全不动
         if (this.counterTiming.isActive || this.effectQueue.length > 0) return;
 
         if (!this.eotTriggered) {
             this.eotTriggered = true;
-            console.log("⏳ 内存过线 → 扫描 [End of Turn] 效果...");
+            console.log("⏳ 扫描 [End of Turn] 效果...");
+        
+            // 触发双方所有 End of Turn 效果（官方顺序）
             this.zones[this.turnPlayer].battleArea.forEach(card =>
                 this.triggerEffect(this.turnPlayer, card, "End of Turn")
             );
@@ -194,11 +187,11 @@ class GameState {
                 this.triggerEffect(opp, card, "End of Turn")
             );
 
-            if (this.effectQueue.length > 0) return;
+            if (this.effectQueue.length > 0) return; // 有待处理效果就先挂起
         }
 
         console.log("✅ 效果清空 → 正式结束回合");
-        this.passTurn();
+        this.passTurn();   // 只有这里才真正切换回合
     }
 
     processEffectQueue() {
@@ -801,41 +794,28 @@ class GameState {
                 }
             }
             
-            // 🔮 解析：翻牌检索 (Reveal & Add)
-            const revealMatch = text.match(/reveal\s*(?:the\s*)?top\s*([0-9]+)\s*cards?\s*of\s*your\s*deck/i);
-            if (revealMatch) {
-                const count = parseInt(revealMatch[1]);
+            // 🔮 通用 Reveal 效果处理（支持所有卡牌）
+            const revealInstruction = this.parseRevealInstruction(text);
+            if (revealInstruction) {
                 const pZone = this.zones[eff.playerId];
-                const actualCount = Math.min(count, pZone.deck.length);
-                
+                const actualCount = Math.min(revealInstruction.revealCount, pZone.deck.length);
+    
                 if (actualCount > 0) {
-                    console.log(`🔍 [REVEAL] 引擎挂起：从 ${eff.playerId} 的卡组顶抽出 ${actualCount} 张卡进行结算！`);
-                    
-                    // 🔥 核心修复：pop 是末尾，所以牌顶在数组末端！从末尾切出卡牌，并 reverse 翻转，让最顶上的卡排在数组第一位供 UI 渲染
-                    const revealedCards = pZone.deck.splice(pZone.deck.length - actualCount, actualCount).reverse(); 
-                    
-                    this.pendingReveal = { playerId: eff.playerId, cards: revealedCards };
-                    return; // 🛑 踩死刹车，等前端挑牌
-                }
-            }
+                    console.log(`🔍 [REVEAL] 翻开卡组顶 ${actualCount} 张卡 → 等待玩家按规则选择`);
 
-            if (text.includes("Reveal") && text.includes("top 3")) {
-                const cards = cur.deck.splice(0, 3);
-                this.revealedCards = cards;
-        
-                // 🔥 特别适配 Gatomon: 识别 "1 yellow and 1 purple"
-                let selectionCount = 1;
-                if (text.includes("1 yellow") && text.includes("1 purple")) {
-                    selectionCount = 2; // 需要选两张
-                }
+                    // 从牌库顶部取出（deck 末尾是顶牌）
+                    const revealedCards = pZone.deck.splice(pZone.deck.length - actualCount, actualCount).reverse();
 
-                this.pendingReveal = {
-                    playerId: playerId,
-                    count: selectionCount, 
-                    remaining: selectionCount, // 剩余需要选的数量
-                    filter: selectionCount === 2 ? "YELLOW_PURPLE" : "ANY" 
-                };
-                return;
+                    this.pendingReveal = {
+                        playerId: eff.playerId,
+                        cards: revealedCards,
+                        constraints: revealInstruction.constraints,     // 关键：选择规则
+                        remainingAction: revealInstruction.remainingAction,
+                        instruction: revealInstruction.instruction,
+                        mode: revealInstruction.constraints.mode
+                    };
+                    return; // 挂起引擎，等待前端选择
+                }
             }
 
             // 🦇 解析：从废弃区登场 (Play from Trash)
@@ -1077,24 +1057,42 @@ class GameState {
     }
 
     // 🔥 修复断线的关键：submitRevealChoice
-    submitRevealChoice(playerId, selectedCardInstanceId) {
+    // 🔮 通用版：支持多张选择 + 颜色限制
+    submitRevealChoice(playerId, selectedInstanceIds = []) {   // 注意：现在支持数组！
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
-        const cardIdx = this.revealedCards.findIndex(c => c.instanceId === selectedCardInstanceId);
-        if (cardIdx !== -1) {
-            const [selectedCard] = this.revealedCards.splice(cardIdx, 1);
-            this.zones[playerId].hand.push(selectedCard);
-            this.pendingReveal.remaining--; // 减少待选数量
+        const selectedCards = this.pendingReveal.cards.filter(c => 
+            selectedInstanceIds.includes(c.instanceId)
+        );
+
+        // 简单校验（未来可加强）
+        const required = this.pendingReveal.constraints.selectCount || 1;
+        if (selectedCards.length !== required) {
+            console.warn(`🚫 选择数量不符，需要选 ${required} 张`);
+            return;
         }
 
-        // 只有当所有该选的卡都选完了，才关闭状态并继续引擎
-        if (this.pendingReveal.remaining <= 0) {
-            // 剩下的放回库底
-            this.zones[playerId].deck.push(...this.revealedCards);
-            this.revealedCards = [];
-            this.pendingReveal = null;
-            this.resolveEffect(); // 继续解析队列中的下一个效果
+        // 加入手牌
+        this.zones[playerId].hand.push(...selectedCards);
+
+        // 剩余卡牌处理
+        const remaining = this.pendingReveal.cards.filter(c => 
+            !selectedInstanceIds.includes(c.instanceId)
+        );
+
+        if (this.pendingReveal.remainingAction === "BOTTOM") {
+            this.zones[playerId].deck.push(...remaining);           // 放回底部
+        } else if (this.pendingReveal.remainingAction === "TOP") {
+            this.zones[playerId].deck.unshift(...remaining);        // 放回顶部
+        } else if (this.pendingReveal.remainingAction === "TRASH") {
+            this.zones[playerId].trash.push(...remaining);
         }
+
+        console.log(`✅ [REVEAL] 玩家已选择 ${selectedCards.length} 张卡，剩余卡牌已处理`);
+
+        // 清空状态，继续执行下一个效果
+        this.pendingReveal = null;
+        this.resolveEffect();
     }
 
     // 🔥 新增：接收前端的目标 ID，扣动扳机，然后解除刹车
@@ -1571,6 +1569,59 @@ class GameState {
         
         // 🔥 第三步：统一输出完整且包含 Buff 的最终面板
         return keywords;
+    }
+
+    // ==========================================
+    // 🔥 通用 Reveal 效果解析器（支持所有类似卡牌）
+    // ==========================================
+    parseRevealInstruction(text) {
+        text = text.toLowerCase();
+
+        // 1. 检测是否是 Reveal 效果 + 翻多少张
+        const revealMatch = text.match(/reveal\s*(?:the\s*)?top\s*(\d+)\s*card/i);
+        if (!revealMatch) return null;
+
+        const revealCount = parseInt(revealMatch[1]);
+
+        // 2. 解析选择规则（支持多种常见模式）
+        let constraints = { 
+            selectCount: 1, 
+            colorRequirements: {},   // 如 { purple: 1, yellow: 1 }
+            allowedColors: [], 
+            mode: "ANY" 
+        };
+
+        // 模式1：经典 “1 purple and 1 yellow”
+        const multiColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)\s*(?:and|,?)\s*(\d+)\s*([a-z]+)/i);
+        if (multiColorMatch) {
+            constraints.selectCount = parseInt(multiColorMatch[1]) + parseInt(multiColorMatch[3]);
+            constraints.colorRequirements = {
+                [multiColorMatch[2]]: parseInt(multiColorMatch[1]),
+                [multiColorMatch[4]]: parseInt(multiColorMatch[3])
+            };
+            constraints.mode = "MULTI_COLOR";
+        } 
+        // 模式2：单色（add 1 purple / add 2 red 等）
+        else {
+            const singleColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)/i);
+            if (singleColorMatch) {
+                constraints.selectCount = parseInt(singleColorMatch[1]);
+                constraints.colorRequirements[singleColorMatch[2]] = constraints.selectCount;
+                constraints.mode = "SINGLE_COLOR";
+            }
+        }
+
+        // 3. 解析剩余卡牌的处理方式（最常见的是放回底部）
+        let remainingAction = "BOTTOM";
+        if (text.includes("trash") || text.includes("discard")) remainingAction = "TRASH";
+        else if (text.includes("top")) remainingAction = "TOP";
+
+        return {
+            revealCount,
+            constraints,
+            remainingAction,
+            instruction: text   // 原始文本，给前端显示用
+        };
     }
 
     // ==========================================
