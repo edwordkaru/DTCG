@@ -934,10 +934,14 @@
     }
     function cancelTargeting() {
         targetingMode = null; selectedTargets = []; activeCommandCard = null;
-        document.body.classList.remove('targeting-mode'); document.getElementById('targeting-banner').style.display = 'none';
+        document.body.classList.remove('targeting-mode'); 
+        document.getElementById('targeting-banner').style.display = 'none';
         document.querySelectorAll('.targeted-1, .targeted-2').forEach(el => el.classList.remove('targeted-1', 'targeted-2'));
-        // 如果是在防守阶段取消了 BLAST 锁定，自动流转为跳过反击
-        if(lastState && lastState.counterTiming.isActive && lastState.counterTiming.defenderId === myId && lastState.counterTiming.step === 'COUNTER') {
+    
+        // 🔥 核心修正：当玩家点取消准星时，告诉服务器放弃爆裂进化，把引擎推向 BLOCKER 阶段
+        if(latestGameState && latestGameState.counterTiming.isActive && 
+           latestGameState.counterTiming.defenderId === myId && 
+           latestGameState.counterTiming.step === 'COUNTER') {
             bypassAceProtocol();
         }
     }
@@ -1239,9 +1243,30 @@
             document.getElementById('effect-choice-overlay').style.display = 'none';
         }
 
-        document.querySelectorAll('.mem-dot').forEach(d => d.classList.remove('mem-active'));
+        // 【修改后】
+        document.querySelectorAll('.mem-dot').forEach(d => {
+            d.classList.remove('mem-active');
+            d.style.color = ''; // 每一帧先重置颜色
+            d.style.textShadow = '';
+        });
         const active = document.getElementById(`mem-${state.memory}`);
-        if(active) active.classList.add('mem-active');
+        if(active) {
+            active.classList.add('mem-active');
+    
+            // 动态变色引擎：对 P1 来说，正数是优势(蓝色)，负数是劣势(红色)；P2 则完全相反。
+            const isMyAdvantage = (state.memory > 0 && myId === 'p1') || (state.memory < 0 && myId === 'p2');
+    
+            if (state.memory === 0) {
+                active.style.color = 'white';
+                active.style.textShadow = '0 0 10px white';
+            } else if (isMyAdvantage) {
+                active.style.color = 'var(--blue)';
+                active.style.textShadow = '0 0 15px var(--blue)';
+            } else {
+                active.style.color = 'var(--red)';
+                active.style.textShadow = '0 0 15px var(--red)';
+            }
+        }
 
         // --- 2. 渲染效果队列 ---
         renderEffectQueue(state.effectQueue);
