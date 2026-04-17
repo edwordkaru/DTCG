@@ -1056,21 +1056,19 @@ class GameState {
         }
     }
 
-    // 🔥 修复断线的关键：submitRevealChoice
-    // 🔮 通用版：支持多张选择 + 颜色限制
-    submitRevealChoice(playerId, selectedInstanceIds = []) {   // 注意：现在支持数组！
+    // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
+    submitRevealChoice(playerId, selectedInstanceIds = []) {   // 注意：现在是数组！
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
+
+        const required = this.pendingReveal.constraints?.selectCount || 1;
+        if (selectedInstanceIds.length !== required) {
+            console.warn(`🚫 选择数量错误，需要选 ${required} 张`);
+            return;
+        }
 
         const selectedCards = this.pendingReveal.cards.filter(c => 
             selectedInstanceIds.includes(c.instanceId)
         );
-
-        // 简单校验（未来可加强）
-        const required = this.pendingReveal.constraints.selectCount || 1;
-        if (selectedCards.length !== required) {
-            console.warn(`🚫 选择数量不符，需要选 ${required} 张`);
-            return;
-        }
 
         // 加入手牌
         this.zones[playerId].hand.push(...selectedCards);
@@ -1081,18 +1079,17 @@ class GameState {
         );
 
         if (this.pendingReveal.remainingAction === "BOTTOM") {
-            this.zones[playerId].deck.push(...remaining);           // 放回底部
+            this.zones[playerId].deck.push(...remaining);
         } else if (this.pendingReveal.remainingAction === "TOP") {
-            this.zones[playerId].deck.unshift(...remaining);        // 放回顶部
+            this.zones[playerId].deck.unshift(...remaining);
         } else if (this.pendingReveal.remainingAction === "TRASH") {
             this.zones[playerId].trash.push(...remaining);
         }
 
-        console.log(`✅ [REVEAL] 玩家已选择 ${selectedCards.length} 张卡，剩余卡牌已处理`);
+        console.log(`✅ [REVEAL] 已选择 ${selectedCards.length} 张卡，剩余处理完毕`);
 
-        // 清空状态，继续执行下一个效果
         this.pendingReveal = null;
-        this.resolveEffect();
+        this.resolveEffect();   // 继续下一效果
     }
 
     // 🔥 新增：接收前端的目标 ID，扣动扳机，然后解除刹车
