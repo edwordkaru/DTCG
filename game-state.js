@@ -191,24 +191,22 @@ class GameState {
         const isP2TurnOver = (this.turnPlayer === 'p2' && this.memory < 0);
 
         if (isP1TurnOver || isP2TurnOver) {
-        if (!this.eotTriggered) {
-            // 触发 [回合结束时] 的效果
-            this.eotTriggered = true;
-            this.triggerEffects('endOfTurn', this.turnPlayer);
+            if (!this.eotTriggered) {
+                // 触发 [回合结束时] 的效果
+                this.eotTriggered = true;
+                this.triggerEffects('endOfTurn', this.turnPlayer);
         
-            // 🔥 修复：如果场上没有任何回合结束的效果被触发，必须立刻移交回合！
-            if (this.effectQueue.length === 0) {
-                this.passTurn();
-                return true;
+                // 🔥 修复：如果场上没有任何回合结束的效果被触发，必须立刻移交回合！
+                if (this.effectQueue.length === 0) {
+                    this.passTurn();
+                    return true;
+                }
+                return false; // 只有当 effectQueue 里真的有效果时，才返回 false 等待结算
             }
-        
-            return false; // 只有当 effectQueue 里真的有效果时，才返回 false 等待结算
+            // 效果结算完，真正切换回合
+            this.passTurn();
+            return true;
         }
-    
-        // 效果结算完，真正切换回合
-        this.passTurn();
-        return true;
-    }
     
     processEffectQueue() {
         if (this.effectQueue.length === 0) {
