@@ -479,20 +479,24 @@
     }
 
     function joinRoom(joinId) {
-        // 如果没有直接传 ID 进来，就去读取输入框的值
         let targetId = joinId;
-        if (!targetId) {
-            const inputEl = document.getElementById('room-id-input'); // 确保这里的 ID 和你 HTML 里输入框的 ID 一致
-            if (inputEl) targetId = inputEl.value.trim();
+        
+        // 如果是从输入框点按钮进来的，joinId 可能是空或者是鼠标事件对象
+        if (!targetId || typeof targetId === 'object') {
+            // 🔥 致命修复：改成了 'join-id'，精准对齐你 HTML 里的输入框！
+            const inputEl = document.getElementById('join-id'); 
+            if (inputEl) {
+                targetId = inputEl.value.trim();
+            }
         }
 
         if (!targetId) return alert("⚠️ 请输入房间号！");
 
-        // 🔥 致命修复：强行转成大写，防止大小写不匹配导致的平行宇宙！
+        // 强行转成大写，防止大小写不匹配
         roomId = targetId.toUpperCase();
-        myRole = 'p2'; // 手动加入的人默认是 P2
+        myRole = 'p2'; 
 
-        // 切换 UI 界面（这里的 ID 请根据你实际的 HTML 修改）
+        // 切换 UI 界面
         document.getElementById('lobby-screen').style.display = 'none'; 
         document.getElementById('staging-screen').style.display = 'flex';
 
