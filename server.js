@@ -111,14 +111,22 @@ io.on('connection', (socket) => {
     console.log('玩家连接:', socket.id);
 
     // 🔥 1. 新增：全服广播大厅状态的专属雷达
+    // 📡 全服广播：增加“防御性编程”，防止读取不到 players 导致崩溃
     const broadcastLobby = () => {
         const availableRooms = Object.keys(rooms)
-            .filter(id => !rooms[id].game) // 过滤掉已经开打的房间
-            .map(id => ({
-                id,
-                players: Object.keys(rooms[id].players).length
-            }));
-        io.emit('roomListUpdate', availableRooms); // 注意：这里是 io.emit，强制发给全服所有人
+            // 🔥 增加检查：确保房间存在、有 players 且没开打
+            .filter(id => rooms[id] && rooms[id].players && !rooms[id].game)
+            .map(id => {
+                const room = rooms[id];
+                return {
+                    id,
+                    // 使用可选链 ?. 即使数据没到位也不会崩，只会显示 Waiting
+                    p1Name: room.players?.p1?.name || "Waiting...",
+                    p2Name: room.players?.p2?.name || "Waiting...",
+                    count: Object.keys(room.players || {}).length
+                };
+            });
+        io.emit('roomListUpdate', availableRooms);
     };
 
     // 玩家刚连上时，先给他发一次列表
@@ -289,15 +297,30 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        console.log('玩家掉线:', socket.id);
         let lobbyChanged = false;
+
         for (const roomId in rooms) {
             const room = rooms[roomId];
-            if (room.players.p1 && room.players.p1.id === socket.id) { delete room.players.p1; lobbyChanged = true; }
-            if (room.players.p2 && room.players.p2.id === socket.id) { delete room.players.p2; lobbyChanged = true; }
-            // 如果房间空了，直接销毁
-            if (!room.players.p1 && !room.players.p2) { delete rooms[roomId]; lobbyChanged = true; }
+            // 🔥 增加防御检查：如果 room 没 players 直接跳过，不崩服务器
+            if (!room || !room.players) continue;
+
+            if (room.players.p1 && room.players.p1.id === socket.id) {
+                delete room.players.p1;
+                lobbyChanged = true;
+            } else if (room.players.p2 && room.players.p2.id === socket.id) {
+                delete room.players.p2;
+                lobbyChanged = true;
+            }
+
+            // 如果房间彻底空了，销毁它
+            if (!room.players.p1 && !room.players.p2) {
+                delete rooms[roomId];
+                lobbyChanged = true;
+            }
         }
-        if (lobbyChanged) broadcastLobby(); // 🔥 有人掉线导致房间变动，刷新大厅！
+        
+        if (lobbyChanged) broadcastLobby();
     });
 
     // 8. 指令分发中心
