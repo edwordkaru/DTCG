@@ -478,7 +478,7 @@
         socket.emit('createRoom', { playerName: myName, deck: deck, avatar: myAvatar });
     }
 
-    // 🔥 替换整个 joinRoom 函数为下面这个（已完美适配你当前的 HTML）
+    // 🔥 最终版 joinRoom（已带头像和卡组）
     function joinRoom() {
         const input = document.getElementById('join-room-id');
         let targetId = input ? input.value.trim().toUpperCase() : '';
@@ -503,12 +503,16 @@
         document.getElementById('lobby-screen').style.display = 'none';
         document.getElementById('staging-screen').style.display = 'flex';
 
+        // 🔥 关键：同时传 avatar 和当前 deck
+        const currentDeck = JSON.parse(localStorage.getItem('currentDeck')) || [];
+
         socket.emit('joinRoom', { 
             roomId: roomId, 
-            playerName: myName 
+            playerName: myName,
+            avatar: myAvatar,
+            deck: currentDeck
         });
 
-        // 清空输入框
         if (input) input.value = '';
     }
 
