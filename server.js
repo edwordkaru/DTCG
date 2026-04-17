@@ -269,7 +269,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 6. 准备按钮（最终修复版：保证 deck 正确传入 GameState）
+    // 6. 准备按钮（最终修复版：保证 deck 正确传入 GameState + 立即推送初始状态）
     socket.on('toggleReady', ({ roomId, role }) => {
         const room = rooms[roomId];
         if (!room || !room.players[role] || room.game) return;
@@ -277,15 +277,15 @@ io.on('connection', (socket) => {
         room.players[role].ready = !room.players[role].ready;
         io.to(roomId).emit('stagingUpdate', getRoomState(room));
 
-        // 🔥 关键修复：双方都准备好时，正确创建 GameState
+        // 🔥 关键修复：双方都准备好时，正确创建 GameState 并推送初始状态
         if (room.players.p1.ready && room.players.p2 && room.players.p2.ready) {
             const p1 = room.players.p1;
             const p2 = room.players.p2;
 
             room.game = new GameState(
-                { name: p1.name, avatar: p1.avatar || null },   // P1 完整对象
-                { name: p2.name, avatar: p2.avatar || null },   // P2 完整对象
-                p1.deck || [],                                  // 确保 deck 不为空
+                { name: p1.name, avatar: p1.avatar || null },
+                { name: p2.name, avatar: p2.avatar || null },
+                p1.deck || [],
                 p2.deck || []
             );
 
@@ -295,6 +295,9 @@ io.on('connection', (socket) => {
                 roomId: roomId, 
                 state: room.game
             });
+
+            // ←←← 最重要的一行：立即推送完整游戏状态，让客户端渲染卡组数量
+            io.to(roomId).emit('gameStateUpdate', room.game);
 
             console.log(`✅ [ROOM ${roomId}] 双方准备就绪，卡组已加载！`);
         }
