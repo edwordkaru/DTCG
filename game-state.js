@@ -1308,61 +1308,82 @@ class GameState {
         let isEvolve = false;
         let target = null;
         let targetZone = null;
-
-        // 🔥 1. 优先校验：如果是进化，必须先找到目标，找不到就中止，绝不提前扣费！
+        
+        // ==========================================
+        // 🛡️ 官方手册规则验证系统 (Strict Manual Rules)
+        // ==========================================
         if (targetInstanceId && (cardType.includes('digimon') || cardType.includes('egg'))) {
             isEvolve = true;
             
-            // 先扫描战斗区
+            // 规则 1：必须在场上（战斗区或蛋区）找到合法目标
             target = cur.battleArea.find(c => c.instanceId === targetInstanceId);
             if (target) {
                 targetZone = 'battleArea';
             } else {
-                // 扫描蛋区
                 target = cur.breedingArea.find(c => c.instanceId === targetInstanceId);
                 if (target) targetZone = 'breedingArea';
             }
 
             if (!target) {
-                console.warn(`❌ 进化失败：未找到目标卡！`);
+                console.warn(`🚫 [Rules] 进化失败：未在场上找到指定目标。`);
                 return; 
             }
 
+            // 提取卡牌数据
             const cardLv = this.getLv(card);
             const targetLv = this.getLv(target);
             const cardColor = String(card.color || "").toLowerCase();
             const targetColor = String(target.color || "").toLowerCase();
 
-            if (cardLv > 0 && targetLv > 0 && targetLv !== cardLv - 1) {
-                console.warn(`🚫 规则拦截：等级越级！`);
+            // 规则 2：等级进化条件判定 (Target Level + 1 == Card Level)
+            if (cardLv === 0 || targetLv === 0 || cardLv !== targetLv + 1) {
+                console.warn(`🚫 [Rules] 违规进化：无法将 Lv.${targetLv} 进化为 Lv.${cardLv}。`);
                 return;
             }
 
+            // 规则 3：颜色匹配判定
             if (cardColor && targetColor) {
                 const cColors = cardColor.split(/[\/\s,]+/);
                 const tColors = targetColor.split(/[\/\s,]+/);
                 const colorMatch = cColors.some(cc => tColors.includes(cc)) || tColors.some(tc => cColors.includes(tc));
                 if (!colorMatch) {
-                    console.warn(`🚫 规则拦截：颜色排斥！`);
+                    console.warn(`🚫 [Rules] 违规进化：颜色不符合进化要求。`);
                     return;
                 }
             }
-            
-            // 🔥 高容错进化费用解析器 (防脏数据)
-            let parsedEvoCost = 0;
-            if (card.digivolveCost !== undefined && !isNaN(parseInt(card.digivolveCost))) parsedEvoCost = parseInt(card.digivolveCost);
-            else if (card.evocost !== undefined) parsedEvoCost = parseInt(card.evocost);
-            else if (cardLv === 3) parsedEvoCost = 0; // Lv3 进化默认 0 费保底
+
+            // 规则 4：严格读取卡面进化费用 (避开 JS 的 0 判定陷阱)
+            // 这里绝对不做任何强制修改，数据库标的是多少，这里就是多少
+            let parsedEvoCost = null;
+            if (card.digivolveCost !== undefined && card.digivolveCost !== null && card.digivolveCost !== "") {
+                parsedEvoCost = parseInt(card.digivolveCost);
+            } else if (card.evocost !== undefined && card.evocost !== null && card.evocost !== "") {
+                parsedEvoCost = parseInt(card.evocost);
+            }
+
+            if (parsedEvoCost === null || isNaN(parsedEvoCost)) {
+                console.warn(`🚫 [Rules] 数据缺失：该卡牌没有合法的进化费用。`);
+                return;
+            }
 
             finalCost = parsedEvoCost;
-            console.log(`✅ 判定为【进化】 → 目标区: ${targetZone} → 进化费用 = ${finalCost}`);
+            console.log(`✅ [Rules] 进化判定通过 → 严格消耗费用 = ${finalCost}`);
             
             this.addLog(`>> <span style="color:var(--blue)">[${playerId.toUpperCase()}]</span> 将场上怪兽进化为 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
 
         } else {
-            if (zone === 'hatch' && !isEvolve) return;
-            finalCost = parseInt(card.playCost) || 0;
+            // ==========================================
+            // 普通出牌规则 (Play from Hand)
+            // ==========================================
             
+            // 手册规则：绝不能将卡牌“普通登场”到蛋区 (Breeding Area 只能孵蛋或在上面进化)
+            if (zone === 'hatch' && !isEvolve) {
+                console.warn(`🚫 [Rules] 违规操作：怪兽不能直接普通登场到蛋区。`);
+                return;
+            }
+            
+            // 严格读取登场费用
+            finalCost = parseInt(card.playCost) || 0;
             this.addLog(`>> <span style="color:var(--green)">[${playerId.toUpperCase()}]</span> 登场了 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
         }
 
