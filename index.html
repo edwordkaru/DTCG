@@ -583,6 +583,17 @@
         `).join('');
     }
 
+    function handleReady() {
+        const deckData = localStorage.getItem('currentDeck');
+        // 核心检查：如果没有数据或者卡组里一张牌都没有
+        if (!deckData || JSON.parse(deckData).length === 0) {
+            return alert("⚠️ 你的卡组是空的！\n\n原因：你可能还没在【这个域名】下组过卡。请先去 DECK BUILDER 组一套并保存。");
+        }
+        
+        const deck = JSON.parse(deckData);
+        socket.emit('ready', { roomId, playerId: myId, name: myName, deck });
+    }
+
     // 选中卡组并发送给服务器
     function selectThisDeck(idx) {
         const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
