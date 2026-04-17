@@ -143,7 +143,7 @@ io.on('connection', (socket) => {
         };
         socket.join(roomId);
         socket.emit('roomJoined', { roomId, role: 'p1', state: getRoomState(rooms[roomId]) });
-        broadcastLobbyState();
+        broadcastLobby();
     });
 
     socket.on('joinRoom', ({ roomId, playerName }) => {
@@ -235,7 +235,7 @@ io.on('connection', (socket) => {
 
         io.to(roomId).emit('roleSwitched', { socketId: socket.id, newRole: toRole });
         io.to(roomId).emit('stagingUpdate', getRoomState(room));
-        broadcastLobbyState();
+        broadcastLobby();
     });
     
 
@@ -247,7 +247,7 @@ io.on('connection', (socket) => {
         if (socket.id === room.hostId) {
             io.to(roomId).emit('roomClosed', 'HOST CLOSED THE ROOM (房主已解散房间).');
             delete rooms[roomId];
-            broadcastLobbyState();
+            broadcastLobby();
         } else {
             if (room.players.p1 && room.players.p1.id === socket.id) room.players.p1 = null;
             else if (room.players.p2 && room.players.p2.id === socket.id) room.players.p2 = null;
@@ -255,7 +255,7 @@ io.on('connection', (socket) => {
 
             socket.leave(roomId);
             io.to(roomId).emit('stagingUpdate', getRoomState(room));
-            broadcastLobbyState();
+            broadcastLobby();
         }
     });
 
