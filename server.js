@@ -146,35 +146,47 @@ io.on('connection', (socket) => {
         broadcastLobby();
     });
 
+    // ==========================================
+    // 修复后的 joinRoom（已完美适配当前前端）
     socket.on('joinRoom', ({ roomId, playerName }) => {
         socket.join(roomId);
-        // 🔥 修改：增加 readyPlayers 记录
+
         if (!rooms[roomId]) {
             rooms[roomId] = { 
-                players: {}, 
-                game: null, 
-                readyPlayers: new Map() 
+                hostId: null,
+                players: { p1: null, p2: null }, 
+                spectators: [], 
+                game: null,
+                readyPlayers: new Map()
             };
         }
-        
-        const room = rooms[roomId];
-        const p1 = room.players.p1;
-        const p2 = room.players.p2;
 
-        if (!p1) {
-            room.players.p1 = { id: socket.id, name: playerName };
-        } else if (!p2 && p1.id !== socket.id) {
-            room.players.p2 = { id: socket.id, name: playerName };
-            // ❌ 注意：把这里原本的 new GameState 那行删掉！我们改用下面的 ready 事件触发开局
+        const room = rooms[roomId];
+
+        // 自动分配座位（p1 优先）
+        let role = null;
+        if (!room.players.p1) {
+            role = 'p1';
+            room.players.p1 = { id: socket.id, name: playerName, avatar: null, ready: false };
+        } else if (!room.players.p2 && room.players.p1.id !== socket.id) {
+            role = 'p2';
+            room.players.p2 = { id: socket.id, name: playerName, avatar: null, ready: false };
+        } else {
+            role = 'spectator';
+            room.spectators.push({ id: socket.id, name: playerName });
         }
-        
-        // 保持你原有的 roomData 发送逻辑
-        const roomData = {
-            p1Name: room.players.p1 ? room.players.p1.name : null,
-            p2Name: room.players.p2 ? room.players.p2.name : null
-        };
-        io.to(roomId).emit('roomData', roomData);
-        broadcastLobby(); // 🔥 有人进出房间，立刻刷新大厅！
+
+        // 🔥 关键修复：立即给加入者发送 roomJoined（和 createRoom 完全一致）
+        socket.emit('roomJoined', { 
+            roomId, 
+            role, 
+            state: getRoomState(room) 
+        });
+
+        // 同时广播给房间内所有人（包括房主），实时刷新备战室
+        io.to(roomId).emit('stagingUpdate', getRoomState(room));
+
+        broadcastLobby(); // 刷新大厅列表
     });
 
     // ⚔️ 核心准备逻辑：接收卡组并触发开局
