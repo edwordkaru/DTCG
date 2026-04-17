@@ -583,17 +583,27 @@
         `).join('');
     }
 
-    function handleReady() {
-        const deckData = localStorage.getItem('currentDeck');
-        // 核心检查：如果没有数据或者卡组里一张牌都没有
-        if (!deckData || JSON.parse(deckData).length === 0) {
-            return alert("⚠️ 你的卡组是空的！\n\n原因：你可能还没在【这个域名】下组过卡。请先去 DECK BUILDER 组一套并保存。");
-        }
+    async function handleReady() {
+        // 先检查登录状态，拿头像
+        const res = await fetch('/auth/status');
+        const userData = await res.json();
         
-        const deck = JSON.parse(deckData);
-        socket.emit('ready', { roomId, playerId: myId, name: myName, deck });
-    }
+        const deckData = localStorage.getItem('currentDeck');
+        if (!deckData) return alert("请先组卡！");
 
+        // 发送给服务器的信息包：包含名字、卡组、头像、角色
+        socket.emit('ready', { 
+            roomId, 
+            playerId: myId, 
+            name: userData.user ? userData.user.username : myName, 
+            avatar: userData.user ? `https://cdn.discordapp.com/avatars/${userData.user.id}/${userData.user.avatar}.png` : 'placeholder.jpg',
+            role: myRole, // 比如 'p1' 或 'p2'
+            deck: JSON.parse(deckData) 
+        });
+        
+        console.log("📡 携带头像和卡组准备就绪！");
+    }
+    
     // 选中卡组并发送给服务器
     function selectThisDeck(idx) {
         const vault = JSON.parse(localStorage.getItem('dtcg_vault')) || {};
