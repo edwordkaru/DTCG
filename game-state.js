@@ -26,10 +26,14 @@ class GameState {
             p1: { deck: [], hand: [], battleArea: [], trash: [], security: [], breedingArea: [], eggDeck: [] },
             p2: { deck: [], hand: [], battleArea: [], trash: [], security: [], breedingArea: [], eggDeck: [] }
         };
-
+        this.actionLogs = []; // 🔥 新增这行
         this.initDeck('p1', p1Deck);
         this.initDeck('p2', p2Deck);
         this.setupGame();
+    }
+
+    addLog(msg) {
+        this.actionLogs.push(msg);
     }
 
     shuffle(array) {
@@ -1314,55 +1318,52 @@ class GameState {
             if (target) {
                 targetZone = 'battleArea';
             } else {
-                // 如果战斗区没有，扫描蛋区 (修复蛋区无法进化 BUG)
+                // 扫描蛋区
                 target = cur.breedingArea.find(c => c.instanceId === targetInstanceId);
-                if (target) {
-                    targetZone = 'breedingArea';
-                }
+                if (target) targetZone = 'breedingArea';
             }
 
-            // ... (前面获取 target 的代码保留)
-
-            // 找不到目标，拦截并阻止扣费
             if (!target) {
-                console.warn(`❌ 进化失败：在战斗区和蛋区均未找到目标卡 (ID: ${targetInstanceId})！`);
+                console.warn(`❌ 进化失败：未找到目标卡！`);
                 return; 
             }
 
-            // 🛡️ 新增：官方规则等级与颜色强制校验！
             const cardLv = this.getLv(card);
             const targetLv = this.getLv(target);
             const cardColor = String(card.color || "").toLowerCase();
             const targetColor = String(target.color || "").toLowerCase();
 
-            // 1. 等级越级校验 (目标必须是当前卡牌等级 - 1)
             if (cardLv > 0 && targetLv > 0 && targetLv !== cardLv - 1) {
-                console.warn(`🚫 规则拦截：等级越级！无法将 Lv.${targetLv} 进化为 Lv.${cardLv}`);
+                console.warn(`🚫 规则拦截：等级越级！`);
                 return;
             }
 
-            // 2. 颜色排斥校验 (卡牌颜色必须包含目标的颜色)
             if (cardColor && targetColor) {
                 const cColors = cardColor.split(/[\/\s,]+/);
                 const tColors = targetColor.split(/[\/\s,]+/);
                 const colorMatch = cColors.some(cc => tColors.includes(cc)) || tColors.some(tc => cColors.includes(tc));
                 if (!colorMatch) {
-                    console.warn(`🚫 规则拦截：颜色排斥！目标颜色(${target.color}) 与 进化牌颜色(${card.color}) 不匹配`);
+                    console.warn(`🚫 规则拦截：颜色排斥！`);
                     return;
                 }
             }
             
-            finalCost = parseInt(card.digivolveCost) || 0;
-            console.log(`✅ 判定为【进化】 → 目标区: ${targetZone} → finalCost = ${finalCost}`);
+            // 🔥 高容错进化费用解析器 (防脏数据)
+            let parsedEvoCost = 0;
+            if (card.digivolveCost !== undefined && !isNaN(parseInt(card.digivolveCost))) parsedEvoCost = parseInt(card.digivolveCost);
+            else if (card.evocost !== undefined) parsedEvoCost = parseInt(card.evocost);
+            else if (cardLv === 3) parsedEvoCost = 0; // Lv3 进化默认 0 费保底
+
+            finalCost = parsedEvoCost;
+            console.log(`✅ 判定为【进化】 → 目标区: ${targetZone} → 进化费用 = ${finalCost}`);
             
+            this.addLog(`>> <span style="color:var(--blue)">[${playerId.toUpperCase()}]</span> 将场上怪兽进化为 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
+
         } else {
-            // 🔥 额外安全锁：不允许把怪兽强行“普通登场”到蛋区
-            if (zone === 'hatch' && !isEvolve) {
-                console.warn(`❌ 规则拦截：不能直接将卡牌普通登场到蛋区！`);
-                return;
-            }
+            if (zone === 'hatch' && !isEvolve) return;
             finalCost = parseInt(card.playCost) || 0;
-            console.log(`⚠️ 判定为【普通出牌】 → playCost = ${card.playCost} → finalCost = ${finalCost}`);
+            
+            this.addLog(`>> <span style="color:var(--green)">[${playerId.toUpperCase()}]</span> 登场了 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
         }
 
         // 特殊免费进化判断
