@@ -1285,7 +1285,7 @@ class GameState {
         }
     }
 
-        // ==================== 【最终调试版】playOrEvolve ====================
+    // ==================== 【最终调试版】playOrEvolve ====================
     playOrEvolve(playerId, card, zone, targetInstanceId = null, isBlast = false) {
         if (this.gameOver || this.turnPlayer !== playerId) return;
 
@@ -1294,15 +1294,42 @@ class GameState {
         const cur = this.zones[playerId];
         const cardType = String(card.type || card.cardType || "").toLowerCase();
 
-        // 🔥 核心成本计算（强制优先 digivolveCost）
         let finalCost = 0;
         let isEvolve = false;
+        let target = null;
+        let targetZone = null;
 
+        // 🔥 1. 优先校验：如果是进化，必须先找到目标，找不到就中止，绝不提前扣费！
         if (targetInstanceId && (cardType.includes('digimon') || cardType.includes('egg'))) {
             isEvolve = true;
-            finalCost = parseInt(card.digivolveCost) || 0;   // ← 官方规则
-            console.log(`✅ 判定为【进化】 → digivolveCost = ${card.digivolveCost} → finalCost = ${finalCost}`);
+            
+            // 先扫描战斗区
+            target = cur.battleArea.find(c => c.instanceId === targetInstanceId);
+            if (target) {
+                targetZone = 'battleArea';
+            } else {
+                // 如果战斗区没有，扫描蛋区 (修复蛋区无法进化 BUG)
+                target = cur.breedingArea.find(c => c.instanceId === targetInstanceId);
+                if (target) {
+                    targetZone = 'breedingArea';
+                }
+            }
+
+            // 找不到目标，拦截并阻止扣费 (修复疯狂扣费死锁 BUG)
+            if (!target) {
+                console.warn(`❌ 进化失败：在战斗区和蛋区均未找到目标卡 (ID: ${targetInstanceId})！`);
+                return; 
+            }
+            
+            finalCost = parseInt(card.digivolveCost) || 0;
+            console.log(`✅ 判定为【进化】 → 目标区: ${targetZone} → finalCost = ${finalCost}`);
+            
         } else {
+            // 🔥 额外安全锁：不允许把怪兽强行“普通登场”到蛋区
+            if (zone === 'hatch' && !isEvolve) {
+                console.warn(`❌ 规则拦截：不能直接将卡牌普通登场到蛋区！`);
+                return;
+            }
             finalCost = parseInt(card.playCost) || 0;
             console.log(`⚠️ 判定为【普通出牌】 → playCost = ${card.playCost} → finalCost = ${finalCost}`);
         }
@@ -1316,7 +1343,7 @@ class GameState {
             }
         }
 
-        // 支付费用（Blast 进化免单）
+        // 🔥 2. 确认合法后，再执行支付（不再出现扣费不结算的死锁）
         if (!isBlast) {
             const delta = (playerId === 'p1') ? -finalCost : finalCost;
             console.log(`💰 实际扣除内存：${delta}（P${playerId === 'p1' ? '1' : '2'} 视角）`);
@@ -1327,12 +1354,6 @@ class GameState {
 
         // ====================== 进化分支 ======================
         if (isEvolve) {
-            const target = cur.battleArea.find(c => c.instanceId === targetInstanceId);
-            if (!target) {
-                console.warn(`❌ 进化失败：目标卡不存在！`);
-                return;
-            }
-
             const handIdx = cur.hand.findIndex(c => c.instanceId === card.instanceId);
             if (handIdx === -1) return;
             const [movedCard] = cur.hand.splice(handIdx, 1);
@@ -1345,9 +1366,16 @@ class GameState {
                 stack: target.stack 
             });
 
-            console.log(`✅ 进化成功！${target.name} 已堆叠 → 强制抽 1 张`);
+            console.log(`✅ 进化成功！${target.name} 已堆叠在 ${targetZone} → 强制抽 1 张`);
             this.drawCard(playerId, 1);
-            this.triggerEffect(playerId, target, "When Digivolving");
+            
+            // 🔥 官方规则特判：蛋区进化绝对不触发 [When Digivolving]
+            if (targetZone === 'battleArea') {
+                this.triggerEffect(playerId, target, "When Digivolving");
+            } else {
+                console.log(`🥚 [规则保护] 蛋区进化静默完成，不触发效果`);
+            }
+            
             this.checkGlobalRules();
             this.checkTurnEnd();
             return;
