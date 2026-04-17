@@ -1040,6 +1040,24 @@
                 previewCardInfo(card); // 🔥 触发情报显示
             }
         };
+        // 支持从 breedingArea 直接进化
+        if (isHatch) {
+            wrap.onclick = (e) => {
+                e.stopPropagation();
+                // 直接调用进化（前端已选中 breeding 卡作为 target）
+                if (activeCommandCard) {
+                    socket.emit('action', { 
+                        type: 'play', 
+                        roomId, 
+                        playerId: myId, 
+                        card: activeCommandCard, 
+                        zone: 'battle', 
+                        targetInstanceId: card.instanceId 
+                    });
+                }
+            };
+        }
+        
         wrap.onclick = () => { handleFieldClick(card.instanceId, isMine); }; // 修正：任何模式下都把点击事件发过去
 
         if (isMine) {
