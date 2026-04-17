@@ -1,6 +1,10 @@
 class GameState {
-    constructor(p1Name, p2Name, p1Deck = [], p2Deck = []) {
-        this.players = { p1: { name: p1Name }, p2: { name: p2Name } };
+    cconstructor(p1Name, p1Id, p2Name, p2Id, p1Deck = [], p2Deck = []) {
+        this.players = { 
+            p1: { name: p1Name, id: p1Id }, 
+            p2: { name: p2Name, id: p2Id } 
+        };
+        // ... 其他保持不变
         this.turnPlayer = 'p1';
         this.turnCount = 1;
         this.phase = 'MULLIGAN';
