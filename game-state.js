@@ -182,38 +182,20 @@ class GameState {
     checkTurnEnd() {
         // 1. 如果还有待结算的技能、正在进行的攻击、或者反击阶段，绝对不能结束回合
         if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
-            return false; 
+            return false;
         }
 
-        // 2. 检查内存是否越界 (假设你的逻辑是：P1 回合 memory > 0 算越界，P2 回合 memory < 0 算越界)
-        // 请根据你项目里实际的坐标系（负数是谁、正数是谁）确认这行
+        // 2. 【官方风格】只检查内存越界（不再用 eotTriggered 复杂逻辑）
         const isP1TurnOver = (this.turnPlayer === 'p1' && this.memory > 0);
         const isP2TurnOver = (this.turnPlayer === 'p2' && this.memory < 0);
 
         if (isP1TurnOver || isP2TurnOver) {
-            if (!this.eotTriggered) {
-                this.eotTriggered = true;
-
-                // 🔥 修复：用现有的单张卡触发方法
-                const area = this.zones[this.turnPlayer].battleArea;
-                area.forEach(card => {
-                    this.triggerEffect(this.turnPlayer, card, "End of Turn");
-                });
-
-                // （可选）如果你的 Breeding Area 也有 End of Turn 效果，也一起触发
-                if (this.zones[this.turnPlayer].breedingArea.length > 0) {
-                    this.triggerEffect(this.turnPlayer, this.zones[this.turnPlayer].breedingArea[0], "End of Turn");
-                }
-
-                if (this.effectQueue.length === 0) {
-                    this.passTurn();
-                    return true;
-                }
-                 return false;
-            }
+            console.log(`🔄 [AUTO PASS] ${this.turnPlayer.toUpperCase()} 内存越界，自动结束回合`);
             this.passTurn();
             return true;
         }
+
+        return false; // 没有越界，也不强制结束，让玩家手动点 FINISH TURN
     }
     
     processEffectQueue() {
@@ -611,8 +593,15 @@ class GameState {
             if (handIdx !== -1) cur.hand.splice(handIdx, 1);
 
             // 扣减后的费用
+                        // 扣减后的费用
             const finalCost = Math.max(0, (handCard.playCost || 0) - reduction);
-            this.updateMemory(playerId === 'p1' ? -finalCost : finalCost);
+            
+            if (!this.canPay(playerId, finalCost)) {
+                console.warn(`🚫 [Rules] DigiXros 内存不足！`);
+                return;
+            }
+            const delta = (playerId === 'p1') ? finalCost : -finalCost;
+            this.updateMemory(delta);
 
             // 创建新实例 + 合并素材 stack
             const newStack = [];
@@ -1454,7 +1443,11 @@ class GameState {
 
         // 🔥 2. 确认合法后，再执行支付（不再出现扣费不结算的死锁）
         if (!isBlast) {
-            const delta = (playerId === 'p1') ? -finalCost : finalCost;
+            if (!this.canPay(playerId, finalCost)) {
+                console.warn(`🚫 [Rules] 内存不足！无法支付 ${finalCost} 费`);
+                return; // 阻止非法出牌
+            }
+            const delta = (playerId === 'p1') ? finalCost : -finalCost;   // ← 关键修正！
             console.log(`💰 实际扣除内存：${delta}（P${playerId === 'p1' ? '1' : '2'} 视角）`);
             this.updateMemory(delta);
         } else {
@@ -1542,6 +1535,13 @@ class GameState {
         this.memory += amount;
         if (this.memory > 10) this.memory = 10;
         if (this.memory < -10) this.memory = -10;
+    }
+
+        // 🔥 新增：官方规则 - 判断是否能支付费用（防止 P1 第一回合无限出牌）
+    canPay(playerId, cost) {
+        if (cost === 0) return true;
+        const projectedMemory = this.memory + (playerId === 'p1' ? cost : -cost);
+        return projectedMemory <= 10 && projectedMemory >= -10;
     }
 
     getKeywords(card) {
