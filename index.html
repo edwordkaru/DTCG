@@ -1037,9 +1037,11 @@
         wrap.onmouseenter = () => { 
             if(card.img) {
                 document.getElementById('fixed-preview').style.backgroundImage = `url('${card.img}')`;
-                previewCardInfo(card.instanceId); // 🔥 触发情报显示
+                // 🔥 修复：必须传入 card.instanceId 而不是整个 card 对象
+                previewCardInfo(card.instanceId); 
             }
         };
+        
         // 支持从 breedingArea 直接进化
         wrap.onclick = (e) => {
             e.stopPropagation();
