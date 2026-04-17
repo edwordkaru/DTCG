@@ -298,6 +298,8 @@ class GameState {
             this.triggerEffect(playerId, card, "When Attacking");
         });
 
+        this.addLog(>> [${playerId.toUpperCase()}] 用 <b>${attacker.name}</b> DeclareAttack！);
+
         // 如果真的触发了攻击时效果，用系统指令强行把反击阶段往后拖
         if (this.effectQueue.length > preQueueLen) {
             this.effectQueue.push({
