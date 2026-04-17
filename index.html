@@ -1129,10 +1129,12 @@
 
         // 在 index.html 渲染玩家信息的地方
         const p1Info = document.getElementById('p1-info');
-        p1Info.innerHTML = `
-            <img src="${state.players.p1.avatar}" class="player-avatar">
-            <span>${state.players.p1.name}</span>
-        `;
+        if (p1Info) {  // 👈 加上这层判定，确保找不到元素时不会崩溃
+            p1Info.innerHTML = `
+                <img src="${state.players.p1.avatar}" class="player-avatar">
+                <span>${state.players.p1.name}</span>
+            `;
+        }
         // --- 1. 日志与基础更新 ---
         if (!lastState) { lastState = JSON.parse(JSON.stringify(state)); }
         else {
