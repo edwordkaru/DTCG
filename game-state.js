@@ -165,15 +165,15 @@ class GameState {
     checkTurnEnd() {
         if (this.gameOver) return;
 
-        // 🔥 强制 Memory Over 检测（无论有没有 pending effect，都立即切回合）
+        // 🔥 强制 Memory Over 检测（最高优先级）
         const isP1Turn = this.turnPlayer === 'p1';
         const opponentSide = isP1Turn ? this.memory < 0 : this.memory > 0;
         const opponentMemory = Math.abs(this.memory);
 
         if (opponentSide && opponentMemory >= 1) {
-            console.log("🔥 [MEMORY OVER] 立即结束当前回合，转给对方！");
+            console.log(`🔥 [MEMORY OVER] ${this.turnPlayer.toUpperCase()} 回合结束！Memory 指向对方 ${opponentMemory}，立即切换`);
             this.passTurn();
-            return;   // 强制退出
+            return;
         }
 
         // 下面是【你原本的全部逻辑】，完全不动
@@ -192,10 +192,9 @@ class GameState {
 
             if (this.effectQueue.length > 0) return;
         }
+
         console.log("✅ 效果清空 → 正式结束回合");
         this.passTurn();
-    } else {
-        this.eotTriggered = false;
     }
 
     processEffectQueue() {
