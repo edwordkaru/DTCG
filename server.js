@@ -147,8 +147,8 @@ io.on('connection', (socket) => {
     });
 
     // ==========================================
-    // 修复后的 joinRoom（已完美适配当前前端）
-    socket.on('joinRoom', ({ roomId, playerName }) => {
+    // 最终修复版 joinRoom（头像 + 卡组一次性解决）
+    socket.on('joinRoom', ({ roomId, playerName, avatar = null, deck = null }) => {
         socket.join(roomId);
 
         if (!rooms[roomId]) {
@@ -163,30 +163,41 @@ io.on('connection', (socket) => {
 
         const room = rooms[roomId];
 
-        // 自动分配座位（p1 优先）
         let role = null;
         if (!room.players.p1) {
             role = 'p1';
-            room.players.p1 = { id: socket.id, name: playerName, avatar: null, ready: false };
+            room.players.p1 = { 
+                id: socket.id, 
+                name: playerName, 
+                avatar: avatar || null, 
+                deck: deck || null, 
+                ready: false 
+            };
         } else if (!room.players.p2 && room.players.p1.id !== socket.id) {
             role = 'p2';
-            room.players.p2 = { id: socket.id, name: playerName, avatar: null, ready: false };
+            room.players.p2 = { 
+                id: socket.id, 
+                name: playerName, 
+                avatar: avatar || null, 
+                deck: deck || null, 
+                ready: false 
+            };
         } else {
             role = 'spectator';
             room.spectators.push({ id: socket.id, name: playerName });
         }
 
-        // 🔥 关键修复：立即给加入者发送 roomJoined（和 createRoom 完全一致）
+        // 🔥 关键：立即回传完整状态
         socket.emit('roomJoined', { 
             roomId, 
             role, 
             state: getRoomState(room) 
         });
 
-        // 同时广播给房间内所有人（包括房主），实时刷新备战室
+        // 广播给房间内所有人，实时刷新备战室
         io.to(roomId).emit('stagingUpdate', getRoomState(room));
 
-        broadcastLobby(); // 刷新大厅列表
+        broadcastLobby();
     });
 
     // ⚔️ 核心准备逻辑：接收卡组并触发开局
