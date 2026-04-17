@@ -200,32 +200,6 @@ io.on('connection', (socket) => {
         broadcastLobby();
     });
 
-    // ⚔️ 核心准备逻辑：接收卡组并触发开局
-    socket.on('ready', (data) => {
-        const { roomId, playerId, name, avatar, role, deck } = data;
-        const room = rooms[roomId];
-        if (!room) return;
-
-        // 存入准备名单
-        room.readyPlayers.set(playerId, { name, avatar, role, deck });
-
-        if (room.readyPlayers.size === 2) {
-            const players = Array.from(room.readyPlayers.values());
-            
-            // 🔥 这里的关键：把头像和名字作为对象传进去
-            room.game = new GameState(
-                { name: players[0].name, avatar: players[0].avatar }, // P1 资料
-                { name: players[1].name, avatar: players[1].avatar }, // P2 资料
-                players[0].deck, 
-                players[1].deck
-            );
-
-            io.to(roomId).emit('gameStateUpdate', room.game);
-            
-            broadcastLobby(); // 🔥 游戏开始了，把这间房从大厅列表里撤下来！
-        }
-    });
-
     // 3. 自由换座
     socket.on('switchRole', ({ roomId, toRole }) => {
         const room = rooms[roomId];
