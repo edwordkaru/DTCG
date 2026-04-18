@@ -855,14 +855,13 @@ class GameState {
                     revealedCards.forEach(c => {
                         if (revealInstruction.constraints.mode === "FILTERED") {
                             
-                            // 🛑 核心修复：绝对不能把 mainEffect 和 inheritedEffect 加入检索范围！
-                            // 只扫描 名字、颜色、类型、种族特征。
+                            // 🛑 核心修复：加上 digi_type！把所有 API 可能用的“种族”字段一网打尽！
                             let cardText = [
                                 (c.name || ""), 
                                 (c.color || ""), 
                                 (c.type || c.cardType || ""), 
-                                (c.traits || c.form || c.attribute || "")
-                            ].join(" | ").toLowerCase(); // 用 | 隔开，防止文字粘连误判
+                                (c.traits || c.digi_type || c.digitype || c.form || c.attribute || c.stage || "")
+                            ].join(" | ").toLowerCase();
                             
                             // 处理双色卡的特殊判断
                             if (c.color && c.color.includes("/")) cardText += " | 2-color";
