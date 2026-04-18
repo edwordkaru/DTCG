@@ -1553,7 +1553,7 @@ class GameState {
             }
             
             // 严格读取登场费用
-            finalCost = parseInt(card.playCost) || 0;
+            finalCost = parseInt(card.playCost ?? card.play_cost) || 0;
             this.addLog(`>> <span style="color:var(--green)">[${playerId.toUpperCase()}]</span> 登场了 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
         }
 
