@@ -1765,7 +1765,23 @@ class GameState {
 
         // 2. 提取所有带方括号的特征或名字 (完美解决 EX6-020 Gatomon 的 [Angel], [Mirei] 等)
         const brackets = [...text.matchAll(/\[(.*?)\]/g)];
-        brackets.forEach(b => constraints.validKeywords.push(b[1].toLowerCase()));
+        
+        // 🔥 新增：规则词汇黑名单！防止系统把时点当成种族拿去检索
+        const ignoreTags = [
+            "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
+            "end of turn", "end of attack", "start of your turn", "start of turn", 
+            "main", "security", "hand", "trash", "once per turn", "rule", 
+            "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay",
+            "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"
+        ];
+        
+        brackets.forEach(b => {
+            const kw = b[1].toLowerCase();
+            // 只有不在黑名单里的词（比如 angel, mirei），才会被加入合法条件池！
+            if (!ignoreTags.includes(kw)) {
+                constraints.validKeywords.push(kw);
+            }
+        });
 
         // 3. 提取颜色限制
         const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
