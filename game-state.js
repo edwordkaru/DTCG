@@ -863,26 +863,39 @@ class GameState {
             }
 
             // 🦇 解析：从废弃区登场 (Play from Trash)
-            // 兼容格式: "play 1 purple digimon card from your trash without paying its memory cost"
-            const reviveMatch = text.match(/play\s*(?:1|an?)\s*(?:([a-z]+)\s*)?digimon\s*card\s*from\s*your\s*trash/i);
+            // 🦇 解析：从废弃区登场 (升级版：支持 DP 限制和多颜色，如 Mastemon P-187)
+            const reviveMatch = text.match(/play\s*(?:1|an?)\s*([a-z\s]+)?\s*digimon\s*card(?:.*?with\s*([0-9]+)\s*dp\s*or\s*less)?\s*from\s*your\s*trash/i);
             
             if (reviveMatch) {
-                const colorReq = reviveMatch[1] ? reviveMatch[1].toLowerCase() : null;
+                // 1. 提取颜色要求（例如把 "purple or yellow" 拆成 ["purple", "yellow"]）
+                const colorReqs = reviveMatch[1] ? reviveMatch[1].toLowerCase().replace(/or/g, ' ').split(/\s+/).filter(c => c) : [];
+                // 2. 提取 DP 上限
+                const maxDp = reviveMatch[2] ? parseInt(reviveMatch[2]) : Infinity;
+                
                 const pZone = this.zones[eff.playerId];
                 
-                // 过滤出废弃区里符合颜色的“数码兽”
+                // 3. 过滤出废弃区里同时符合【颜色】和【DP】的数码兽
                 const validCards = pZone.trash.filter(c => {
                     const isDigimon = String(c.type || c.cardType || "").toLowerCase().includes("digimon");
-                    const matchColor = colorReq ? String(c.color || "").toLowerCase().includes(colorReq) : true;
-                    return isDigimon && matchColor;
+                    
+                    const cardColor = String(c.color || "").toLowerCase();
+                    const matchColor = colorReqs.length === 0 || colorReqs.some(color => cardColor.includes(color));
+                    
+                    const matchDp = this.getDp(c) <= maxDp; // 校验该卡的 DP 是否小于等于上限
+
+                    return isDigimon && matchColor && matchDp;
                 });
                 
                 if (validCards.length > 0) {
-                    console.log(`🦇 [REVIVE] 引擎挂起：开启玩家 ${eff.playerId} 的墓地，准备秽土转生！`);
-                    this.pendingTrashRevive = { playerId: eff.playerId, cards: validCards };
+                    console.log(`🦇 [REVIVE] 引擎挂起：准备秽土转生！(限制: DP<=${maxDp===Infinity ? '无限制' : maxDp})`);
+                    this.pendingTrashRevive = { 
+                        playerId: eff.playerId, 
+                        cards: validCards,
+                        constraints: { maxDp: maxDp } // 把限制条件传下去
+                    };
                     return; // 🛑 踩死刹车，等前端选尸体
                 } else {
-                    console.log(`⏩ [REVIVE] 废弃区里没有符合条件的尸体，招魂失败。`);
+                    console.log(`⏩ [REVIVE] 废弃区里没有符合 DP 和颜色条件的尸体，招魂效果落空。`);
                 }
             }
 
