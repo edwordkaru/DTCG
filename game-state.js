@@ -1685,10 +1685,16 @@ class GameState {
                     'color:#ffcc00; font-weight:bold; background:#111');
     }
 
-        // 🔥 新增：官方规则 - 判断是否能支付费用（防止 P1 第一回合无限出牌）
+    // 🔥 新增：官方规则 - 判断是否能支付费用（防止第一回合无限出牌）
     canPay(playerId, cost) {
         if (cost === 0) return true;
-        const projectedMemory = this.memory + (playerId === 'p1' ? cost : -cost);
+        
+        // 🛑 核心修复：必须和真实的内存推演方向完全一致！
+        // P1 消费时，指针往对手（负数）走；P2 消费时，指针往对手（正数）走。
+        const delta = (playerId === 'p1') ? -cost : cost;
+        const projectedMemory = this.memory + delta;
+        
+        // 只要推演后的内存没有爆表（>10 或 <-10），就允许支付
         return projectedMemory <= 10 && projectedMemory >= -10;
     }
 
