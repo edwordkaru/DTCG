@@ -180,14 +180,22 @@ class GameState {
     }
 
     checkTurnEnd() {
-        // 1. 如果还有效果、攻击、反击在进行，绝对不能结束回合
+        // 1. 如果还有待结算的技能、正在进行的攻击、或者反击阶段，绝对不能结束回合
         if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
             return false;
         }
 
-        // 🔥 暂时关闭自动 pass，让玩家手动点红色 FINISH TURN 按钮
-        // （等 memory 彻底稳定后再打开）
-        return false;
+        // 2. 【官方风格】只检查内存越界（不再用 eotTriggered 复杂逻辑）
+        const isP1TurnOver = (this.turnPlayer === 'p1' && this.memory > 0);
+        const isP2TurnOver = (this.turnPlayer === 'p2' && this.memory < 0);
+
+        if (isP1TurnOver || isP2TurnOver) {
+            console.log(`🔄 [AUTO PASS] ${this.turnPlayer.toUpperCase()} 内存越界，自动结束回合`);
+            this.passTurn();
+            return true;
+        }
+
+        return false; // 没有越界，也不强制结束，让玩家手动点 FINISH TURN
     }
     
     processEffectQueue() {
@@ -592,7 +600,7 @@ class GameState {
                 console.warn(`🚫 [Rules] DigiXros 内存不足！`);
                 return;
             }
-            const delta = (playerId === 'p1') ? finalCost : -finalCost;
+            const delta = (playerId === 'p1') ? -finalCost : finalCost;
             this.updateMemory(delta, `DIGIXROS ${handCard.name}`);
 
             // 创建新实例 + 合并素材 stack
@@ -1443,7 +1451,7 @@ class GameState {
                 console.warn(`🚫 [Rules] 内存不足！无法支付 ${finalCost} 费 (当前 memory=${this.memory})`);
                 return;
             }
-            const delta = (playerId === 'p1') ? finalCost : -finalCost;
+            const delta = (playerId === 'p1') ? -finalCost : finalCost;
             this.updateMemory(delta, isEvolve ? `EVOLVE ${card.name}` : `PLAY ${card.name}`);
         } else {
             console.log(`%c💥 BLAST 进化 → 免单，不扣内存`, 'color:#ff00ff');
