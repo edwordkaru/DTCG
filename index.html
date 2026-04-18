@@ -328,13 +328,10 @@
     </div>
 </div>
 
-<div id="trash-revive-overlay" style="position: fixed; inset: 0; background: rgba(15, 0, 20, 0.9); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
-    <div id="trash-revive-panel" style="border: 2px solid #a200ff; box-shadow: 0 0 50px rgba(162, 0, 255, 0.2); background: rgba(0, 0, 0, 0.8); padding: 40px; text-align: center; border-radius: 12px; max-width: 80vw; max-height: 80vh; overflow-y: auto;">
-        <div style="color: #a200ff; font-size: 24px; font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; font-family: 'Consolas', monospace; text-shadow: 0 0 10px #a200ff;">>> NECROMANCY PROTOCOL <<</div>
-        <div style="color: #888; font-size: 12px; letter-spacing: 2px; margin-bottom: 30px;">SELECT 1 DIGIMON FROM TRASH TO RESURRECT</div>
-        <div id="trash-revive-cards-container" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 25px;"></div>
-        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitTrashReviveChoice(null)">[ SKIP / 放弃转生 ]</button>
-    </div>
+<div id="trash-revive-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; flex-direction:column; align-items:center; justify-content:center;">
+    <h2 id="trash-revive-title" style="color:var(--gold); margin-bottom:20px; text-shadow: 0 0 10px rgba(255,204,0,0.5);">请选择要登场的数码兽</h2>
+    <div id="trash-revive-container" style="display:flex; gap:15px; max-width:80%; overflow-x:auto; padding:20px; background:rgba(255,255,255,0.05); border-radius: 10px;"></div>
+    <button onclick="submitTrashReviveChoice(null)" style="margin-top:30px; padding:12px 40px; background:var(--red); color:white; border:none; border-radius: 20px; cursor:pointer; font-size:16px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,71,87,0.4);">放弃招魂 (跳过)</button>
 </div>
 
 <div id="action-ring">
@@ -1398,18 +1395,50 @@
 
         // --- 7. 🦇 废弃区转生雷达接管 ---
         const tOverlay = document.getElementById('trash-revive-overlay');
+        // ==========================================
+        // 🦇 渲染招魂系统 UI
+        // ==========================================
         if (state.pendingTrashRevive && state.pendingTrashRevive.playerId === myId) {
-            tOverlay.style.display = 'flex';
-            const container = document.getElementById('trash-revive-cards-container');
-            // 将符合条件的尸体渲染出来，边框弄成高贵的基佬紫
-            container.innerHTML = state.pendingTrashRevive.cards.map(c => 
-                `<div class="reveal-card" style="background-image:url('${c.img}'); border-color: #a200ff; box-shadow: 0 10px 20px rgba(162,0,255,0.3);" 
-                      onclick="submitTrashReviveChoice('${c.instanceId}')" 
-                      onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
-                 </div>`
-            ).join('');
+            document.getElementById('trash-revive-overlay').style.display = 'flex';
+            const container = document.getElementById('trash-revive-container');
+            container.innerHTML = '';
+
+            // 🔥 动态显示限制条件 (读取你 game-state 传过来的 constraints)
+            const titleEl = document.getElementById('trash-revive-title');
+            const maxDp = state.pendingTrashRevive.constraints?.maxDp;
+            if (maxDp && maxDp < 100000) {
+                titleEl.innerText = `请选择要登场的数码兽 (限制: ${maxDp} DP 或以下)`;
+            } else {
+                titleEl.innerText = `请选择要登场的数码兽`;
+            }
+
+            // 渲染后端发来的合法卡牌
+            state.pendingTrashRevive.cards.forEach(card => {
+                const img = document.createElement('img');
+                img.src = card.image || `cards/${card.cardnumber}.jpg`;
+                img.style.width = '120px';
+                img.style.borderRadius = '6px';
+                img.style.cursor = 'pointer';
+                img.style.border = '3px solid transparent';
+                img.style.transition = 'all 0.2s';
+                
+                // 悬停特效
+                img.onmouseover = () => {
+                    img.style.border = '3px solid var(--green)';
+                    img.style.transform = 'translateY(-10px)';
+                };
+                img.onmouseout = () => {
+                    img.style.border = '3px solid transparent';
+                    img.style.transform = 'translateY(0)';
+                };
+                
+                // 点击直接发送复活指令
+                img.onclick = () => submitTrashReviveChoice(card.instanceId);
+                
+                container.appendChild(img);
+            });
         } else {
-            tOverlay.style.display = 'none';
+            document.getElementById('trash-revive-overlay').style.display = 'none';
         }
 
         // --- 8. 🛡️ 抗性雷达接管 ---
