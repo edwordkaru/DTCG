@@ -358,9 +358,9 @@ io.on('connection', (socket) => {
             case 'resolveEffect': game.resolveEffect(effectId); break;
             case 'dnaDigivolve': game.dnaEvolve(playerId, handCard, targetId1, targetId2); break;
             case 'attachToStack': game.attachToStack(playerId, data.sourceInstanceId, data.targetInstanceId); break;
-            case 'submitTarget': game.submitTarget(playerId, targetInstanceId); break;
+            case 'submitTarget': game.submitTarget(playerId, data.targetInstanceId); break;
             case 'submitRevealChoice': game.submitRevealChoice(playerId, data.selectedCardInstanceIds || [data.selectedCardInstanceId]); break;
-            case 'submitTrashRevive': game.submitTrashRevive(playerId, selectedCardInstanceId); break;
+            case 'submitTrashRevive': game.submitTrashRevive(playerId, data.selectedCardInstanceId); break;
             case 'submitProtectionChoice': game.submitProtectionChoice(playerId, choice); break;
             case 'resolveManualEffect': game.resolveManualEffect(playerId, data.effectIndex, data.confirmed); break;
         }
