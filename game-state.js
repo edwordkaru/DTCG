@@ -509,10 +509,6 @@ class GameState {
         }
 
         if (canDNA) {
-            // ... (下面保留你原本的代码，不需要动)
-            console.log(`🌀 [DNA EVOLVE] ${mat1.name} + ${mat2.name} → ${handCard.name} （抽 ${drawAmount} 张）`);
-
-        if (canDNA) {
             console.log(`🌀 [DNA EVOLVE] ${mat1.name} + ${mat2.name} → ${handCard.name} （抽 ${drawAmount} 张）`);
 
             const handIdx = cur.hand.findIndex(c => c.instanceId === handCard.instanceId);
