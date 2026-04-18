@@ -851,18 +851,23 @@ class GameState {
 
                 if (revealedCards.length > 0) {
                     // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
+                    // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
                     revealedCards.forEach(c => {
                         if (revealInstruction.constraints.mode === "FILTERED") {
+                            
+                            // 🛑 核心修复：绝对不能把 mainEffect 和 inheritedEffect 加入检索范围！
+                            // 只扫描 名字、颜色、类型、种族特征。
                             let cardText = [
-                                (c.name || ""), (c.color || ""), (c.type || c.cardType || ""), 
-                                (c.traits || c.form || c.attribute || ""), 
-                                (c.mainEffect || ""), (c.inheritedEffect || "")
-                            ].join(" ").toLowerCase();
+                                (c.name || ""), 
+                                (c.color || ""), 
+                                (c.type || c.cardType || ""), 
+                                (c.traits || c.form || c.attribute || "")
+                            ].join(" | ").toLowerCase(); // 用 | 隔开，防止文字粘连误判
                             
                             // 处理双色卡的特殊判断
-                            if (c.color && c.color.includes("/")) cardText += " 2-color";
+                            if (c.color && c.color.includes("/")) cardText += " | 2-color";
 
-                            // 只要卡牌的任何属性命中了特征、名字或颜色要求，就允许选择
+                            // 只有卡牌的真实身份命中了要求，才允许被选择
                             c.isSelectable = revealInstruction.constraints.validKeywords.some(kw => cardText.includes(kw));
                         } else {
                             c.isSelectable = true; // 没限制就全都可以选
@@ -1763,10 +1768,10 @@ class GameState {
             constraints.selectCount = 1;
         }
 
-        // 2. 提取所有带方括号的特征或名字 (完美解决 EX6-020 Gatomon 的 [Angel], [Mirei] 等)
+        // 2. 提取所有带方括号的特征或名字
         const brackets = [...text.matchAll(/\[(.*?)\]/g)];
         
-        // 🔥 新增：规则词汇黑名单！防止系统把时点当成种族拿去检索
+        // 🔥 规则词汇黑名单！防止系统把时点当成种族拿去检索
         const ignoreTags = [
             "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
             "end of turn", "end of attack", "start of your turn", "start of turn", 
