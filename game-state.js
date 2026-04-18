@@ -850,6 +850,25 @@ class GameState {
                 }
 
                 if (revealedCards.length > 0) {
+                    // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
+                    revealedCards.forEach(c => {
+                        if (revealInstruction.constraints.mode === "FILTERED") {
+                            let cardText = [
+                                (c.name || ""), (c.color || ""), (c.type || c.cardType || ""), 
+                                (c.traits || c.form || c.attribute || ""), 
+                                (c.mainEffect || ""), (c.inheritedEffect || "")
+                            ].join(" ").toLowerCase();
+                            
+                            // 处理双色卡的特殊判断
+                            if (c.color && c.color.includes("/")) cardText += " 2-color";
+
+                            // 只要卡牌的任何属性命中了特征、名字或颜色要求，就允许选择
+                            c.isSelectable = revealInstruction.constraints.validKeywords.some(kw => cardText.includes(kw));
+                        } else {
+                            c.isSelectable = true; // 没限制就全都可以选
+                        }
+                    });
+
                     this.pendingReveal = {
                         playerId: eff.playerId,
                         cards: revealedCards,
@@ -1715,12 +1734,11 @@ class GameState {
     }
 
     // ==========================================
-    // 🔥 升级版通用 Reveal 解析器
+    // 🔥 升级版通用 Reveal 解析器 (动态提取一切条件)
     // ==========================================
     parseRevealInstruction(text) {
         text = text.toLowerCase();
 
-        // 1. 检测翻卡来源（支持卡组顶 或 整个安保区）
         let revealCount = 0;
         let isSecurity = false;
 
@@ -1730,45 +1748,43 @@ class GameState {
         if (topMatch) {
             revealCount = parseInt(topMatch[1]);
         } else if (secMatch) {
-            isSecurity = true; // 安保区全开模式
+            isSecurity = true; 
         } else {
-            return null; // 不是翻卡效果
+            return null; 
         }
 
-        let constraints = { selectCount: 1, colorRequirements: {}, allowedColors: [], mode: "ANY" };
+        let constraints = { selectCount: 1, mode: "ANY", validKeywords: [] };
 
-        // 2. 模式解析 A：支持中间夹杂废话的经典颜色（如 "1 purple digimon card and 1 yellow"）
-        const multiColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)(?:\s*digimon\s*card)?\s*(?:and|,?)\s*(\d+)\s*([a-z]+)/i);
-        if (multiColorMatch) {
-            constraints.selectCount = parseInt(multiColorMatch[1]) + parseInt(multiColorMatch[3]);
-            constraints.colorRequirements = {
-                [multiColorMatch[2]]: parseInt(multiColorMatch[1]),
-                [multiColorMatch[4]]: parseInt(multiColorMatch[3])
-            };
-            constraints.mode = "MULTI_COLOR";
-        } else {
-            const singleColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)/i);
-            if (singleColorMatch) {
-                constraints.selectCount = parseInt(singleColorMatch[1]);
-                constraints.colorRequirements[singleColorMatch[2]] = constraints.selectCount;
-                constraints.mode = "SINGLE_COLOR";
+        // 1. 动态抓取需要拿几张牌
+        const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
+        if (addMatches.length > 0) {
+            constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+        } else if (text.includes("add this card")) {
+            constraints.selectCount = 1;
+        }
+
+        // 2. 提取所有带方括号的特征或名字 (完美解决 EX6-020 Gatomon 的 [Angel], [Mirei] 等)
+        const brackets = [...text.matchAll(/\[(.*?)\]/g)];
+        brackets.forEach(b => constraints.validKeywords.push(b[1].toLowerCase()));
+
+        // 3. 提取颜色限制
+        const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
+        colors.forEach(c => {
+            if (text.includes(c)) {
+                constraints.validKeywords.push(c);
             }
+        });
+
+        // 只要抓取到了任何特征、名字或颜色，就开启过滤模式
+        if (constraints.validKeywords.length > 0) {
+            constraints.mode = "FILTERED";
         }
 
-        // 2. 模式解析 B：支持带方括号的特征与名字（如 "1 card with [Angel]... and 1 [Mirei]"）
-        const traitNameMatch = text.match(/add\s*1\s*(?:card\s*with\s*)?\[(.*?)\]\s*(?:in\s*its\s*traits\s*)?(?:and|,?)\s*1\s*\[(.*?)\]/i);
-        if (traitNameMatch) {
-            constraints.selectCount = 2;
-            constraints.mode = "TRAIT_NAME";
-            constraints.requiredTrait = traitNameMatch[1].toLowerCase();
-            constraints.requiredName = traitNameMatch[2].toLowerCase();
-        }
-
-        // 3. 剩余卡牌处理方式（新增洗回安保区）
+        // 4. 剩余卡牌去向
         let remainingAction = "BOTTOM";
         if (text.includes("trash") || text.includes("discard")) remainingAction = "TRASH";
         else if (text.includes("top")) remainingAction = "TOP";
-        else if (isSecurity) remainingAction = "SHUFFLE_SECURITY"; // 翻完安保区需要洗牌
+        else if (isSecurity) remainingAction = "SHUFFLE_SECURITY"; 
 
         return { revealCount, isSecurity, constraints, remainingAction, instruction: text };
     }
