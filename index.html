@@ -1397,6 +1397,14 @@
                 img.src = card.image_url || card.imageUrl || card.cardImage || card.img || card.image || `cards/${card.cardnumber || card.cardNumber}.jpg`;
                 img.style.width = '120px';
                 img.style.borderRadius = '6px';
+                // 🔥 新增：如果后端判定这张卡不符合条件（不是天使、不是米蕾），直接变灰且无法点击！
+                if (card.isSelectable === false) {
+                    img.style.filter = 'grayscale(100%) opacity(0.4)';
+                    img.style.cursor = 'not-allowed';
+                    img.style.border = '4px solid transparent';
+                    container.appendChild(img);
+                    return; // 直接 return，跳过绑定下面的 onclick 事件！
+                }
                 img.style.cursor = 'pointer';
                 img.style.border = '4px solid transparent';
                 img.style.transition = 'all 0.2s';
