@@ -874,6 +874,16 @@ class GameState {
                 this.updateMemory(change);
             }
 
+            const recoveryMatch = text.match(/recovery\s*\+([0-9]+)/i);
+            if (recoveryMatch) {
+                const amount = parseInt(recoveryMatch[1]);
+                for (let i = 0; i < amount; i++) {
+                    if (this.zones[eff.playerId].deck.length > 0) {
+                        this.zones[eff.playerId].security.push(this.zones[eff.playerId].deck.shift());
+                    }
+                }
+            }
+
             // 🔥 新增：解析多重安保判定接力
             const secMatch = text.match(/sec_check\s*([0-9]+)/);
             if (secMatch) {
