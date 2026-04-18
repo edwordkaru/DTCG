@@ -186,8 +186,8 @@ class GameState {
         }
 
         // 2. 【官方风格】只检查内存越界（不再用 eotTriggered 复杂逻辑）
-        const isP1TurnOver = (this.turnPlayer === 'p1' && this.memory > 0);
-        const isP2TurnOver = (this.turnPlayer === 'p2' && this.memory < 0);
+        const isP1TurnOver = (this.turnPlayer === 'p1' && this.memory < 0);
+        const isP2TurnOver = (this.turnPlayer === 'p2' && this.memory > 0);
 
         if (isP1TurnOver || isP2TurnOver) {
             console.log(`🔄 [AUTO PASS] ${this.turnPlayer.toUpperCase()} 内存越界，自动结束回合`);
@@ -1343,6 +1343,11 @@ class GameState {
     // ==================== 【最终调试版】playOrEvolve ====================
     playOrEvolve(playerId, card, zone, targetInstanceId = null, isBlast = false) {
         if (this.gameOver || (this.turnPlayer !== playerId && !isBlast)) return;
+        // 🔥 新增安全锁：如果当前有技能排队等结算、或者正在战斗中，绝对禁止出牌！
+        if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
+            console.warn(`🚫 规则拦截：当前有效果正在结算或动作未完成，无法打出 ${card.name}！`);
+            return;
+        }
 
         console.log(`🔍 [playOrEvolve] 开始执行 → Player: ${playerId} | TargetID: ${targetInstanceId || '无'} | Card: ${card.name} (${card.type})`);
 
