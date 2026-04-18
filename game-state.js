@@ -1759,12 +1759,18 @@ class GameState {
 
         let constraints = { selectCount: 1, mode: "ANY", validKeywords: [] };
 
-        // 1. 动态抓取需要拿几张牌
-        const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
-        if (addMatches.length > 0) {
-            constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
-        } else if (text.includes("add this card")) {
-            constraints.selectCount = 1;
+        // 1. 动态抓取需要拿几张牌 (完美兼容 "add 1... and 1...")
+        const complexAddMatch = text.match(/add\s*(\d+).*?(?:and|,)\s*(\d+)/i);
+        if (complexAddMatch) {
+            // 如果句式是 add X ... and Y，就把两个数字加起来
+            constraints.selectCount = parseInt(complexAddMatch[1]) + parseInt(complexAddMatch[2]);
+        } else {
+            const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
+            if (addMatches.length > 0) {
+                constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+            } else if (text.includes("add this card")) {
+                constraints.selectCount = 1;
+            }
         }
 
         // 2. 提取所有带方括号的特征或名字
