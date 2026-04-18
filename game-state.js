@@ -764,6 +764,34 @@ class GameState {
                 text = text.replace(/if\s*your\s*opponent\s*has\s*[0-9]+\s*or\s*more\s*digimon\s*,?\s*/i, '');
             }
 
+            // 🩸 解析：燃烧自己的安保区作为代价 (Mastemon P-187)
+            const trashSecCostMatch = text.match(/by\s*trashing\s*your\s*top\s*security\s*card/i);
+            if (trashSecCostMatch) {
+                const pZone = this.zones[eff.playerId];
+                if (pZone.security.length > 0) {
+                    const burned = pZone.security.shift();
+                    pZone.trash.push(burned);
+                    console.log(`🩸 代价支付：玩家烧毁了自己安保区顶部的卡 ${burned.name}`);
+                } else {
+                    console.log(`⏩ [FIZZLE] 玩家没有安保卡可以作为代价，效果落空。`);
+                    this.resolveEffect();
+                    return;
+                }
+            }
+
+            // 🎯 解析：把场上的卡放进安保区 (如 Mastemon P-187)
+            const toSecurityMatch = text.match(/placing\s*1\s*other\s*digimon(?:(?:\/| or )tamer)?\s*on\s*the\s*(top|bottom)\s*of\s*security/i);
+            if (toSecurityMatch) {
+                this.pendingTarget = {
+                    playerId: eff.playerId,
+                    actionType: 'SEND_TO_SECURITY',  // 🔥 新增的动作类型
+                    position: toSecurityMatch[1].toLowerCase(), // 'top' 或 'bottom'
+                    conditions: { }, // 以后可以在这加限制
+                    instruction: `请选择场上1只数码兽/驯兽师塞入安保区${toSecurityMatch[1] === 'top' ? '顶' : '底'}`
+                };
+                return; // 挂起引擎，等待玩家点击目标
+            }
+
             // ⚔️ 解析：动态安保攻击力加成 (Sec Attack Mod)
             // 兼容诸如: "1 of your Digimon gets <Security Attack +1> for the turn"
             const secModMatch = text.match(/(?:gets|get).*?security\s*attack\s*([+-]\s*[0-9]+).*?for\s*the\s*turn/i);
@@ -1181,6 +1209,33 @@ class GameState {
             // 动态开辟状态槽位，并塞入冰冻状态
             if (!targetDigimon.turnEffects) targetDigimon.turnEffects = [];
             targetDigimon.turnEffects.push({ type: 'STUN' });
+        }
+
+        // 👇 新增分支：把卡牌移入安保区
+        else if (actionType === 'SEND_TO_SECURITY') {
+            const tZone = this.zones[targetCard.ownerId || oppId]; // 卡是谁的就进谁的安保
+            const idx = tZone.battleArea.findIndex(c => c.instanceId === targetCard.instanceId);
+            if (idx !== -1) {
+                const cardToMove = tZone.battleArea.splice(idx, 1)[0];
+                // 清理底板和悬挂物
+                delete cardToMove.stack;
+                cardToMove.isSuspended = false;
+
+                // 根据要求放顶或放底
+                if (this.pendingTarget.position === 'bottom') {
+                    tZone.security.push(cardToMove); // Push 是塞到底部
+                } else {
+                    tZone.security.unshift(cardToMove); // Unshift 是塞到顶部
+                }
+                console.log(`🛡️ ${cardToMove.name} 被莫斯提兽放逐到了安保区！`);
+                        
+                // 连带效果：废除对手顶盾 (Trash opponent's top security)
+                if (this.zones[oppId].security.length > 0) {
+                    const burnedShield = this.zones[oppId].security.shift();
+                    this.zones[oppId].trash.push(burnedShield);
+                    console.log(`🔥 莫斯提兽的连带效果烧毁了对手的一张安保卡！`);
+                }
+            }
         }
 
         if (action === 'BOUNCE') {
