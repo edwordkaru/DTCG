@@ -843,7 +843,13 @@
     }
 
     function submitReveal(selectedIds = []) {
-        socket.emit('action', { type: 'submitRevealChoice', roomId, playerId: myId, selectedInstanceIds: selectedIds });
+        socket.emit('action', { 
+            type: 'submitRevealChoice', 
+            roomId, 
+            playerId: myId, 
+            // 🔥 同样严格对齐
+            selectedCardInstanceIds: selectedIds
+        });
         document.getElementById('reveal-overlay').style.display = 'none';
     }
 
@@ -1388,7 +1394,7 @@
 
             state.pendingReveal.cards.forEach(card => {
                 const img = document.createElement('img');
-                img.src = card.image_url || card.image || `cards/${card.cardnumber}.jpg`;
+                img.src = card.image_url || card.imageUrl || card.cardImage || card.img || card.image || `cards/${card.cardnumber || card.cardNumber}.jpg`;
                 img.style.width = '120px';
                 img.style.borderRadius = '6px';
                 img.style.cursor = 'pointer';
@@ -1417,13 +1423,13 @@
 
             // 🔥 绑定确认按钮的点击事件
             document.getElementById('reveal-confirm-btn').onclick = () => {
-                // 判断：要么选够了数量，要么场上符合条件的卡本来就不够
                 if (currentRevealSelections.length === requiredCount || currentRevealSelections.length === state.pendingReveal.cards.length) {
                     socket.emit('action', { 
                         type: 'submitRevealChoice', 
                         roomId, 
                         playerId: myId, 
-                        selectedInstanceIds: currentRevealSelections // 把数组传给你的后端！
+                        // 🔥 严格对齐 server.js 的变量名！
+                        selectedCardInstanceIds: currentRevealSelections
                     });
                     document.getElementById('reveal-overlay').style.display = 'none';
                 } else {
@@ -1456,7 +1462,7 @@
             // 渲染后端发来的合法卡牌
             state.pendingTrashRevive.cards.forEach(card => {
                 const img = document.createElement('img');
-                img.src = card.image_url || card.image || `cards/${card.cardnumber}.jpg`;
+                img.src = card.image_url || card.imageUrl || card.cardImage || card.img || card.image || `cards/${card.cardnumber || card.cardNumber}.jpg`;
                 img.style.width = '120px';
                 img.style.borderRadius = '6px';
                 img.style.cursor = 'pointer';
