@@ -800,27 +800,37 @@ class GameState {
                 }
             }
             
-            // 🔮 通用 Reveal 效果处理（支持所有卡牌）
+            // 🔮 通用 Reveal 效果处理（现已支持 Security）
             const revealInstruction = this.parseRevealInstruction(text);
             if (revealInstruction) {
                 const pZone = this.zones[eff.playerId];
-                const actualCount = Math.min(revealInstruction.revealCount, pZone.deck.length);
-    
-                if (actualCount > 0) {
-                    console.log(`🔍 [REVEAL] 翻开卡组顶 ${actualCount} 张卡 → 等待玩家按规则选择`);
+                let revealedCards = [];
 
-                    // 从牌库顶部取出（deck 末尾是顶牌）
-                    const revealedCards = pZone.deck.splice(pZone.deck.length - actualCount, actualCount).reverse();
+                // 如果是翻安保区（天女兽效果）
+                if (revealInstruction.isSecurity) {
+                    console.log(`🔍 [REVEAL] 引擎雷达：展开安保区供玩家挑选！`);
+                    revealedCards = [...pZone.security]; // 拿出所有安保卡
+                    pZone.security = [];                 // 先清空槽位
+                } 
+                // 如果是正常的翻卡组顶（Gatomon 效果）
+                else {
+                    const actualCount = Math.min(revealInstruction.revealCount, pZone.deck.length);
+                    if (actualCount > 0) {
+                        console.log(`🔍 [REVEAL] 翻开卡组顶 ${actualCount} 张卡`);
+                        revealedCards = pZone.deck.splice(pZone.deck.length - actualCount, actualCount).reverse();
+                    }
+                }
 
+                if (revealedCards.length > 0) {
                     this.pendingReveal = {
                         playerId: eff.playerId,
                         cards: revealedCards,
-                        constraints: revealInstruction.constraints,     // 关键：选择规则
+                        constraints: revealInstruction.constraints,
                         remainingAction: revealInstruction.remainingAction,
                         instruction: revealInstruction.instruction,
                         mode: revealInstruction.constraints.mode
                     };
-                    return; // 挂起引擎，等待前端选择
+                    return; // 🛑 踩死刹车，等待前端玩家在盲盒UI中选牌
                 }
             }
 
@@ -1095,11 +1105,16 @@ class GameState {
         );
 
         if (this.pendingReveal.remainingAction === "BOTTOM") {
-            this.zones[playerId].deck.push(...remaining);
+            this.zones[playerId].deck.unshift(...remaining); // 塞回牌底
         } else if (this.pendingReveal.remainingAction === "TOP") {
-            this.zones[playerId].deck.unshift(...remaining);
+            this.zones[playerId].deck.push(...remaining);
         } else if (this.pendingReveal.remainingAction === "TRASH") {
             this.zones[playerId].trash.push(...remaining);
+        } else if (this.pendingReveal.remainingAction === "SHUFFLE_SECURITY") {
+            // 🔥 新增：选完牌后，把剩下的安保卡放回去并洗切
+            this.zones[playerId].security = remaining;
+            this.shuffle(this.zones[playerId].security);
+            console.log(`🛡️ 剩余安保卡已重新洗切！`);
         }
 
         console.log(`✅ [REVEAL] 已选择 ${selectedCards.length} 张卡，剩余处理完毕`);
@@ -1494,8 +1509,17 @@ class GameState {
             this.drawCard(playerId, 1);
             
             // 🔥 官方规则特判：蛋区进化绝对不触发 [When Digivolving]
+            // 之前的代码：this.triggerEffect(playerId, target, "When Digivolving");
             if (targetZone === 'battleArea') {
                 this.triggerEffect(playerId, target, "When Digivolving");
+                
+                // 🔥 新增全场进化广播
+                cur.battleArea.forEach(c => {
+                    if (c.instanceId !== target.instanceId) {
+                        this.triggerEffect(playerId, c, "Your Turn"); 
+                        this.triggerEffect(playerId, c, "All Turns");
+                    }
+                });
             } else {
                 console.log(`🥚 [规则保护] 蛋区进化静默完成，不触发效果`);
             }
@@ -1522,6 +1546,13 @@ class GameState {
                 playedThisTurn: true
             });
             this.triggerEffect(playerId, movedCard, "On Play");
+            // 🔥 新增全场登场广播（天女兽监听驯兽师就在这里触发）
+            cur.battleArea.forEach(c => {
+                if (c.instanceId !== movedCard.instanceId) {
+                    this.triggerEffect(playerId, c, "Your Turn");
+                    this.triggerEffect(playerId, c, "All Turns");
+                }
+            });
         }
 
         this.checkGlobalRules();
@@ -1616,27 +1647,30 @@ class GameState {
     }
 
     // ==========================================
-    // 🔥 通用 Reveal 效果解析器（支持所有类似卡牌）
+    // 🔥 升级版通用 Reveal 解析器
     // ==========================================
     parseRevealInstruction(text) {
         text = text.toLowerCase();
 
-        // 1. 检测是否是 Reveal 效果 + 翻多少张
-        const revealMatch = text.match(/reveal\s*(?:the\s*)?top\s*(\d+)\s*card/i);
-        if (!revealMatch) return null;
+        // 1. 检测翻卡来源（支持卡组顶 或 整个安保区）
+        let revealCount = 0;
+        let isSecurity = false;
 
-        const revealCount = parseInt(revealMatch[1]);
+        const topMatch = text.match(/reveal\s*(?:the\s*)?top\s*(\d+)\s*card/i);
+        const secMatch = text.match(/(?:search|reveal)\s*(?:your\s*)?security\s*stack/i);
 
-        // 2. 解析选择规则（支持多种常见模式）
-        let constraints = { 
-            selectCount: 1, 
-            colorRequirements: {},   // 如 { purple: 1, yellow: 1 }
-            allowedColors: [], 
-            mode: "ANY" 
-        };
+        if (topMatch) {
+            revealCount = parseInt(topMatch[1]);
+        } else if (secMatch) {
+            isSecurity = true; // 安保区全开模式
+        } else {
+            return null; // 不是翻卡效果
+        }
 
-        // 模式1：经典 “1 purple and 1 yellow”
-        const multiColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)\s*(?:and|,?)\s*(\d+)\s*([a-z]+)/i);
+        let constraints = { selectCount: 1, colorRequirements: {}, allowedColors: [], mode: "ANY" };
+
+        // 2. 模式解析 A：支持中间夹杂废话的经典颜色（如 "1 purple digimon card and 1 yellow"）
+        const multiColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)(?:\s*digimon\s*card)?\s*(?:and|,?)\s*(\d+)\s*([a-z]+)/i);
         if (multiColorMatch) {
             constraints.selectCount = parseInt(multiColorMatch[1]) + parseInt(multiColorMatch[3]);
             constraints.colorRequirements = {
@@ -1644,9 +1678,7 @@ class GameState {
                 [multiColorMatch[4]]: parseInt(multiColorMatch[3])
             };
             constraints.mode = "MULTI_COLOR";
-        } 
-        // 模式2：单色（add 1 purple / add 2 red 等）
-        else {
+        } else {
             const singleColorMatch = text.match(/add\s*(\d+)\s*([a-z]+)/i);
             if (singleColorMatch) {
                 constraints.selectCount = parseInt(singleColorMatch[1]);
@@ -1655,17 +1687,22 @@ class GameState {
             }
         }
 
-        // 3. 解析剩余卡牌的处理方式（最常见的是放回底部）
+        // 2. 模式解析 B：支持带方括号的特征与名字（如 "1 card with [Angel]... and 1 [Mirei]"）
+        const traitNameMatch = text.match(/add\s*1\s*(?:card\s*with\s*)?\[(.*?)\]\s*(?:in\s*its\s*traits\s*)?(?:and|,?)\s*1\s*\[(.*?)\]/i);
+        if (traitNameMatch) {
+            constraints.selectCount = 2;
+            constraints.mode = "TRAIT_NAME";
+            constraints.requiredTrait = traitNameMatch[1].toLowerCase();
+            constraints.requiredName = traitNameMatch[2].toLowerCase();
+        }
+
+        // 3. 剩余卡牌处理方式（新增洗回安保区）
         let remainingAction = "BOTTOM";
         if (text.includes("trash") || text.includes("discard")) remainingAction = "TRASH";
         else if (text.includes("top")) remainingAction = "TOP";
+        else if (isSecurity) remainingAction = "SHUFFLE_SECURITY"; // 翻完安保区需要洗牌
 
-        return {
-            revealCount,
-            constraints,
-            remainingAction,
-            instruction: text   // 原始文本，给前端显示用
-        };
+        return { revealCount, isSecurity, constraints, remainingAction, instruction: text };
     }
 
     triggerEffect(playerId, card, timing) {
