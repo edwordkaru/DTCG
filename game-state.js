@@ -1096,6 +1096,7 @@ class GameState {
 
         this.pendingReveal = null;
         this.resolveEffect();   // 继续下一效果
+        this.checkTurnEnd();    // 🔥 新增：强迫引擎在选完卡后检查内存是否越界！
     }
 
     // 🔥 新增：接收前端的目标 ID，扣动扳机，然后解除刹车
@@ -1110,7 +1111,8 @@ class GameState {
             console.log(`⏩ 玩家 ${playerId} 取消了选择或无合法目标，效果落空！`);
             this.pendingTarget = null;
             this.resolveEffect();
-            return;
+            this.checkGlobalRules();
+            this.checkTurnEnd();    // 🔥 新增：强迫引擎检查内存！
         }
 
         const action = this.pendingTarget.actionType;
@@ -1267,6 +1269,7 @@ class GameState {
         this.pendingTrashRevive = null;
         this.resolveEffect();
         this.checkGlobalRules();
+        this.checkTurnEnd();    // 🔥 新增：强迫引擎检查内存！
     }
 
     // 🛡️ 接收前端的抗性选择，决定是“免死”还是“认命”
@@ -1304,6 +1307,7 @@ class GameState {
         this.pendingProtection = null;
         this.resolveEffect(); 
         this.checkGlobalRules();
+        this.checkTurnEnd();    // 🔥 新增：强迫引擎检查内存！
     }
 
     hatchEgg(playerId) {
