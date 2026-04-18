@@ -453,7 +453,12 @@ class GameState {
         if (!mat1 || !mat2 || !handCard) return;
 
         let canDNA = false;
-        let drawAmount = 1;   // 默认 2（手册通常值）
+        let drawAmount = 1;   
+
+        // 🔥 修复点 1：使用通用方法安全获取等级，无视 API 字段命名差异！
+        const lv1 = this.getLv(mat1);
+        const lv2 = this.getLv(mat2);
+        const handLv = this.getLv(handCard);
 
         // ==========================================
         // 🔥 DNA 合法性 + 抽牌数量动态解析
@@ -461,19 +466,19 @@ class GameState {
         if (handCard.mainEffect) {
             const effectText = handCard.mainEffect.toLowerCase();
 
-            // 模式 A: 颜色+等级
-            const lvColorMatch = effectText.match(/\[dna digivolve\]\s*(\w+)\s*lv\.?(\d+)\s*\+\s*(\w+)\s*lv\.?(\d+)/i);
+            // 模式 A: 颜色+等级 (🔥 修复点 2：放宽正则，兼容 "0 from yellow lv.5" 这种新式写法)
+            const lvColorMatch = effectText.match(/\[dna digivolve\].*?([a-z]+)\s*lv\.?(\d+).*?\+.*?([a-z]+)\s*lv\.?(\d+)/i);
             if (lvColorMatch) {
                 const [, cA, lA, cB, lB] = lvColorMatch;
-                const matchNormal = (String(mat1.color || "").toLowerCase().includes(cA) && mat1.level == lA &&
-                                     String(mat2.color || "").toLowerCase().includes(cB) && mat2.level == lB);
-                const matchReverse = (String(mat1.color || "").toLowerCase().includes(cB) && mat1.level == lB &&
-                                      String(mat2.color || "").toLowerCase().includes(cA) && mat2.level == lA);
+                const matchNormal = (String(mat1.color || "").toLowerCase().includes(cA) && lv1 == lA &&
+                                     String(mat2.color || "").toLowerCase().includes(cB) && lv2 == lB);
+                const matchReverse = (String(mat1.color || "").toLowerCase().includes(cB) && lv1 == lB &&
+                                      String(mat2.color || "").toLowerCase().includes(cA) && lv2 == lA);
                 if (matchNormal || matchReverse) canDNA = true;
             }
 
-            // 模式 B: 指定名字
-            const nameMatch = effectText.match(/\[dna digivolve\]\s*\[(.*?)\]\s*\+\s*\[(.*?)\]/i);
+            // 模式 B: 指定名字 (同样放宽正则)
+            const nameMatch = effectText.match(/\[dna digivolve\].*?\[(.*?)\]\s*\+\s*\[(.*?)\]/i);
             if (!canDNA && nameMatch) {
                 const [, nA, nB] = nameMatch;
                 const m1n = mat1.name.toLowerCase();
@@ -483,16 +488,17 @@ class GameState {
                 if (matchNormal || matchReverse) canDNA = true;
             }
 
-            // 🔥 新增：从卡面解析抽牌数量（支持 draw 1 / draw 3 等）
+            // 获取抽牌数量
             const drawMatch = effectText.match(/draw\s*(\d+)/i);
             if (drawMatch) drawAmount = parseInt(drawMatch[1]);
         }
 
-        // 基础颜色/Lv fallback（如果你有不写 [DNA] 的卡）
+        // 基础颜色/Lv fallback（🔥 修复点 3：全部改用安全获取到的真实 lv）
         if (!canDNA) {
             const dnaColors = String(handCard.color || "").toLowerCase().split(/[\/\s,]+/);
-            const reqLv = handCard.level - 1;
-            if (mat1.level === reqLv && mat2.level === reqLv) {
+            const reqLv = handLv - 1;
+            
+            if (lv1 === reqLv && lv2 === reqLv) {
                 if (dnaColors.length >= 2) {
                     canDNA = (String(mat1.color || "").toLowerCase().includes(dnaColors[0]) && 
                               String(mat2.color || "").toLowerCase().includes(dnaColors[1])) ||
@@ -501,6 +507,10 @@ class GameState {
                 }
             }
         }
+
+        if (canDNA) {
+            // ... (下面保留你原本的代码，不需要动)
+            console.log(`🌀 [DNA EVOLVE] ${mat1.name} + ${mat2.name} → ${handCard.name} （抽 ${drawAmount} 张）`);
 
         if (canDNA) {
             console.log(`🌀 [DNA EVOLVE] ${mat1.name} + ${mat2.name} → ${handCard.name} （抽 ${drawAmount} 张）`);
