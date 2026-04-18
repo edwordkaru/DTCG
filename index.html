@@ -842,14 +842,8 @@
             (selectedRevealIds.length === required) ? 'block' : 'none';
     }
 
-    function submitRevealSelection() {
-        socket.emit('action', { 
-            type: 'submitRevealChoice', 
-            roomId, 
-            playerId: myId, 
-            selectedCardInstanceIds: selectedRevealIds 
-        });
-        selectedRevealIds = [];
+    function submitReveal(selectedIds = []) {
+        socket.emit('action', { type: 'submitRevealChoice', roomId, playerId: myId, selectedInstanceIds: selectedIds });
         document.getElementById('reveal-overlay').style.display = 'none';
     }
 
@@ -1378,18 +1372,66 @@
 
         // --- 6. 🔮 盲盒检索雷达接管 ---
         const rOverlay = document.getElementById('reveal-overlay');
+        // ==========================================
+        // 🔍 渲染盲盒系统 UI (支持 Gatomon 多选)
+        // ==========================================
         if (state.pendingReveal && state.pendingReveal.playerId === myId) {
-            rOverlay.style.display = 'flex';
-            const container = document.getElementById('reveal-cards-container');
-            // 将引擎发来的卡片渲染出来
-            container.innerHTML = state.pendingReveal.cards.map(c => 
-                `<div class="reveal-card" style="background-image:url('${c.img}')" 
-                      onclick="submitReveal('${c.instanceId}')" 
-                      onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
-                 </div>`
-            ).join('');
+            document.getElementById('reveal-overlay').style.display = 'flex';
+            const container = document.getElementById('reveal-container');
+            container.innerHTML = '';
+            
+            currentRevealSelections = []; // 每次打开盲盒前清空选择
+
+            // 读取后端要求的数量 (Gatomon 会传过来 2)
+            const requiredCount = state.pendingReveal.constraints?.selectCount || 1;
+            document.getElementById('reveal-title').innerText = `请选择 ${requiredCount} 张卡牌加入手牌`;
+
+            state.pendingReveal.cards.forEach(card => {
+                const img = document.createElement('img');
+                img.src = card.image || `cards/${card.cardnumber}.jpg`;
+                img.style.width = '120px';
+                img.style.borderRadius = '6px';
+                img.style.cursor = 'pointer';
+                img.style.border = '4px solid transparent';
+                img.style.transition = 'all 0.2s';
+                
+                // 🔥 点击不再直接提交，而是加入/移出选中数组
+                img.onclick = () => {
+                    const idx = currentRevealSelections.indexOf(card.instanceId);
+                    if (idx > -1) {
+                        // 已经选中了，再次点击取消选中
+                        currentRevealSelections.splice(idx, 1);
+                        img.style.border = '4px solid transparent';
+                        img.style.transform = 'translateY(0)';
+                    } else {
+                        // 没选中，并且还没达到数量上限，就加上绿框选中
+                        if (currentRevealSelections.length < requiredCount) {
+                            currentRevealSelections.push(card.instanceId);
+                            img.style.border = '4px solid var(--green)';
+                            img.style.transform = 'translateY(-10px)';
+                        }
+                    }
+                };
+                container.appendChild(img);
+            });
+
+            // 🔥 绑定确认按钮的点击事件
+            document.getElementById('reveal-confirm-btn').onclick = () => {
+                // 判断：要么选够了数量，要么场上符合条件的卡本来就不够
+                if (currentRevealSelections.length === requiredCount || currentRevealSelections.length === state.pendingReveal.cards.length) {
+                    socket.emit('action', { 
+                        type: 'submitRevealChoice', 
+                        roomId, 
+                        playerId: myId, 
+                        selectedInstanceIds: currentRevealSelections // 把数组传给你的后端！
+                    });
+                    document.getElementById('reveal-overlay').style.display = 'none';
+                } else {
+                    alert(`数量不对！你需要选择 ${requiredCount} 张卡。`);
+                }
+            };
         } else {
-            rOverlay.style.display = 'none';
+            document.getElementById('reveal-overlay').style.display = 'none';
         }
 
         // --- 7. 🦇 废弃区转生雷达接管 ---
