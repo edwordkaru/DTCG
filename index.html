@@ -1388,7 +1388,7 @@
 
             state.pendingReveal.cards.forEach(card => {
                 const img = document.createElement('img');
-                img.src = card.image || `cards/${card.cardnumber}.jpg`;
+                img.src = card.image_url || card.image || `cards/${card.cardnumber}.jpg`;
                 img.style.width = '120px';
                 img.style.borderRadius = '6px';
                 img.style.cursor = 'pointer';
@@ -1456,7 +1456,7 @@
             // 渲染后端发来的合法卡牌
             state.pendingTrashRevive.cards.forEach(card => {
                 const img = document.createElement('img');
-                img.src = card.image || `cards/${card.cardnumber}.jpg`;
+                img.src = card.image_url || card.image || `cards/${card.cardnumber}.jpg`;
                 img.style.width = '120px';
                 img.style.borderRadius = '6px';
                 img.style.cursor = 'pointer';
