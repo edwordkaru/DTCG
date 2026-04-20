@@ -1158,33 +1158,38 @@ class GameState {
 
         const constraints = this.pendingReveal.constraints;
         const requiredTotal = constraints.totalSelectCount;
-    
-        // 如果一张都不选（放弃检索）
-        if (selectedInstanceIds.length === 0) {
-            console.log(`⏩ [REVEAL] 玩家放弃检索。`);
+        
+        // 1. 放弃检索的情况
+        if (!selectedInstanceIds || selectedInstanceIds.length === 0) {
+            console.log(`⏩ [REVEAL] 玩家 ${playerId} 放弃检索。`);
             this.finishRevealProcess(playerId, [], this.pendingReveal.cards);
             return;
         }
 
-        // 选的数量不能超过上限
+        // 2. 数量校验
         if (selectedInstanceIds.length > requiredTotal) {
-            console.warn(`🚫 [REVEAL] 选牌数量超限！最多可选 ${requiredTotal} 张`);
+            console.warn(`🚫 [REVEAL] 选牌超限！`);
             return;
         }
 
-        const selectedCards = this.pendingReveal.cards.filter(c => selectedInstanceIds.includes(c.instanceId));
+        // 🔥 修复点：强制进行 String 转换比对，消除类型差异
+        const selectedCards = this.pendingReveal.cards.filter(c => 
+            selectedInstanceIds.map(String).includes(String(c.instanceId))
+        );
 
-        // ⚔️ 深度回溯验证：确保选出的卡能合法地填入各个要求组
+        // 3. 深度验证：确保选出的卡符合具体的 [Angel] / [Demon] 等分组条件
         if (constraints.mode === "FILTERED") {
             let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
             if (!valid) {
-                console.warn(`🚫 [REVEAL] 规则拦截：所选卡牌未能满足不同组别的独立条件（例如 1张A特征 和 1张B特征 冲突）！`);
-                return; // 拒绝操作，维持挂起状态让玩家重选
+                console.warn(`🚫 [REVEAL] 规则拦截：选定的组合不符合卡牌描述的要求！`);
+                return; 
             }
         }
 
-        // 处理结算
-        const remaining = this.pendingReveal.cards.filter(c => !selectedInstanceIds.includes(c.instanceId));
+        const selectedIds = selectedCards.map(c => String(c.instanceId));
+        const remaining = this.pendingReveal.cards.filter(c => !selectedIds.includes(String(c.instanceId)));
+        
+        console.log(`✅ [REVEAL] 玩家 ${playerId} 成功检索 ${selectedCards.length} 张卡入对手牌。`);
         this.finishRevealProcess(playerId, selectedCards, remaining);
     }
 
