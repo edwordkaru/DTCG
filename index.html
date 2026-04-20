@@ -182,8 +182,8 @@
 <div id="lobby-screen" style="position: fixed; inset: 0; background: #05050a; z-index: 9999; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding-top: 8vh; overflow-y: auto;">
         
         <div style="text-align: center; max-width: 400px; width: 100%; padding: 0 15px;">
-            <h1 style="color: var(--blue); font-family: monospace; letter-spacing: 10px; margin-bottom: 5px;">DTCG PRO</h1>
-            <div style="color: #666; font-size: 12px; margin-bottom: 40px; letter-spacing: 2px;">Have Fun</div>
+            <h1 style="color: var(--blue); font-family: monospace; letter-spacing: 10px; margin-bottom: 5px;">DTCG_ARENA</h1>
+            <div style="color: #666; font-size: 12px; margin-bottom: 40px; letter-spacing: 2px;">V36.5 MULTIPLAYER NODE</div>
             
             <div id="auth-panel" style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 1px dashed #555; display: flex; flex-direction: column; align-items: center; min-height: 70px; justify-content: center;">
                 
@@ -309,13 +309,12 @@
     </div>
 </div>
 
-<div id="reveal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 id="reveal-title" style="color:var(--blue); margin-bottom:20px;">请选择卡牌</h2>
-    <div id="reveal-container" style="display:flex; gap:15px; max-width:80%; overflow-x:auto; padding:20px;"></div>
-        
-    <div style="margin-top:20px; display:flex; gap:20px;">
-        <button id="reveal-confirm-btn" style="padding:10px 30px; background:var(--green); color:black; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:16px;">确认选择</button>
-        <button onclick="submitReveal([])" style="padding:10px 30px; background:var(--red); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; font-size:16px;">放弃 (全部放回)</button>
+<div id="reveal-overlay">
+    <div id="reveal-panel">
+        <div class="reveal-title">>> DECK SEARCH PROTOCOL <<</div>
+        <div class="reveal-desc">AWAITING TARGET SELECTION. CHOOSE 1 CARD TO ADD TO HAND.</div>
+        <div id="reveal-cards-container"></div>
+        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitReveal(null)">[ SKIP / 放弃检索引擎并归还卡牌 ]</button>
     </div>
 </div>
 
@@ -327,10 +326,13 @@
     </div>
 </div>
 
-<div id="trash-revive-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 id="trash-revive-title" style="color:var(--gold); margin-bottom:20px; text-shadow: 0 0 10px rgba(255,204,0,0.5);">请选择要登场的数码兽</h2>
-    <div id="trash-revive-container" style="display:flex; gap:15px; max-width:80%; overflow-x:auto; padding:20px; background:rgba(255,255,255,0.05); border-radius: 10px;"></div>
-    <button onclick="submitTrashReviveChoice(null)" style="margin-top:30px; padding:12px 40px; background:var(--red); color:white; border:none; border-radius: 20px; cursor:pointer; font-size:16px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,71,87,0.4);">放弃招魂 (跳过)</button>
+<div id="trash-revive-overlay" style="position: fixed; inset: 0; background: rgba(15, 0, 20, 0.9); z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+    <div id="trash-revive-panel" style="border: 2px solid #a200ff; box-shadow: 0 0 50px rgba(162, 0, 255, 0.2); background: rgba(0, 0, 0, 0.8); padding: 40px; text-align: center; border-radius: 12px; max-width: 80vw; max-height: 80vh; overflow-y: auto;">
+        <div style="color: #a200ff; font-size: 24px; font-weight: 900; letter-spacing: 3px; margin-bottom: 10px; font-family: 'Consolas', monospace; text-shadow: 0 0 10px #a200ff;">>> NECROMANCY PROTOCOL <<</div>
+        <div style="color: #888; font-size: 12px; letter-spacing: 2px; margin-bottom: 30px;">SELECT 1 DIGIMON FROM TRASH TO RESURRECT</div>
+        <div id="trash-revive-cards-container" style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 25px;"></div>
+        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitTrashReviveChoice(null)">[ SKIP / 放弃转生 ]</button>
+    </div>
 </div>
 
 <div id="action-ring">
@@ -822,37 +824,6 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    let selectedRevealIds = [];
-
-    function submitReveal(instanceId) {
-        if (selectedRevealIds.includes(instanceId)) {
-            selectedRevealIds = selectedRevealIds.filter(id => id !== instanceId);
-        } else {
-            selectedRevealIds.push(instanceId);
-        }
-    
-        // 高亮已选
-        document.querySelectorAll('.reveal-card').forEach(el => {
-            el.style.borderColor = selectedRevealIds.includes(el.getAttribute('data-id')) ? '#ffcc00' : 'transparent';
-        });
-
-        // 显示确认按钮（当选够数量时）
-        const required = latestGameState.pendingReveal.constraints?.selectCount || 1;
-        document.getElementById('reveal-confirm-btn').style.display = 
-            (selectedRevealIds.length === required) ? 'block' : 'none';
-    }
-
-    function submitReveal(selectedIds = []) {
-        socket.emit('action', { 
-            type: 'submitRevealChoice', 
-            roomId, 
-            playerId: myId, 
-            // 🔥 同样严格对齐
-            selectedCardInstanceIds: selectedIds
-        });
-        document.getElementById('reveal-overlay').style.display = 'none';
-    }
-
     // ==========================================
     // ⚔️ 战斗阶段智能处理系统 (由状态树驱动，不依赖额外事件)
     // ==========================================
@@ -930,14 +901,10 @@
     }
     function cancelTargeting() {
         targetingMode = null; selectedTargets = []; activeCommandCard = null;
-        document.body.classList.remove('targeting-mode'); 
-        document.getElementById('targeting-banner').style.display = 'none';
+        document.body.classList.remove('targeting-mode'); document.getElementById('targeting-banner').style.display = 'none';
         document.querySelectorAll('.targeted-1, .targeted-2').forEach(el => el.classList.remove('targeted-1', 'targeted-2'));
-    
-        // 🔥 核心修正：当玩家点取消准星时，告诉服务器放弃爆裂进化，把引擎推向 BLOCKER 阶段
-        if(latestGameState && latestGameState.counterTiming.isActive && 
-           latestGameState.counterTiming.defenderId === myId && 
-           latestGameState.counterTiming.step === 'COUNTER') {
+        // 如果是在防守阶段取消了 BLAST 锁定，自动流转为跳过反击
+        if(lastState && lastState.counterTiming.isActive && lastState.counterTiming.defenderId === myId && lastState.counterTiming.step === 'COUNTER') {
             bypassAceProtocol();
         }
     }
@@ -1204,10 +1171,9 @@
         else {
             if (lastState.turnPlayer !== state.turnPlayer) addLog(`>> <span style="color:var(--gold)">SIGNAL: ${state.turnPlayer.toUpperCase()} PHASE INITIATED</span>`);
             if (lastState.memory !== state.memory) {
-                const diff = state.memory - lastState.memory;   // 正数 = P1支付，负数 = P2支付
-                const cost = Math.abs(diff);
-                const player = (diff > 0) ? "P1" : "P2";
-                addLog(`<span class="log-player">${player}</span> 消耗了 <span style="color:var(--red)">${cost}</span> 内存`);
+                const cost = Math.abs(lastState.memory - state.memory);
+                const p = lastState.memory > state.memory ? "P1" : "P2";
+                addLog(`<span class="log-player">${p}</span> 消耗了 <span style="color:var(--red)">${cost}</span> 内存`);
             }
             if (state.actionLogs && state.actionLogs.length > lastLogCount) {
             for (let i = lastLogCount; i < state.actionLogs.length; i++) {
@@ -1240,30 +1206,9 @@
             document.getElementById('effect-choice-overlay').style.display = 'none';
         }
 
-        // 【修改后】
-        document.querySelectorAll('.mem-dot').forEach(d => {
-            d.classList.remove('mem-active');
-            d.style.color = ''; // 每一帧先重置颜色
-            d.style.textShadow = '';
-        });
+        document.querySelectorAll('.mem-dot').forEach(d => d.classList.remove('mem-active'));
         const active = document.getElementById(`mem-${state.memory}`);
-        if(active) {
-            active.classList.add('mem-active');
-    
-            // 动态变色引擎：对 P1 来说，正数是优势(蓝色)，负数是劣势(红色)；P2 则完全相反。
-            const isMyAdvantage = (state.memory > 0 && myId === 'p1') || (state.memory < 0 && myId === 'p2');
-    
-            if (state.memory === 0) {
-                active.style.color = 'white';
-                active.style.textShadow = '0 0 10px white';
-            } else if (isMyAdvantage) {
-                active.style.color = 'var(--blue)';
-                active.style.textShadow = '0 0 15px var(--blue)';
-            } else {
-                active.style.color = 'var(--red)';
-                active.style.textShadow = '0 0 15px var(--red)';
-            }
-        }
+        if(active) active.classList.add('mem-active');
 
         // --- 2. 渲染效果队列 ---
         renderEffectQueue(state.effectQueue);
@@ -1378,125 +1323,34 @@
 
         // --- 6. 🔮 盲盒检索雷达接管 ---
         const rOverlay = document.getElementById('reveal-overlay');
-        // ==========================================
-        // 🔍 渲染盲盒系统 UI (支持 Gatomon 多选)
-        // ==========================================
         if (state.pendingReveal && state.pendingReveal.playerId === myId) {
-            document.getElementById('reveal-overlay').style.display = 'flex';
-            const container = document.getElementById('reveal-container');
-            container.innerHTML = '';
-            
-            currentRevealSelections = []; // 每次打开盲盒前清空选择
-
-            // 读取后端要求的数量 (Gatomon 会传过来 2)
-            const requiredCount = state.pendingReveal.constraints?.selectCount || 1;
-            document.getElementById('reveal-title').innerText = `请选择 ${requiredCount} 张卡牌加入手牌`;
-
-            state.pendingReveal.cards.forEach(card => {
-                const img = document.createElement('img');
-                img.src = card.image_url || card.imageUrl || card.cardImage || card.img || card.image || `cards/${card.cardnumber || card.cardNumber}.jpg`;
-                img.style.width = '120px';
-                img.style.borderRadius = '6px';
-                // 🔥 新增：如果后端判定这张卡不符合条件（不是天使、不是米蕾），直接变灰且无法点击！
-                if (card.isSelectable === false) {
-                    img.style.filter = 'grayscale(100%) opacity(0.4)';
-                    img.style.cursor = 'not-allowed';
-                    img.style.border = '4px solid transparent';
-                    container.appendChild(img);
-                    return; // 直接 return，跳过绑定下面的 onclick 事件！
-                }
-                img.style.cursor = 'pointer';
-                img.style.border = '4px solid transparent';
-                img.style.transition = 'all 0.2s';
-                
-                // 🔥 点击不再直接提交，而是加入/移出选中数组
-                img.onclick = () => {
-                    const idx = currentRevealSelections.indexOf(card.instanceId);
-                    if (idx > -1) {
-                        // 已经选中了，再次点击取消选中
-                        currentRevealSelections.splice(idx, 1);
-                        img.style.border = '4px solid transparent';
-                        img.style.transform = 'translateY(0)';
-                    } else {
-                        // 没选中，并且还没达到数量上限，就加上绿框选中
-                        if (currentRevealSelections.length < requiredCount) {
-                            currentRevealSelections.push(card.instanceId);
-                            img.style.border = '4px solid var(--green)';
-                            img.style.transform = 'translateY(-10px)';
-                        }
-                    }
-                };
-                container.appendChild(img);
-            });
-            
-            // 🔥 绑定确认按钮的点击事件
-            document.getElementById('reveal-confirm-btn').onclick = () => {
-                // 读取后端算好的当前最大合法拿取量
-                const maxTake = state.pendingReveal.constraints?.maxValidTake || 1;
-
-                // 只要选的卡不多于合法上限，就允许提交！(允许拿0张、拿1张)
-                if (currentRevealSelections.length <= maxTake) {
-                    socket.emit('action', { 
-                        type: 'submitRevealChoice', 
-                        roomId, 
-                        playerId: myId, 
-                        selectedCardInstanceIds: currentRevealSelections 
-                    });
-                    document.getElementById('reveal-overlay').style.display = 'none';
-                } else {
-                    alert(`违规操作！根据翻出的卡，你最多只能选择 ${maxTake} 张卡。`);
-                }
-            };
+            rOverlay.style.display = 'flex';
+            const container = document.getElementById('reveal-cards-container');
+            // 将引擎发来的卡片渲染出来
+            container.innerHTML = state.pendingReveal.cards.map(c => 
+                `<div class="reveal-card" style="background-image:url('${c.img}')" 
+                      onclick="submitReveal('${c.instanceId}')" 
+                      onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
+                 </div>`
+            ).join('');
         } else {
-            document.getElementById('reveal-overlay').style.display = 'none';
+            rOverlay.style.display = 'none';
         }
 
         // --- 7. 🦇 废弃区转生雷达接管 ---
         const tOverlay = document.getElementById('trash-revive-overlay');
-        // ==========================================
-        // 🦇 渲染招魂系统 UI
-        // ==========================================
         if (state.pendingTrashRevive && state.pendingTrashRevive.playerId === myId) {
-            document.getElementById('trash-revive-overlay').style.display = 'flex';
-            const container = document.getElementById('trash-revive-container');
-            container.innerHTML = '';
-
-            // 🔥 动态显示限制条件 (读取你 game-state 传过来的 constraints)
-            const titleEl = document.getElementById('trash-revive-title');
-            const maxDp = state.pendingTrashRevive.constraints?.maxDp;
-            if (maxDp && maxDp < 100000) {
-                titleEl.innerText = `请选择要登场的数码兽 (限制: ${maxDp} DP 或以下)`;
-            } else {
-                titleEl.innerText = `请选择要登场的数码兽`;
-            }
-
-            // 渲染后端发来的合法卡牌
-            state.pendingTrashRevive.cards.forEach(card => {
-                const img = document.createElement('img');
-                img.src = card.image_url || card.imageUrl || card.cardImage || card.img || card.image || `cards/${card.cardnumber || card.cardNumber}.jpg`;
-                img.style.width = '120px';
-                img.style.borderRadius = '6px';
-                img.style.cursor = 'pointer';
-                img.style.border = '3px solid transparent';
-                img.style.transition = 'all 0.2s';
-                
-                // 悬停特效
-                img.onmouseover = () => {
-                    img.style.border = '3px solid var(--green)';
-                    img.style.transform = 'translateY(-10px)';
-                };
-                img.onmouseout = () => {
-                    img.style.border = '3px solid transparent';
-                    img.style.transform = 'translateY(0)';
-                };
-                
-                // 点击直接发送复活指令
-                img.onclick = () => submitTrashReviveChoice(card.instanceId);
-                
-                container.appendChild(img);
-            });
+            tOverlay.style.display = 'flex';
+            const container = document.getElementById('trash-revive-cards-container');
+            // 将符合条件的尸体渲染出来，边框弄成高贵的基佬紫
+            container.innerHTML = state.pendingTrashRevive.cards.map(c => 
+                `<div class="reveal-card" style="background-image:url('${c.img}'); border-color: #a200ff; box-shadow: 0 10px 20px rgba(162,0,255,0.3);" 
+                      onclick="submitTrashReviveChoice('${c.instanceId}')" 
+                      onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
+                 </div>`
+            ).join('');
         } else {
-            document.getElementById('trash-revive-overlay').style.display = 'none';
+            tOverlay.style.display = 'none';
         }
 
         // --- 8. 🛡️ 抗性雷达接管 ---
