@@ -1166,39 +1166,36 @@ class GameState {
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
     submitRevealChoice(playerId, selectedInstanceIds) {
-        // 🔥 安全处理默认参数（彻底解决 Render 解析报错）
+        // 🔥 安全處理預設參數（徹底解決 Render 解析報錯）
         selectedInstanceIds = selectedInstanceIds || [];
 
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
         const constraints = this.pendingReveal.constraints;
         
-        // 1. 强制类型转换，确保比对成功
+        // 1. 强制類型轉換
         const normalizedIds = selectedInstanceIds.map(String);
         const selectedCards = this.pendingReveal.cards.filter(c => 
             normalizedIds.includes(String(c.instanceId))
         );
 
-        // 2. 如果玩家选了牌但后端没匹配上，报错（防类型 Bug）
         if (normalizedIds.length > 0 && selectedCards.length === 0) {
-            console.error("🚨 [REVEAL] InstanceID 匹配失败，请检查类型转换！");
+            console.error("🚨 [REVEAL] InstanceID 匹配失敗，請檢查類型轉換！");
             return;
         }
 
-        // 3. 核心验证：处理“1黄 AND 1紫”的独立性
         if (constraints.mode === "FILTERED" && selectedCards.length > 0) {
             let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
             if (!valid) {
-                console.warn(`🚫 [REVEAL] 选牌组合不合法！不满足: ${JSON.stringify(constraints.targetGroups)}`);
+                console.warn(`🚫 [REVEAL] 選牌組合不合法！不滿足: ${JSON.stringify(constraints.targetGroups)}`);
                 return; 
             }
         }
 
-        // 4. 成功后执行清理和入库
         const selectedActualIds = selectedCards.map(c => String(c.instanceId));
         const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
         
-        console.log(`✅ [REVEAL] 验证通过，${selectedCards.length} 张卡进入玩家 ${playerId} 手牌。`);
+        console.log(`✅ [REVEAL] 驗證通過，${selectedCards.length} 張卡進入玩家 ${playerId} 手牌。`);
         this.finishRevealProcess(playerId, selectedCards, remaining);
     }
 
@@ -2267,12 +2264,18 @@ class GameState {
         }
     }
 
-    drawCard(playerId, amount = 1) {
+    drawCard(playerId, amount) {
+        // 🔥 安全處理預設參數
+        amount = amount || 1;
+
         const cur = this.zones[playerId];
         for (let i = 0; i < amount; i++) {
-            if (cur.deck.length === 0) { this.gameOver = true; this.winner = (playerId === 'p1') ? 'p2' : 'p1'; return; }
-            cur.hand.push(cur.deck.pop());
+            if (cur.deck.length === 0) { 
+                this.gameOver = true; 
+                this.winner = (playerId === 'p1') ? 'p2' : 'p1'; 
+                return; 
             }
+            cur.hand.push(cur.deck.pop());
         }
     }
 
