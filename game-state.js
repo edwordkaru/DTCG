@@ -233,7 +233,8 @@ class GameState {
         this.resolveEffect(); 
     }
 
-    declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId = null) {
+    declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId) {
+        targetInstanceId = targetInstanceId || null;   // 🔥 安全处理默认值
         if (this.gameOver || this.turnPlayer !== playerId) return; 
         if (this.counterTiming.isActive || this.effectQueue.length > 0) return; 
         if (this.phase === 'HATCH') {
@@ -307,7 +308,8 @@ class GameState {
         }
     }
 
-    resolveCounter(playerId, actionType, blastData = null) {
+    resolveCounter(playerId, actionType, blastData) {
+        blastData = blastData || null;   // 🔥 安全处理默认值
         if (!this.counterTiming.isActive || this.counterTiming.step !== 'COUNTER') return;
         if (this.counterTiming.defenderId !== playerId) return;
         
@@ -1516,7 +1518,9 @@ class GameState {
     }
 
     // ==================== 【最终调试版】playOrEvolve ====================
-    playOrEvolve(playerId, card, zone, targetInstanceId = null, isBlast = false) {
+    playOrEvolve(playerId, card, zone, targetInstanceId, isBlast) {
+        targetInstanceId = targetInstanceId || null;
+        isBlast = isBlast || false;   // 🔥 安全处理两个默认值
         if (this.gameOver || (this.turnPlayer !== playerId && !isBlast)) return;
         // 🔥 新增安全锁：如果当前有技能排队等结算、或者正在战斗中，绝对禁止出牌！
         if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
