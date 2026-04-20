@@ -718,18 +718,22 @@ class GameState {
     }
 
     resolveEffect() {
-        if (this.gameOver) return;
+        if (this.gameOver || this.effectQueue.length === 0) return;
         
-        while (this.effectQueue.length > 0) {
-            // 🔥 四锁合一：瞄准、盲盒、招魂、免死。任何一个在等待，引擎必须静止！
-            if (this.pendingTarget || this.pendingReveal || this.pendingTrashRevive || this.pendingProtection) {
-                return; 
-            }
+        // 🚨 关键修复点 1：防止重复触发
+        if (this.pendingTarget || this.pendingReveal || this.pendingTrashRevive || this.pendingProtection) return;
 
-            // 🛑 新增拦截器：如果队列顶端是玩家卡牌效果，立刻暂停解析，转交前端弹窗！
-            if (this.effectQueue[0].type !== 'System' && this.effectQueue[0].type !== 'System_Exec') {
-                this.processEffectQueue();
-                return; 
+        const effect = this.effectQueue[0]; // 先看第一个任务
+        
+        if (effect.type === 'REVEAL') {
+            const revealInstruction = this.parseRevealInstruction(effect.text);
+            if (revealInstruction) {
+                // 🚨 关键修复点 2：在设置 pending 状态前，必须先将该任务从队列移除！
+                this.effectQueue.shift(); 
+                
+                this.pendingReveal = { ...revealInstruction, playerId: effect.playerId };
+                console.log(`📡 [QUEUE] 处理翻牌效果，剩余任务数: ${this.effectQueue.length}`);
+                return;
             }
             
             const eff = this.effectQueue.shift();
@@ -1159,35 +1163,34 @@ class GameState {
         const constraints = this.pendingReveal.constraints;
         const requiredTotal = constraints.totalSelectCount;
         
-        // 1. 预处理：强制转换为字符串数组，并过滤掉无效输入
+        // 1. 强制类型转换，确保比对成功
         const normalizedIds = (selectedInstanceIds || []).map(String);
-
-        // 2. 提取选中的卡牌（修复类型不匹配）
         const selectedCards = this.pendingReveal.cards.filter(c => 
             normalizedIds.includes(String(c.instanceId))
         );
 
-        // 3. 严格校验：如果玩家点了卡，但后端一张都没匹配上，说明前端传值有问题
+        // 2. 如果玩家选了牌但后端没匹配上，报错（防类型 Bug）
         if (normalizedIds.length > 0 && selectedCards.length === 0) {
-            console.error("🚨 [REVEAL] 严重错误：前端选中的 ID 在后端翻开的卡中找不到！检查 InstanceID 类型。");
+            console.error("🚨 [REVEAL] InstanceID 匹配失败，请检查类型转换！");
             return;
         }
 
-        // 4. 深度验证：多维槽位匹配 (处理 1黄 + 1紫 的逻辑核心)
+        // 3. 核心验证：处理“1黄 AND 1紫”的独立性
         if (constraints.mode === "FILTERED" && selectedCards.length > 0) {
             let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
             if (!valid) {
-                // ⚠️ 这里就是拦截“选了两张紫色”的地方！
-                console.warn(`🚫 [REVEAL] 规则拦截：选定的卡牌组合无法同时满足所有独立条件！`);
-                return; // 拒绝操作，让玩家在 UI 上重选
+                // ⚠️ 这里就是拦截“选了两张紫色”的地方
+                console.warn(`🚫 [REVEAL] 选牌组合不合法！不满足: ${JSON.stringify(constraints.targetGroups)}`);
+                // 给玩家发一个通知（可选）
+                return; 
             }
         }
 
-        // 5. 结算：将确认选中的卡移入手牌，剩下的处理
+        // 4. 成功后执行清理和入库
         const selectedActualIds = selectedCards.map(c => String(c.instanceId));
         const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
         
-        console.log(`✅ [REVEAL] 玩家 ${playerId} 成功检索 ${selectedCards.length} 张卡。`);
+        console.log(`✅ [REVEAL] 验证通过，${selectedCards.length} 张卡进入玩家 ${playerId} 手牌。`);
         this.finishRevealProcess(playerId, selectedCards, remaining);
     }
 
