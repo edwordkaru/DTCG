@@ -233,8 +233,7 @@ class GameState {
         this.resolveEffect(); 
     }
 
-    declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId) {
-        targetInstanceId = targetInstanceId || null;   // 🔥 安全处理默认值
+    declareAttack(playerId, attackerInstanceId, targetType, targetInstanceId = null) {
         if (this.gameOver || this.turnPlayer !== playerId) return; 
         if (this.counterTiming.isActive || this.effectQueue.length > 0) return; 
         if (this.phase === 'HATCH') {
@@ -308,8 +307,7 @@ class GameState {
         }
     }
 
-    resolveCounter(playerId, actionType, blastData) {
-        blastData = blastData || null;   // 🔥 安全处理默认值
+    resolveCounter(playerId, actionType, blastData = null) {
         if (!this.counterTiming.isActive || this.counterTiming.step !== 'COUNTER') return;
         if (this.counterTiming.defenderId !== playerId) return;
         
@@ -566,10 +564,7 @@ class GameState {
     // ==========================================
     // 🔥 DigiXros + Assembly（手册 p.22-25）
     // ==========================================
-    digiXros(playerId, handCard, targetIds) {
-        // 🔥 安全处理默认参数（防止 Render 语法解析报错）
-        targetIds = targetIds || [];
-
+    digiXros(playerId, handCard, targetIds = []) {
         const cur = this.zones[playerId];
         if (!handCard || targetIds.length === 0) return;
 
@@ -723,24 +718,19 @@ class GameState {
     }
 
     resolveEffect() {
-        if (this.gameOver || this.effectQueue.length === 0) return;
+        if (this.gameOver) return;
         
-        // 1. 拦截器：如果当前有任何弹窗正在等待玩家操作，直接终止，不要重复触发！
-        if (this.pendingReveal || this.pendingTarget || this.pendingEffectSelection) return;
-
-        const effect = this.effectQueue[0];
-        
-        if (effect.type === 'REVEAL') {
-            const revealInstruction = this.parseRevealInstruction(effect.text);
-            if (revealInstruction) {
-                // 🚨 关键修复点 2：在设置 pending 状态前，必须先将该任务从队列移除！
-                this.effectQueue.shift(); 
-                
-                this.pendingReveal = { ...revealInstruction, playerId: effect.playerId };
-                console.log(`📡 [QUEUE] 处理翻牌效果，剩余任务数: ${this.effectQueue.length}`);
-                return;
+        while (this.effectQueue.length > 0) {
+            // 🔥 四锁合一：瞄准、盲盒、招魂、免死。任何一个在等待，引擎必须静止！
+            if (this.pendingTarget || this.pendingReveal || this.pendingTrashRevive || this.pendingProtection) {
+                return; 
             }
-        }
+
+            // 🛑 新增拦截器：如果队列顶端是玩家卡牌效果，立刻暂停解析，转交前端弹窗！
+            if (this.effectQueue[0].type !== 'System' && this.effectQueue[0].type !== 'System_Exec') {
+                this.processEffectQueue();
+                return; 
+            }
             
             const eff = this.effectQueue.shift();
             let text = eff.effectText; 
@@ -756,8 +746,7 @@ class GameState {
                 
                 if (!hasRequired) {
                     console.log(`🚫 [CONDITION] 魔法反制：玩家 ${eff.playerId} 场上没有 ${reqType}，效果落空！`);
-                    this.resolveEffect();
-                    return; // 拦截成功！直接切断当前循环，这效果废了
+                    continue; // 拦截成功！直接切断当前循环，这效果废了
                 }
                 
                 // 验证通过，把前面的 If 废话切掉，留下干货给后面的解析器
@@ -774,8 +763,7 @@ class GameState {
                 
                 if (oppCount < reqCount) {
                     console.log(`🚫 [CONDITION] 魔法反制：对手场上只有 ${oppCount} 只怪兽，不足 ${reqCount} 只，效果落空！`);
-                    this.resolveEffect();
-                    return;
+                    continue;
                 }
                 
                 console.log(`✨ [CONDITION] 条件达成！对手人头数达标，准备执行惩罚...`);
@@ -868,26 +856,26 @@ class GameState {
                 }
 
                 if (revealedCards.length > 0) {
-                    // 🔥 核心修正：多维分组评估
+                    // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
+                    // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
                     revealedCards.forEach(c => {
                         if (revealInstruction.constraints.mode === "FILTERED") {
+                            
+                            // 🛑 核心修复：加上 digi_type！把所有 API 可能用的“种族”字段一网打尽！
                             let cardText = [
-                                (c.name || ""), (c.color || ""), (c.type || c.cardType || ""), 
+                                (c.name || ""), 
+                                (c.color || ""), 
+                                (c.type || c.cardType || ""), 
                                 (c.traits || c.digi_type || c.digitype || c.form || c.attribute || c.stage || "")
                             ].join(" | ").toLowerCase();
+                            
+                            // 处理双色卡的特殊判断
                             if (c.color && c.color.includes("/")) cardText += " | 2-color";
 
-                            c.matchedGroups = []; // 记录该卡牌符合哪些要求槽位
-                            revealInstruction.constraints.targetGroups.forEach((group, idx) => {
-                                if (group.keywords.length === 0 || group.keywords.some(kw => cardText.includes(kw))) {
-                                    c.matchedGroups.push(idx); // 例如: 0代表它是天使，1代表它是恶魔
-                                }
-                            });
-                            // 只要能满足哪怕一个槽位，就可以被玩家点击
-                            c.isSelectable = c.matchedGroups.length > 0;
+                            // 只有卡牌的真实身份命中了要求，才允许被选择
+                            c.isSelectable = revealInstruction.constraints.validKeywords.some(kw => cardText.includes(kw));
                         } else {
-                            c.isSelectable = true;
-                            c.matchedGroups = [0]; // 无限制模式默认归入0号组
+                            c.isSelectable = true; // 没限制就全都可以选
                         }
                     });
 
@@ -1150,7 +1138,7 @@ class GameState {
                 }
             }
 
-        this.checkGlobalRules();
+            this.checkGlobalRules();
 
             // 🔥 修复 1：解除爆裂进化死锁！
             // 如果是在等待反击效果结算，且队列已空，自动推动引擎进入 BLOCKER 阶段
@@ -1165,92 +1153,45 @@ class GameState {
     }
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds) {
-        // 1. 安全處理預設參數並去重（防止前端传入重复ID）
-        const rawIds = selectedInstanceIds || [];
-        const normalizedIds = [...new Set(rawIds.map(String))]; 
-
+    submitRevealChoice(playerId, selectedInstanceIds = []) {   // 注意：现在是数组！
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
-        // 确保 constraints 存在，提供默认值防止报错
-        const constraints = this.pendingReveal.constraints || {}; 
-    
-        // 2. 匹配卡牌实体
-        const selectedCards = this.pendingReveal.cards.filter(c => 
-            normalizedIds.includes(String(c.instanceId))
-        );
-
-        // 3. 严格的防作弊匹配检查：传入的ID必须100%在池子中找到
-        if (normalizedIds.length !== selectedCards.length) {
-            console.error(`🚨 [REVEAL] InstanceID 匹配失败！玩家 ${playerId} 试图选择不存在或不属于当前 Reveal 池的卡牌。`);
-            // TODO: 必须通知客户端匹配失败，解除客户端卡死状态
-            // this.sendErrorMessage(playerId, "选择的卡牌无效，请重试。");
+        const required = this.pendingReveal.constraints?.selectCount || 1;
+        if (selectedInstanceIds.length !== required) {
+            console.warn(`🚫 选择数量错误，需要选 ${required} 张`);
             return;
         }
 
-        // 4. 核心验证 (移除 length > 0 的短路判断，空数组也必须接受规则的审判)
-        if (constraints.mode === "FILTERED") {
-            // 如果 targetGroups 不存在，默认给空数组防报错
-            const groups = constraints.targetGroups || [];
-        
-            let valid = this.validateSelectionAgainstGroups(selectedCards, groups);
-            if (!valid) {
-                console.warn(`🚫 [REVEAL] 玩家 ${playerId} 选牌组合不合法！选择数量: ${selectedCards.length}`);
-                // TODO: 通知客户端非法选择，让其重新选择
-                // this.sendErrorMessage(playerId, "卡牌组合不满足条件，请重新选择。");
-                return; 
-            }
-        }
+        const selectedCards = this.pendingReveal.cards.filter(c => 
+            selectedInstanceIds.includes(c.instanceId)
+        );
 
-        // 5. 成功后执行清理
-        const selectedActualIds = selectedCards.map(c => String(c.instanceId));
-        const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
-    
-        console.log(`✅ [REVEAL] 验证通过，${selectedCards.length} 张卡进入玩家 ${playerId} 手牌。`);
-        this.finishRevealProcess(playerId, selectedCards, remaining);
-    }
-
-    // 辅助方法：验证多维卡牌归属
-    validateSelectionAgainstGroups(selectedCards, targetGroups) {
-        // 复制一份每个组还需要几张卡
-        const groupNeeds = targetGroups.map(g => g.count);
-    
-        // 采用递归尝试把每张选定的卡分配给它符合的组
-        const tryAssign = (cardIndex) => {
-            if (cardIndex === selectedCards.length) return true; // 所有选出的卡都成功塞进去了
-            const card = selectedCards[cardIndex];
-        
-            for (let groupId of card.matchedGroups) {
-                if (groupNeeds[groupId] > 0) {
-                    groupNeeds[groupId]--; // 尝试分配给这个组
-                    if (tryAssign(cardIndex + 1)) return true;
-                    groupNeeds[groupId]++; // 回溯
-                }
-            }
-            return false; // 这张卡没地方能放，或者挤占了名额导致后面的卡没地方放
-        };
-
-        return tryAssign(0);
-    }
-
-    // 辅助方法：清理善后
-    finishRevealProcess(playerId, selectedCards, remainingCards) {
+        // 加入手牌
         this.zones[playerId].hand.push(...selectedCards);
 
+        // 剩余卡牌处理
+        const remaining = this.pendingReveal.cards.filter(c => 
+            !selectedInstanceIds.includes(c.instanceId)
+        );
+
         if (this.pendingReveal.remainingAction === "BOTTOM") {
-            this.zones[playerId].deck.unshift(...remainingCards);
+            this.zones[playerId].deck.unshift(...remaining); // 塞回牌底
         } else if (this.pendingReveal.remainingAction === "TOP") {
-            this.zones[playerId].deck.push(...remainingCards);
+            this.zones[playerId].deck.push(...remaining);
         } else if (this.pendingReveal.remainingAction === "TRASH") {
-            this.zones[playerId].trash.push(...remainingCards);
+            this.zones[playerId].trash.push(...remaining);
         } else if (this.pendingReveal.remainingAction === "SHUFFLE_SECURITY") {
-            this.zones[playerId].security = remainingCards;
+            // 🔥 新增：选完牌后，把剩下的安保卡放回去并洗切
+            this.zones[playerId].security = remaining;
             this.shuffle(this.zones[playerId].security);
+            console.log(`🛡️ 剩余安保卡已重新洗切！`);
         }
 
+        console.log(`✅ [REVEAL] 已选择 ${selectedCards.length} 张卡，剩余处理完毕`);
+
         this.pendingReveal = null;
-        this.resolveEffect();
-        this.checkTurnEnd();
+        this.resolveEffect();   // 继续下一效果
+        this.checkTurnEnd();    // 🔥 新增：强迫引擎在选完卡后检查内存是否越界！
     }
 
     // 🔥 新增：接收前端的目标 ID，扣动扳机，然后解除刹车
@@ -1267,7 +1208,6 @@ class GameState {
             this.resolveEffect();
             this.checkGlobalRules();
             this.checkTurnEnd();    // 🔥 新增：强迫引擎检查内存！
-            return;
         }
 
         const action = this.pendingTarget.actionType;
@@ -1313,12 +1253,9 @@ class GameState {
             targetDigimon.turnEffects.push({ type: 'STUN' });
         }
 
-        // 👇 把卡牌移入安保区 (SEND_TO_SECURITY) —— 已修复
-        if (action === 'SEND_TO_SECURITY') {
-            const oppId = (playerId === 'p1') ? 'p2' : 'p1';
-            const targetCard = targetDigimon;   // 直接复用上面找到的目标
-            
-            const tZone = this.zones[targetCard.ownerId || oppId];
+        // 👇 新增分支：把卡牌移入安保区
+        else if (actionType === 'SEND_TO_SECURITY') {
+            const tZone = this.zones[targetCard.ownerId || oppId]; // 卡是谁的就进谁的安保
             const idx = tZone.battleArea.findIndex(c => c.instanceId === targetCard.instanceId);
             if (idx !== -1) {
                 const cardToMove = tZone.battleArea.splice(idx, 1)[0];
@@ -1418,6 +1355,7 @@ class GameState {
         this.checkGlobalRules();
     }
 
+    // 🔮 新增：接收前端的检索选择，发牌，并把剩下的塞回卡组底
     // 🦇 新增：接收前端的转生选择，把卡拉回战场并触发 On Play
     submitTrashRevive(playerId, selectedCardInstanceId) {
         if (!this.pendingTrashRevive || this.pendingTrashRevive.playerId !== playerId) {
@@ -1529,9 +1467,7 @@ class GameState {
     }
 
     // ==================== 【最终调试版】playOrEvolve ====================
-    playOrEvolve(playerId, card, zone, targetInstanceId, isBlast) {
-        targetInstanceId = targetInstanceId || null;
-        isBlast = isBlast || false;   // 🔥 安全处理两个默认值
+    playOrEvolve(playerId, card, zone, targetInstanceId = null, isBlast = false) {
         if (this.gameOver || (this.turnPlayer !== playerId && !isBlast)) return;
         // 🔥 新增安全锁：如果当前有技能排队等结算、或者正在战斗中，绝对禁止出牌！
         if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
@@ -1639,7 +1575,8 @@ class GameState {
         // 🔥 2. 确认合法后，再执行支付（不再出现扣费不结算的死锁）
                 // 🔥 3. 【加强调试版】支付成本
         if (!isBlast) {
-            console.log(`%c[COST CALC] Player=${playerId} | Card=${card.name} | Type=${cardType} | isEvolve=${isEvolve} | finalCost=${finalCost} | playCost=${card.playCost} | digivolveCost=${card.digivolveCost}`, 'color:#00ffcc; font-weight:bold');
+            console.log(`%c[COST CALC] Player=${playerId} | Card=${card.name} | Type=${cardType} | isEvolve=${isEvolve} | finalCost=${finalCost} | playCost=${card.playCost} | digivolveCost=${card.digivolveCost || 'N/A'}`, 
+                        'color:#00ffcc; font-weight:bold');
 
             if (!this.canPay(playerId, finalCost)) {
                 console.warn(`🚫 [Rules] 内存不足！无法支付 ${finalCost} 费 (当前 memory=${this.memory})`);
@@ -1818,16 +1755,6 @@ class GameState {
     parseRevealInstruction(text) {
         text = text.toLowerCase();
 
-        // ✅ 修复：必须把字典定义移到函数最顶部，防止 TDZ 报错！
-        const ignoreTags = [
-            "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
-            "end of turn", "end of attack", "start of your turn", "start of turn", 
-            "main", "security", "hand", "trash", "once per turn", "rule", 
-            "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay",
-            "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"
-        ];
-        const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
-
         let revealCount = 0;
         let isSecurity = false;
 
@@ -1842,60 +1769,56 @@ class GameState {
             return null; 
         }
 
-        let constraints = { mode: "ANY", targetGroups: [], totalSelectCount: 0 };
+        let constraints = { selectCount: 1, mode: "ANY", validKeywords: [] };
 
-        const addClauseMatch = text.match(/add\s+(.*?)(?:to\s+(?:your\s+)?hand|\.|$)/i);
-
-        if (addClauseMatch) {
-            const parts = addClauseMatch[1].split(/\s+and\s+|,/);
-    
-            parts.forEach(part => {
-                const numMatch = part.match(/(\d+)/);
-                if (numMatch) {
-                    const count = parseInt(numMatch[1]);
-                    const kw = [];
-            
-                    [...part.matchAll(/\[(.*?)\]/g)].forEach(b => {
-                        if (!ignoreTags.includes(b[1].toLowerCase())) kw.push(b[1].toLowerCase());
-                    });
-                    
-                    colors.forEach(c => { if (part.includes(c)) kw.push(c); });
-            
-                    constraints.targetGroups.push({
-                        count: count,
-                        keywords: kw
-                    });
-                    constraints.totalSelectCount += count;
-                }
-            });
-        }
-
-        if (constraints.targetGroups.length === 0) {
-            let fallbackCount = 1;
+        // 1. 动态抓取需要拿几张牌 (完美兼容 "add 1... and 1...")
+        const complexAddMatch = text.match(/add\s*(\d+).*?(?:and|,)\s*(\d+)/i);
+        if (complexAddMatch) {
+            // 如果句式是 add X ... and Y，就把两个数字加起来
+            constraints.selectCount = parseInt(complexAddMatch[1]) + parseInt(complexAddMatch[2]);
+        } else {
             const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
-            if (addMatches.length > 0) fallbackCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
-    
-            const fallbackKw = [];
-            [...text.matchAll(/\[(.*?)\]/g)].forEach(b => {
-                if (!ignoreTags.includes(b[1].toLowerCase())) fallbackKw.push(b[1].toLowerCase());
-            });
-            colors.forEach(c => { if (text.includes(c)) fallbackKw.push(c); });
-    
-            constraints.targetGroups.push({ count: fallbackCount, keywords: fallbackKw });
-            constraints.totalSelectCount = fallbackCount;
+            if (addMatches.length > 0) {
+                constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+            } else if (text.includes("add this card")) {
+                constraints.selectCount = 1;
+            }
         }
 
-        if (constraints.targetGroups.some(g => g.keywords.length > 0)) constraints.mode = "FILTERED";
-
+        // 2. 提取所有带方括号的特征或名字
         const brackets = [...text.matchAll(/\[(.*?)\]/g)];
+        
+        // 🔥 规则词汇黑名单！防止系统把时点当成种族拿去检索
+        const ignoreTags = [
+            "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
+            "end of turn", "end of attack", "start of your turn", "start of turn", 
+            "main", "security", "hand", "trash", "once per turn", "rule", 
+            "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay",
+            "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"
+        ];
         
         brackets.forEach(b => {
             const kw = b[1].toLowerCase();
+            // 只有不在黑名单里的词（比如 angel, mirei），才会被加入合法条件池！
             if (!ignoreTags.includes(kw)) {
-                // constraints.validKeywords.push(kw); // 移除旧逻辑
+                constraints.validKeywords.push(kw);
             }
         });
 
+        // 3. 提取颜色限制
+        const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
+        colors.forEach(c => {
+            if (text.includes(c)) {
+                constraints.validKeywords.push(c);
+            }
+        });
+
+        // 只要抓取到了任何特征、名字或颜色，就开启过滤模式
+        if (constraints.validKeywords.length > 0) {
+            constraints.mode = "FILTERED";
+        }
+
+        // 4. 剩余卡牌去向
         let remainingAction = "BOTTOM";
         if (text.includes("trash") || text.includes("discard")) remainingAction = "TRASH";
         else if (text.includes("top")) remainingAction = "TOP";
@@ -2274,18 +2197,12 @@ class GameState {
         }
     }
 
-    drawCard(playerId, amount) {
-        // 🔥 安全處理預設參數
-        amount = amount || 1;
-
+    drawCard(playerId, amount = 1) {
         const cur = this.zones[playerId];
         for (let i = 0; i < amount; i++) {
-            if (cur.deck.length === 0) { 
-                this.gameOver = true; 
-                this.winner = (playerId === 'p1') ? 'p2' : 'p1'; 
-                return; 
-            }
+            if (cur.deck.length === 0) { this.gameOver = true; this.winner = (playerId === 'p1') ? 'p2' : 'p1'; return; }
             cur.hand.push(cur.deck.pop());
+            }
         }
     }
 
