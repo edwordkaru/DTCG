@@ -856,26 +856,26 @@ class GameState {
                 }
 
                 if (revealedCards.length > 0) {
-                    // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
-                    // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
+                    // 🔥 核心修正：多维分组评估
                     revealedCards.forEach(c => {
                         if (revealInstruction.constraints.mode === "FILTERED") {
-                            
-                            // 🛑 核心修复：加上 digi_type！把所有 API 可能用的“种族”字段一网打尽！
                             let cardText = [
-                                (c.name || ""), 
-                                (c.color || ""), 
-                                (c.type || c.cardType || ""), 
+                                (c.name || ""), (c.color || ""), (c.type || c.cardType || ""), 
                                 (c.traits || c.digi_type || c.digitype || c.form || c.attribute || c.stage || "")
                             ].join(" | ").toLowerCase();
-                            
-                            // 处理双色卡的特殊判断
                             if (c.color && c.color.includes("/")) cardText += " | 2-color";
 
-                            // 只有卡牌的真实身份命中了要求，才允许被选择
-                            c.isSelectable = revealInstruction.constraints.validKeywords.some(kw => cardText.includes(kw));
+                            c.matchedGroups = []; // 记录该卡牌符合哪些要求槽位
+                            revealInstruction.constraints.targetGroups.forEach((group, idx) => {
+                                if (group.keywords.length === 0 || group.keywords.some(kw => cardText.includes(kw))) {
+                                    c.matchedGroups.push(idx); // 例如: 0代表它是天使，1代表它是恶魔
+                                }
+                            });
+                            // 只要能满足哪怕一个槽位，就可以被玩家点击
+                            c.isSelectable = c.matchedGroups.length > 0;
                         } else {
-                            c.isSelectable = true; // 没限制就全都可以选
+                            c.isSelectable = true;
+                            c.matchedGroups = [0]; // 无限制模式默认归入0号组
                         }
                     });
 
@@ -1153,45 +1153,82 @@ class GameState {
     }
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds = []) {   // 注意：现在是数组！
+    submitRevealChoice(playerId, selectedInstanceIds = []) {
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
-        const required = this.pendingReveal.constraints?.selectCount || 1;
-        if (selectedInstanceIds.length !== required) {
-            console.warn(`🚫 选择数量错误，需要选 ${required} 张`);
+        const constraints = this.pendingReveal.constraints;
+        const requiredTotal = constraints.totalSelectCount;
+    
+        // 如果一张都不选（放弃检索）
+        if (selectedInstanceIds.length === 0) {
+            console.log(`⏩ [REVEAL] 玩家放弃检索。`);
+            this.finishRevealProcess(playerId, [], this.pendingReveal.cards);
             return;
         }
 
-        const selectedCards = this.pendingReveal.cards.filter(c => 
-            selectedInstanceIds.includes(c.instanceId)
-        );
-
-        // 加入手牌
-        this.zones[playerId].hand.push(...selectedCards);
-
-        // 剩余卡牌处理
-        const remaining = this.pendingReveal.cards.filter(c => 
-            !selectedInstanceIds.includes(c.instanceId)
-        );
-
-        if (this.pendingReveal.remainingAction === "BOTTOM") {
-            this.zones[playerId].deck.unshift(...remaining); // 塞回牌底
-        } else if (this.pendingReveal.remainingAction === "TOP") {
-            this.zones[playerId].deck.push(...remaining);
-        } else if (this.pendingReveal.remainingAction === "TRASH") {
-            this.zones[playerId].trash.push(...remaining);
-        } else if (this.pendingReveal.remainingAction === "SHUFFLE_SECURITY") {
-            // 🔥 新增：选完牌后，把剩下的安保卡放回去并洗切
-            this.zones[playerId].security = remaining;
-            this.shuffle(this.zones[playerId].security);
-            console.log(`🛡️ 剩余安保卡已重新洗切！`);
+        // 选的数量不能超过上限
+        if (selectedInstanceIds.length > requiredTotal) {
+            console.warn(`🚫 [REVEAL] 选牌数量超限！最多可选 ${requiredTotal} 张`);
+            return;
         }
 
-        console.log(`✅ [REVEAL] 已选择 ${selectedCards.length} 张卡，剩余处理完毕`);
+        const selectedCards = this.pendingReveal.cards.filter(c => selectedInstanceIds.includes(c.instanceId));
+
+        // ⚔️ 深度回溯验证：确保选出的卡能合法地填入各个要求组
+        if (constraints.mode === "FILTERED") {
+            let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
+            if (!valid) {
+                console.warn(`🚫 [REVEAL] 规则拦截：所选卡牌未能满足不同组别的独立条件（例如 1张A特征 和 1张B特征 冲突）！`);
+                return; // 拒绝操作，维持挂起状态让玩家重选
+            }
+        }
+
+        // 处理结算
+        const remaining = this.pendingReveal.cards.filter(c => !selectedInstanceIds.includes(c.instanceId));
+        this.finishRevealProcess(playerId, selectedCards, remaining);
+    }
+
+    // 辅助方法：验证多维卡牌归属
+    validateSelectionAgainstGroups(selectedCards, targetGroups) {
+        // 复制一份每个组还需要几张卡
+        const groupNeeds = targetGroups.map(g => g.count);
+    
+        // 采用递归尝试把每张选定的卡分配给它符合的组
+        const tryAssign = (cardIndex) => {
+            if (cardIndex === selectedCards.length) return true; // 所有选出的卡都成功塞进去了
+            const card = selectedCards[cardIndex];
+        
+            for (let groupId of card.matchedGroups) {
+                if (groupNeeds[groupId] > 0) {
+                    groupNeeds[groupId]--; // 尝试分配给这个组
+                    if (tryAssign(cardIndex + 1)) return true;
+                    groupNeeds[groupId]++; // 回溯
+                }
+            }
+            return false; // 这张卡没地方能放，或者挤占了名额导致后面的卡没地方放
+        };
+
+        return tryAssign(0);
+    }
+
+    // 辅助方法：清理善后
+    finishRevealProcess(playerId, selectedCards, remainingCards) {
+        this.zones[playerId].hand.push(...selectedCards);
+
+        if (this.pendingReveal.remainingAction === "BOTTOM") {
+            this.zones[playerId].deck.unshift(...remainingCards);
+        } else if (this.pendingReveal.remainingAction === "TOP") {
+            this.zones[playerId].deck.push(...remainingCards);
+        } else if (this.pendingReveal.remainingAction === "TRASH") {
+            this.zones[playerId].trash.push(...remainingCards);
+        } else if (this.pendingReveal.remainingAction === "SHUFFLE_SECURITY") {
+            this.zones[playerId].security = remainingCards;
+            this.shuffle(this.zones[playerId].security);
+        }
 
         this.pendingReveal = null;
-        this.resolveEffect();   // 继续下一效果
-        this.checkTurnEnd();    // 🔥 新增：强迫引擎在选完卡后检查内存是否越界！
+        this.resolveEffect();
+        this.checkTurnEnd();
     }
 
     // 🔥 新增：接收前端的目标 ID，扣动扳机，然后解除刹车
@@ -1769,21 +1806,56 @@ class GameState {
             return null; 
         }
 
-        let constraints = { selectCount: 1, mode: "ANY", validKeywords: [] };
+        // 替换原有的 parseRevealInstruction 中关于约束提取的部分
+        let constraints = { mode: "ANY", targetGroups: [], totalSelectCount: 0 };
 
-        // 1. 动态抓取需要拿几张牌 (完美兼容 "add 1... and 1...")
-        const complexAddMatch = text.match(/add\s*(\d+).*?(?:and|,)\s*(\d+)/i);
-        if (complexAddMatch) {
-            // 如果句式是 add X ... and Y，就把两个数字加起来
-            constraints.selectCount = parseInt(complexAddMatch[1]) + parseInt(complexAddMatch[2]);
-        } else {
-            const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
-            if (addMatches.length > 0) {
-                constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
-            } else if (text.includes("add this card")) {
-                constraints.selectCount = 1;
-            }
+        // 1. 动态抓取 "add ... to hand" 这一段进行精准切割
+        const addClauseMatch = text.match(/add\s+(.*?)(?:to\s+(?:your\s+)?hand|\.|$)/i);
+
+        if (addClauseMatch) {
+            // 按 'and' 或 ',' 切割，例如分成 ["1 [Angel] trait", "1 [Demon] trait"]
+            const parts = addClauseMatch[1].split(/\s+and\s+|,/);
+    
+            parts.forEach(part => {
+                const numMatch = part.match(/(\d+)/);
+                if (numMatch) {
+                    const count = parseInt(numMatch[1]);
+                    const kw = [];
+            
+                    // 提取这个子句里的专属特征
+                    [...part.matchAll(/\[(.*?)\]/g)].forEach(b => {
+                        if (!ignoreTags.includes(b[1].toLowerCase())) kw.push(b[1].toLowerCase());
+                    });
+                    // 提取颜色
+                    colors.forEach(c => { if (part.includes(c)) kw.push(c); });
+            
+                    // 将这个专属槽位压入组中
+                    constraints.targetGroups.push({
+                        count: count,
+                        keywords: kw
+                    });
+                    constraints.totalSelectCount += count;
+                }
+            });
         }
+
+        // 2. 如果切割失败，启用兜底的单组解析逻辑
+        if (constraints.targetGroups.length === 0) {
+            let fallbackCount = 1;
+            const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
+            if (addMatches.length > 0) fallbackCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+    
+            const fallbackKw = [];
+            [...text.matchAll(/\[(.*?)\]/g)].forEach(b => {
+                if (!ignoreTags.includes(b[1].toLowerCase())) fallbackKw.push(b[1].toLowerCase());
+            });
+            colors.forEach(c => { if (text.includes(c)) fallbackKw.push(c); });
+    
+            constraints.targetGroups.push({ count: fallbackCount, keywords: fallbackKw });
+            constraints.totalSelectCount = fallbackCount;
+        }
+
+        if (constraints.targetGroups.some(g => g.keywords.length > 0)) constraints.mode = "FILTERED";
 
         // 2. 提取所有带方括号的特征或名字
         const brackets = [...text.matchAll(/\[(.*?)\]/g)];
