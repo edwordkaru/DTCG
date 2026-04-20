@@ -312,9 +312,13 @@
 <div id="reveal-overlay">
     <div id="reveal-panel">
         <div class="reveal-title">>> DECK SEARCH PROTOCOL <<</div>
-        <div class="reveal-desc">AWAITING TARGET SELECTION. CHOOSE 1 CARD TO ADD TO HAND.</div>
+        <div class="reveal-desc" id="reveal-instruction-text">AWAITING TARGET SELECTION.</div>
         <div id="reveal-cards-container"></div>
-        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitReveal(null)">[ SKIP / 放弃检索引擎并归还卡牌 ]</button>
+    
+        <button id="confirm-reveal-btn" class="ring-btn" style="display:none; border-color:var(--green); color:var(--green); font-size: 14px; padding: 10px 40px; margin-bottom: 10px;" onclick="executeRevealSelection()">[ CONFIRM SELECTION / 确认选择 ]</button>
+    
+        <br>
+        <button class="ring-btn" style="border-color:#555; color:#aaa; font-size: 14px; padding: 10px 30px;" onclick="submitReveal(null)">[ SKIP / 放弃检索 ]</button>
     </div>
 </div>
 
@@ -1114,28 +1118,28 @@
 
     // 📡 数据雷达：根据 instanceId 扫描战局，提取卡牌全部资料
     function previewCardInfo(instanceId) {
-    if (!latestGameState) return;
-    let found = null;
-    ['p1', 'p2'].forEach(p => {
-        const z = latestGameState.zones[p];
-        const all = [...z.hand, ...z.battleArea, ...z.breedingArea, ...z.trash, ...z.security];
-        all.forEach(c => {
-            if (c.instanceId === instanceId) found = c;
-            if (c.stack) c.stack.forEach(s => { if (s.instanceId === instanceId) found = s; });
+        if (!latestGameState) return;
+        let found = null;
+        ['p1', 'p2'].forEach(p => {
+            const z = latestGameState.zones[p];
+            const all = [...z.hand, ...z.battleArea, ...z.breedingArea, ...z.trash, ...z.security];
+            all.forEach(c => {
+                if (c.instanceId === instanceId) found = c;
+                if (c.stack) c.stack.forEach(s => { if (s.instanceId === instanceId) found = s; });
+            });
         });
-    });
 
-    if (found) {
-        document.getElementById('hover-card-info').style.display = 'flex';
-        document.getElementById('info-name').innerText = found.name || 'UNKNOWN';
-        document.getElementById('info-type-level').innerText = (found.type || '').toUpperCase() + (found.level ? ` / LV.${found.level}` : '');
-        document.getElementById('info-dp').innerText = found.dp ? `DP ${found.dp}` : '';
-        document.getElementById('info-cost').innerText = `PLAY: ${found.playCost || 0} | EVO: ${found.digivolveCost || 0}`;
-        const format = (t) => t ? t.replace(/\n/g, '<br>') : '';
-        document.getElementById('info-main-effect').innerHTML = found.mainEffect ? `<span style="color:var(--blue);">[MAIN]</span><br>${format(found.mainEffect)}` : '';
-        document.getElementById('info-source-effect').innerHTML = found.sourceEffect ? `<span style="color:var(--gold);">[INHERITED]</span><br>${format(found.sourceEffect)}` : '';
+        if (found) {
+            document.getElementById('hover-card-info').style.display = 'flex';
+            document.getElementById('info-name').innerText = found.name || 'UNKNOWN';
+            document.getElementById('info-type-level').innerText = (found.type || '').toUpperCase() + (found.level ? ` / LV.${found.level}` : '');
+            document.getElementById('info-dp').innerText = found.dp ? `DP ${found.dp}` : '';
+            document.getElementById('info-cost').innerText = `PLAY: ${found.playCost || 0} | EVO: ${found.digivolveCost || 0}`;
+            const format = (t) => t ? t.replace(/\n/g, '<br>') : '';
+            document.getElementById('info-main-effect').innerHTML = found.mainEffect ? `<span style="color:var(--blue);">[MAIN]</span><br>${format(found.mainEffect)}` : '';
+            document.getElementById('info-source-effect').innerHTML = found.sourceEffect ? `<span style="color:var(--gold);">[INHERITED]</span><br>${format(found.sourceEffect)}` : '';
+        }
     }
-}
 
     socket.on('gameStateUpdate', (state) => {
         latestGameState = state; // 🔥 新增：每次收到服务器数据，截取快照
@@ -1383,6 +1387,68 @@
         document.getElementById('mulligan-btns').style.display = 'none';
         document.getElementById('mulligan-waiting').style.display = 'block';
         socket.emit('action', { type: 'mulligan', roomId, playerId: myId, doMulligan: doMulligan });
+    }
+
+    // --- 🔮 检索多选逻辑 ---
+    let selectedRevealIds = [];
+
+    function toggleRevealSelection(instanceId) {
+        if (!latestGameState || !latestGameState.pendingReveal) return;
+        
+        const constraints = latestGameState.pendingReveal.constraints;
+        const max = constraints.totalSelectCount;
+        const idx = selectedRevealIds.indexOf(instanceId);
+        
+        // 找到对应的 DOM 元素以便加高亮
+        const el = document.querySelector(`.reveal-card[onclick*="${instanceId}"]`);
+
+        if (idx > -1) {
+            // 取消选中
+            selectedRevealIds.splice(idx, 1);
+            if (el) {
+                el.style.borderColor = "transparent";
+                el.style.boxShadow = "0 10px 20px rgba(0,0,0,0.8)";
+            }
+        } else {
+            // 检查是否达到选牌上限
+            if (selectedRevealIds.length < max) {
+                selectedRevealIds.push(instanceId);
+                if (el) {
+                    el.style.borderColor = "var(--gold)";
+                    el.style.boxShadow = "0 0 30px var(--gold)";
+                }
+            } else {
+                alert(`>> 系统限制：该效果最多只能选择 ${max} 张卡！`);
+            }
+        }
+
+        // 控制确认按钮显示：只有选了牌才显示
+        const confirmBtn = document.getElementById('confirm-reveal-btn');
+        confirmBtn.style.display = selectedRevealIds.length > 0 ? 'inline-block' : 'none';
+    }
+
+    // 真正的提交函数
+    function executeRevealSelection() {
+        if (selectedRevealIds.length === 0) return;
+        
+        document.getElementById('reveal-overlay').style.display = 'none';
+        socket.emit('action', { 
+            type: 'submitRevealChoice', 
+            roomId, 
+            playerId: myId, 
+            selectedCardInstanceId: selectedRevealIds // 🚀 发送数组
+        });
+        
+        selectedRevealIds = []; // 重置
+    }
+
+    // 覆盖你原本的 submitReveal(null) 以便处理跳过
+    function submitReveal(id) {
+        if (id === null) {
+            document.getElementById('reveal-overlay').style.display = 'none';
+            socket.emit('action', { type: 'submitRevealChoice', roomId, playerId: myId, selectedCardInstanceId: [] });
+            selectedRevealIds = [];
+        }
     }
     
     function allowDrop(e) { e.preventDefault(); }
