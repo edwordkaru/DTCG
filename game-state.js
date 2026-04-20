@@ -564,7 +564,10 @@ class GameState {
     // ==========================================
     // 🔥 DigiXros + Assembly（手册 p.22-25）
     // ==========================================
-    digiXros(playerId, handCard, targetIds = []) {
+    digiXros(playerId, handCard, targetIds) {
+        // 🔥 安全处理默认参数（防止 Render 语法解析报错）
+        targetIds = targetIds || [];
+
         const cur = this.zones[playerId];
         if (!handCard || targetIds.length === 0) return;
 
@@ -1160,15 +1163,13 @@ class GameState {
     }
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds) {
-        selectedInstanceIds = selectedInstanceIds || [];
+    submitRevealChoice(playerId, selectedInstanceIds = []) {
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
         const constraints = this.pendingReveal.constraints;
-        const requiredTotal = constraints.totalSelectCount;
         
         // 1. 强制类型转换，确保比对成功
-        const normalizedIds = (selectedInstanceIds || []).map(String);
+        const normalizedIds = selectedInstanceIds.map(String);
         const selectedCards = this.pendingReveal.cards.filter(c => 
             normalizedIds.includes(String(c.instanceId))
         );
@@ -1183,9 +1184,7 @@ class GameState {
         if (constraints.mode === "FILTERED" && selectedCards.length > 0) {
             let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
             if (!valid) {
-                // ⚠️ 这里就是拦截“选了两张紫色”的地方
                 console.warn(`🚫 [REVEAL] 选牌组合不合法！不满足: ${JSON.stringify(constraints.targetGroups)}`);
-                // 给玩家发一个通知（可选）
                 return; 
             }
         }
