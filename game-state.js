@@ -1160,7 +1160,8 @@ class GameState {
     }
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds = []) {
+    submitRevealChoice(playerId, selectedInstanceIds) {
+        selectedInstanceIds = selectedInstanceIds || [];
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
         const constraints = this.pendingReveal.constraints;
@@ -1254,6 +1255,7 @@ class GameState {
             this.resolveEffect();
             this.checkGlobalRules();
             this.checkTurnEnd();    // 🔥 新增：强迫引擎检查内存！
+            return;
         }
 
         const action = this.pendingTarget.actionType;
@@ -1299,9 +1301,12 @@ class GameState {
             targetDigimon.turnEffects.push({ type: 'STUN' });
         }
 
-        // 👇 新增分支：把卡牌移入安保区
-        else if (actionType === 'SEND_TO_SECURITY') {
-            const tZone = this.zones[targetCard.ownerId || oppId]; // 卡是谁的就进谁的安保
+        // 👇 把卡牌移入安保区 (SEND_TO_SECURITY) —— 已修复
+        if (action === 'SEND_TO_SECURITY') {
+            const oppId = (playerId === 'p1') ? 'p2' : 'p1';
+            const targetCard = targetDigimon;   // 直接复用上面找到的目标
+            
+            const tZone = this.zones[targetCard.ownerId || oppId];
             const idx = tZone.battleArea.findIndex(c => c.instanceId === targetCard.instanceId);
             if (idx !== -1) {
                 const cardToMove = tZone.battleArea.splice(idx, 1)[0];
@@ -1401,7 +1406,6 @@ class GameState {
         this.checkGlobalRules();
     }
 
-    // 🔮 新增：接收前端的检索选择，发牌，并把剩下的塞回卡组底
     // 🦇 新增：接收前端的转生选择，把卡拉回战场并触发 On Play
     submitTrashRevive(playerId, selectedCardInstanceId) {
         if (!this.pendingTrashRevive || this.pendingTrashRevive.playerId !== playerId) {
