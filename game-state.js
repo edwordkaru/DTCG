@@ -1792,6 +1792,16 @@ class GameState {
     parseRevealInstruction(text) {
         text = text.toLowerCase();
 
+        // ✅ 修复：必须把字典定义移到函数最顶部，防止 TDZ 报错！
+        const ignoreTags = [
+            "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
+            "end of turn", "end of attack", "start of your turn", "start of turn", 
+            "main", "security", "hand", "trash", "once per turn", "rule", 
+            "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay",
+            "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"
+        ];
+        const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
+
         let revealCount = 0;
         let isSecurity = false;
 
@@ -1806,14 +1816,11 @@ class GameState {
             return null; 
         }
 
-        // 替换原有的 parseRevealInstruction 中关于约束提取的部分
         let constraints = { mode: "ANY", targetGroups: [], totalSelectCount: 0 };
 
-        // 1. 动态抓取 "add ... to hand" 这一段进行精准切割
         const addClauseMatch = text.match(/add\s+(.*?)(?:to\s+(?:your\s+)?hand|\.|$)/i);
 
         if (addClauseMatch) {
-            // 按 'and' 或 ',' 切割，例如分成 ["1 [Angel] trait", "1 [Demon] trait"]
             const parts = addClauseMatch[1].split(/\s+and\s+|,/);
     
             parts.forEach(part => {
@@ -1822,14 +1829,12 @@ class GameState {
                     const count = parseInt(numMatch[1]);
                     const kw = [];
             
-                    // 提取这个子句里的专属特征
                     [...part.matchAll(/\[(.*?)\]/g)].forEach(b => {
                         if (!ignoreTags.includes(b[1].toLowerCase())) kw.push(b[1].toLowerCase());
                     });
-                    // 提取颜色
+                    
                     colors.forEach(c => { if (part.includes(c)) kw.push(c); });
             
-                    // 将这个专属槽位压入组中
                     constraints.targetGroups.push({
                         count: count,
                         keywords: kw
@@ -1839,7 +1844,6 @@ class GameState {
             });
         }
 
-        // 2. 如果切割失败，启用兜底的单组解析逻辑
         if (constraints.targetGroups.length === 0) {
             let fallbackCount = 1;
             const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
@@ -1857,40 +1861,15 @@ class GameState {
 
         if (constraints.targetGroups.some(g => g.keywords.length > 0)) constraints.mode = "FILTERED";
 
-        // 2. 提取所有带方括号的特征或名字
         const brackets = [...text.matchAll(/\[(.*?)\]/g)];
-        
-        // 🔥 规则词汇黑名单！防止系统把时点当成种族拿去检索
-        const ignoreTags = [
-            "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
-            "end of turn", "end of attack", "start of your turn", "start of turn", 
-            "main", "security", "hand", "trash", "once per turn", "rule", 
-            "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay",
-            "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"
-        ];
         
         brackets.forEach(b => {
             const kw = b[1].toLowerCase();
-            // 只有不在黑名单里的词（比如 angel, mirei），才会被加入合法条件池！
             if (!ignoreTags.includes(kw)) {
-                constraints.validKeywords.push(kw);
+                // constraints.validKeywords.push(kw); // 移除旧逻辑
             }
         });
 
-        // 3. 提取颜色限制
-        const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
-        colors.forEach(c => {
-            if (text.includes(c)) {
-                constraints.validKeywords.push(c);
-            }
-        });
-
-        // 只要抓取到了任何特征、名字或颜色，就开启过滤模式
-        if (constraints.validKeywords.length > 0) {
-            constraints.mode = "FILTERED";
-        }
-
-        // 4. 剩余卡牌去向
         let remainingAction = "BOTTOM";
         if (text.includes("trash") || text.includes("discard")) remainingAction = "TRASH";
         else if (text.includes("top")) remainingAction = "TOP";
