@@ -1190,11 +1190,6 @@ class GameState {
         }
 
         const selectedCards = this.pendingReveal.cards.filter(c => selectedInstanceIds.includes(c.instanceId));
-        // ... (下面保留原本加入手牌和处理剩余卡的逻辑)
-
-        const selectedCards = this.pendingReveal.cards.filter(c => 
-            selectedInstanceIds.includes(c.instanceId)
-        );
 
         // 加入手牌
         this.zones[playerId].hand.push(...selectedCards);
@@ -2215,6 +2210,7 @@ class GameState {
             }
         }
     }
+}
 
 // 🔥 让 Node.js 能够引入这台核动力引擎
 if (typeof module !== 'undefined' && module.exports) {
