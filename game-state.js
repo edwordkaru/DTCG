@@ -447,97 +447,70 @@ class GameState {
         this.counterTiming.pendingAttack = null;
     }
 
+    // ====================== DNA 进化（已升级为 v2.0 标准） ======================
     dnaEvolve(playerId, handCard, targetId1, targetId2) {
         const cur = this.zones[playerId];
         const mat1 = cur.battleArea.find(c => c.instanceId === targetId1);
         const mat2 = cur.battleArea.find(c => c.instanceId === targetId2);
 
-        if (!mat1 || !mat2 || !handCard) return;
+        if (!mat1 || !mat2 || !handCard) return false;
 
-        let canDNA = false;
-        let drawAmount = 1;   
-
-        // 🔥 修复点 1：使用通用方法安全获取等级，无视 API 字段命名差异！
         const lv1 = this.getLv(mat1);
         const lv2 = this.getLv(mat2);
         const handLv = this.getLv(handCard);
 
-        // ==========================================
-        // 🔥 DNA 合法性 + 抽牌数量动态解析
-        // ==========================================
-        if (handCard.mainEffect) {
-            const effectText = handCard.mainEffect.toLowerCase();
+        let canDNA = false;
+        let drawAmount = 1;
 
-            // 模式 A: 颜色+等级 (🔥 修复点 2：放宽正则，兼容 "0 from yellow lv.5" 这种新式写法)
-            const lvColorMatch = effectText.match(/\[dna digivolve\].*?([a-z]+)\s*lv\.?(\d+).*?\+.*?([a-z]+)\s*lv\.?(\d+)/i);
-            if (lvColorMatch) {
-                const [, cA, lA, cB, lB] = lvColorMatch;
-                const matchNormal = (String(mat1.color || "").toLowerCase().includes(cA) && lv1 == lA &&
-                                     String(mat2.color || "").toLowerCase().includes(cB) && lv2 == lB);
-                const matchReverse = (String(mat1.color || "").toLowerCase().includes(cB) && lv1 == lB &&
-                                      String(mat2.color || "").toLowerCase().includes(cA) && lv2 == lA);
-                if (matchNormal || matchReverse) canDNA = true;
-            }
+        const effectText = (handCard.mainEffect || '').toLowerCase();
 
-            // 模式 B: 指定名字 (同样放宽正则)
-            const nameMatch = effectText.match(/\[dna digivolve\].*?\[(.*?)\]\s*\+\s*\[(.*?)\]/i);
-            if (!canDNA && nameMatch) {
-                const [, nA, nB] = nameMatch;
-                const m1n = mat1.name.toLowerCase();
-                const m2n = mat2.name.toLowerCase();
-                const matchNormal = m1n.includes(nA.toLowerCase()) && m2n.includes(nB.toLowerCase());
-                const matchReverse = m1n.includes(nB.toLowerCase()) && m2n.includes(nA.toLowerCase());
-                if (matchNormal || matchReverse) canDNA = true;
-            }
-
-            // 获取抽牌数量
-            const drawMatch = effectText.match(/draw\s*(\d+)/i);
-            if (drawMatch) drawAmount = parseInt(drawMatch[1]);
+        // 模式1：颜色+等级（最常见）
+        const colorLvMatch = effectText.match(/\[dna digivolve\].*?([a-z]+)\s*lv\.?(\d+).*?([a-z]+)\s*lv\.?(\d+)/i);
+        if (colorLvMatch) {
+            const [, cA, lA, cB, lB] = colorLvMatch;
+            const matchNormal = (String(mat1.color || '').toLowerCase().includes(cA) && lv1 == lA &&
+                                String(mat2.color || '').toLowerCase().includes(cB) && lv2 == lB);
+            const matchReverse = (String(mat1.color || '').toLowerCase().includes(cB) && lv1 == lB &&
+                                 String(mat2.color || '').toLowerCase().includes(cA) && lv2 == lA);
+            if (matchNormal || matchReverse) canDNA = true;
         }
 
-        // 基础颜色/Lv fallback（🔥 修复点 3：全部改用安全获取到的真实 lv）
-        if (!canDNA) {
-            const dnaColors = String(handCard.color || "").toLowerCase().split(/[\/\s,]+/);
-            const reqLv = handLv - 1;
-            
-            if (lv1 === reqLv && lv2 === reqLv) {
-                if (dnaColors.length >= 2) {
-                    canDNA = (String(mat1.color || "").toLowerCase().includes(dnaColors[0]) && 
-                              String(mat2.color || "").toLowerCase().includes(dnaColors[1])) ||
-                             (String(mat1.color || "").toLowerCase().includes(dnaColors[1]) && 
-                              String(mat2.color || "").toLowerCase().includes(dnaColors[0]));
-                }
+        // 模式2：指定名字
+        const nameMatch = effectText.match(/\[dna digivolve\].*?\[(.*?)\]\s*\+\s*\[(.*?)\]/i);
+        if (!canDNA && nameMatch) {
+            const [, nA, nB] = nameMatch;
+            const m1n = mat1.name.toLowerCase();
+            const m2n = mat2.name.toLowerCase();
+            if ((m1n.includes(nA.toLowerCase()) && m2n.includes(nB.toLowerCase())) ||
+                (m1n.includes(nB.toLowerCase()) && m2n.includes(nA.toLowerCase()))) {
+                canDNA = true;
             }
         }
 
-        if (canDNA) {
-            console.log(`🌀 [DNA EVOLVE] ${mat1.name} + ${mat2.name} → ${handCard.name} （抽 ${drawAmount} 张）`);
+        // 抽卡数量
+        const drawMatch = effectText.match(/draw\s*(\d+)/i);
+        if (drawMatch) drawAmount = parseInt(drawMatch[1]);
 
-            const handIdx = cur.hand.findIndex(c => c.instanceId === handCard.instanceId);
-            if (handIdx !== -1) cur.hand.splice(handIdx, 1);
+        if (canDNA && handLv > Math.max(lv1, lv2)) {
+            // 执行进化
+            const newCard = { ...handCard, instanceId: Math.random().toString(36).substr(2, 9) };
+            newCard.stack = [mat1, mat2]; // 把两个素材压到底下
 
-            const m1Data = { ...mat1 }; delete m1Data.stack;
-            const m2Data = { ...mat2 }; delete m2Data.stack;
-            const newStack = [...(mat1.stack || []), m1Data, ...(mat2.stack || []), m2Data];
-
+            // 移除旧素材
             cur.battleArea = cur.battleArea.filter(c => c.instanceId !== targetId1 && c.instanceId !== targetId2);
+            cur.battleArea.push(newCard);
 
-            const newInstance = { 
-                ...handCard, 
-                instanceId: `dna-${Date.now()}`, 
-                stack: newStack, 
-                isSuspended: false,
-                playedThisTurn: false 
-            };
-            cur.battleArea.push(newInstance);
+            // 抽卡
+            this.drawCard(playerId, drawAmount);
+            this.addLog(`🧬 ${playerId.toUpperCase()} DNA 进化成功！抽 ${drawAmount} 张`);
 
-            this.drawCard(playerId, drawAmount);           // ← 动态抽牌
-            this.triggerEffect(playerId, newInstance, "When Digivolving");
-            this.checkGlobalRules();
-            this.checkTurnEnd();
-        } else {
-            console.warn(`🚫 [DNA FAIL] 不满足合体条件`);
+            // 触发 On Play / When Digivolving
+            this.triggerEffect(playerId, newCard, "On Play");
+            this.triggerEffect(playerId, newCard, "When Digivolving");
+
+            return true;
         }
+        return false;
     }
 
     appFusion(playerId, handCard, targetId) {
@@ -1721,30 +1694,6 @@ class GameState {
         this.checkTurnEnd();
     }
 
-    getLv(card) { 
-        if (!card) return 0; 
-        const raw = card.lv || card.level || (card.cardnumber?.includes('Lv') ? card.cardnumber : "0"); 
-        return parseInt(raw.toString().replace(/[^0-9]/g, '')) || 0; 
-    }
-
-    getDp(cardInstance) {
-        if (!cardInstance || !cardInstance.dp) return 0;
-        let totalDp = parseInt(cardInstance.dp.toString().replace(/[^0-9]/g, '')) || 0;
-        if (cardInstance.stack) cardInstance.stack.forEach(s => {
-            const dpMatch = (s.inheritedEffect || "").match(/\+([0-9]+)\s*dp/i);
-            if (dpMatch) totalDp += parseInt(dpMatch[1]);
-        });
-        
-        // 🔥 新增：结算所有挂载的临时 Buff/Debuff
-        if (cardInstance.turnEffects) {
-            cardInstance.turnEffects.forEach(eff => {
-                if (eff.type === 'DP_MOD') totalDp += eff.value;
-            });
-        }
-        
-        return totalDp;
-    }
-
     // 🔥 加强版内存更新（带彩色调试日志）
     updateMemory(amount, reason = "unknown") {
         const old = this.memory;
@@ -1767,51 +1716,6 @@ class GameState {
         
         // 只要推演后的内存没有爆表（>10 或 <-10），就允许支付
         return projectedMemory <= 10 && projectedMemory >= -10;
-    }
-
-    getKeywords(card) {
-        // 先读取顶层卡的基础文本
-        let text = ((card.mainEffect || "") + (card.cardText || "")).toLowerCase();
-        
-        // 向下挖掘，把所有进化源里的 [继承效果] 拼接到一起
-        if (card.stack && card.stack.length > 0) {
-            card.stack.forEach(sCard => {
-                text += " " + (sCard.inheritedEffect || sCard.sourceEffect || "").toLowerCase();
-            });
-        }
-        
-        let secPlusAmount = 0;
-        const secMatches = [...text.matchAll(/security attack\s*([+-]\s*[0-9]+)/g)];
-        secMatches.forEach(match => {
-            secPlusAmount += parseInt(match[1].replace(/\s+/g, ''));
-        });
-
-        // 🔥 第一步：先把静态文字解析出来的全部属性打包成一个对象
-        const keywords = { 
-            secPlus: secPlusAmount, 
-            blocker: text.includes("blocker"), 
-            rush: text.includes("rush"), 
-            piercing: text.includes("piercing"), 
-            jamming: text.includes("jamming"),
-            retaliation: text.includes("retaliation"),
-            attackActive: text.includes("can attack unsuspended") || text.includes("attacks unsuspended"),
-            evade: text.includes("evade"),
-            armorPurge: text.includes("armor purge"),
-            reboot: text.includes("reboot") || text.includes("再起") // 🔥 新增再起词条识别
-        };
-
-        // 🔥 第二步：叠加临时状态（Buff/Debuff）
-        if (card.turnEffects) {
-            card.turnEffects.forEach(eff => {
-                if (eff.type === 'SEC_MOD') {
-                    // 我们字典里叫 secPlus，所以直接加给它
-                    keywords.secPlus += eff.value;
-                }
-            });
-        }
-        
-        // 🔥 第三步：统一输出完整且包含 Buff 的最终面板
-        return keywords;
     }
 
     // ==========================================
@@ -2014,6 +1918,89 @@ class GameState {
         }
 
         this.checkGlobalRules(); // 每次效果执行后检查 DP ≤ 0 等全局规则
+    }
+
+    // ====================== 词条解析器 v2.0（推荐最终版） ======================
+    getKeywords(card) {
+        if (!card) return {};
+
+        // 把所有可能出现词条的字段全部合并（最全面）
+        const fullText = [
+            card.mainEffect || '',
+            card.sourceEffect || '',
+            card.inheritedEffect || '',
+            card.cardText || ''
+        ].join(' ').toLowerCase();
+
+        return {
+            // 基础攻击词条
+            rush: fullText.includes('rush') || fullText.includes('<rush>'),
+            blocker: fullText.includes('blocker') || fullText.includes('<blocker>'),
+            piercing: fullText.includes('piercing') || fullText.includes('<piercing>'),
+            reboot: fullText.includes('reboot') || fullText.includes('<reboot>'),
+        
+            // 安全区相关
+            securityPlus: (() => {
+                const match = fullText.match(/security\s*a\.\s*\+(\d+)/i);
+                return match ? parseInt(match[1]) : 0;
+            })(),
+
+            // 保护类
+            evade: fullText.includes('evade') || fullText.includes('<evade>') || fullText.includes('回避'),
+            armorPurge: fullText.includes('armor purge') || fullText.includes('装甲解除') || fullText.includes('purge'),
+
+            // 其他常用
+            retaliation: fullText.includes('retaliation') || fullText.includes('反击'),
+            attackActive: fullText.includes('attack active') || fullText.includes('狙击') || fullText.includes('can attack unsuspended'),
+            stun: fullText.includes('stun') || fullText.includes('冰冻') || fullText.includes('cannot attack'),
+
+            // 未来可扩展（留空备用）
+            alliance: fullText.includes('alliance'),
+            collision: fullText.includes('collision'),
+            // ... 你以后加新词条直接在这里加就行
+        };
+    }
+
+    // ====================== 等级安全获取（最稳版） ======================
+    getLv(card) {
+        if (!card) return 0;
+    
+        // 优先级：card.level → card.lv → 从 cardnumber 里提取 Lv
+        let raw = card.level || card.lv;
+        if (!raw && card.cardnumber) {
+            const match = card.cardnumber.match(/Lv\.?(\d+)/i);
+            if (match) raw = match[1];
+        }
+    
+        return parseInt(raw) || 0;
+    }
+
+    // ====================== DP 计算（最完整版） ======================
+    getDp(cardInstance) {
+        if (!cardInstance) return 0;
+
+        // 1. 基础 DP
+        let totalDp = parseInt(cardInstance.dp?.toString().replace(/[^0-9]/g, '')) || 0;
+
+        // 2. 继承效果里的 +DP（你原本就有的逻辑，保留）
+        if (cardInstance.stack && cardInstance.stack.length > 0) {
+            cardInstance.stack.forEach(s => {
+                const inherited = (s.inheritedEffect || s.sourceEffect || "");
+                const dpMatch = inherited.match(/\+(\d+)\s*dp/i);
+                if (dpMatch) totalDp += parseInt(dpMatch[1]);
+            });
+        }
+
+        // 3. 本回合临时 Buff/Debuff（turnEffects）
+        if (cardInstance.turnEffects && cardInstance.turnEffects.length > 0) {
+            cardInstance.turnEffects.forEach(eff => {
+                if (eff.type === 'DP_MOD') {
+                    totalDp += (eff.value || 0);
+                }
+            });
+        }
+
+        return totalDp;
     }
 
     // ====================== 主效果核心 ======================
