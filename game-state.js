@@ -1983,12 +1983,201 @@ class GameState {
         );
     }
 
-    // ====================== 简单版 applyEffect（解决报错） ======================
-    // 你可以后面再慢慢扩展这个函数，目前先让它不报错
+    // ==========================================
+    // 🔥 效果执行引擎 v2.0
+    // ==========================================
     applyEffect(effect) {
-        console.log(`>> 执行效果: ${effect.sourceName} - ${effect.effectText}`);
-        // TODO: 后续在这里解析具体效果（抽卡、DP修改、记忆扣除等）
-        // 目前先打印，防止报错
+        if (!effect || !effect.effectText) return;
+
+        const rawText = effect.effectText;
+        const text = rawText.toLowerCase();
+        const playerId = effect.playerId;
+        const sourceCard = effect.sourceCard || effect.source;
+
+        console.log(`🚀 [EFFECT v2] ${effect.sourceName} | ${rawText}`);
+
+        // 1. 按时点分流
+        if (text.includes('[main]') || text.includes('[on play]') || text.includes('[when digivolving]') || text.includes('[when attacking]')) {
+            this.executeMainEffect(playerId, rawText, sourceCard);
+        }
+
+        if (text.includes('[security]')) {
+            this.executeSecurityEffect(playerId, rawText, sourceCard);
+        }
+
+        if (text.includes('all turns') || text.includes('your turn') || text.includes('opponent\'s turn') || effect.inherited) {
+            this.executePersistentOrInherited(playerId, rawText, sourceCard);
+        }
+
+        if (effect.type === 'System') {
+            this.executeSystemCommand(effect);
+        }
+
+        this.checkGlobalRules(); // 每次效果执行后检查 DP ≤ 0 等全局规则
+    }
+
+    // ====================== 主效果核心 ======================
+    executeMainEffect(playerId, text, sourceCard) {
+        const lower = text.toLowerCase();
+
+        // 抽卡
+        if (lower.includes('draw')) {
+            const num = this.parseNumber(lower, /draw\s*(\d+)/) || 1;
+            this.drawCard(playerId, num);
+            this.addLog(`📥 ${playerId.toUpperCase()} 抽 ${num} 张`);
+        }
+
+        // 删除对方数码兽（支持各种条件）
+        if (lower.includes('delete') && lower.includes("opponent's")) {
+            if (lower.includes('lowest level')) {
+                this.deleteLowestLevelDigimon(playerId === 'p1' ? 'p2' : 'p1');
+            } else if (lower.includes('with no digivolution cards')) {
+                this.deleteNoEvoDigimon(playerId === 'p1' ? 'p2' : 'p1');
+            } else {
+                // 通用：进入 pending 让玩家手动选目标
+                this.queueTargetSelection(playerId, 'delete', 1);
+            }
+        }
+
+        // 记忆操作（最常用）
+        if (lower.includes('gain') && lower.includes('memory')) {
+            const num = this.parseNumber(lower, /gain\s*(\d+)/) || 1;
+            this.updateMemory(playerId === 'p1' ? -num : num);
+        }
+        if (lower.includes('lose') || lower.includes('memory cost')) {
+            const num = this.parseNumber(lower, /(\d+)/) || 1;
+            this.updateMemory(playerId === 'p1' ? num : -num);
+        }
+
+        // DP 修改（本回合）
+        const dpMatch = lower.match(/[+-]\s*(\d+)\s*dp/);
+        if (dpMatch) {
+            const val = parseInt(dpMatch[1]);
+            const isPlus = lower.includes('+');
+            this.addTurnBuff(playerId, sourceCard, 'DP', isPlus ? val : -val);
+        }
+
+        // Recovery
+        if (lower.includes('recovery')) {
+            const num = this.parseNumber(lower, /recovery\s*\+(\d+)/) || 1;
+            this.recoveryDeck(playerId, num);
+        }
+
+        // Trash 进化源
+        if (lower.includes('trash the bottom') || lower.includes('trash any')) {
+            const opp = playerId === 'p1' ? 'p2' : 'p1';
+            this.trashBottomEvo(opp);
+        }
+
+        // 常见 Option 效果
+        if (lower.includes('trash the top card of your security stack')) {
+            const zone = this.zones[playerId];
+            if (zone.security.length > 0) zone.security.shift();
+        }
+    }
+
+    // ====================== Security 效果 ======================
+    executeSecurityEffect(playerId, text, sourceCard) {
+        const lower = text.toLowerCase();
+
+        if (lower.includes('add this card to the hand') || lower.includes('add this card to hand')) {
+            if (this.counterTiming.currentSecurityCard) {
+                this.zones[playerId].hand.push(this.counterTiming.currentSecurityCard);
+                this.addLog(`🛡️ ${playerId.toUpperCase()} 安保卡回收入手`);
+            }
+        }
+
+        if (lower.includes('activate this card\'s [main] effects')) {
+            this.executeMainEffect(playerId, text, sourceCard);
+        }
+    }
+
+    // ====================== 常驻 / 继承效果 ======================
+    executePersistentOrInherited(playerId, text, sourceCard) {
+        const lower = text.toLowerCase();
+        if (lower.includes('this digimon gets') && lower.includes('dp')) {
+            const val = this.parseNumber(lower, /\+(\d+)/) || 2000;
+            this.addTurnBuff(playerId, sourceCard, 'DP', val);
+        }
+        // Reboot / Blocker / Rush 等已经在 getKeywords 里处理，这里只加临时 Buff
+    }
+
+    // ====================== 系统指令 ======================
+    executeSystemCommand(effect) {
+        const cmd = effect.effectText;
+        if (cmd === 'execute_attack') this.executePendingAttack();
+        if (cmd.startsWith('sec_check')) {
+            const remain = parseInt(cmd.split(' ')[1]) || 1;
+            this.processSecurityChecks(effect.playerId, null, this.zones[effect.playerId === 'p1' ? 'p2' : 'p1'], remain);
+        }
+        if (cmd === 'end_of_attack') {
+            this.resetBattleState();
+            this.checkTurnEnd();
+        }
+    }
+
+    // ====================== 工具函数 ======================
+    parseNumber(text, regex) {
+        const m = text.match(regex);
+        return m ? parseInt(m[1]) : null;
+    }
+
+    addTurnBuff(playerId, sourceCard, type, value) {
+        this.zones[playerId].battleArea.forEach(card => {
+            if (!card.turnEffects) card.turnEffects = [];
+            card.turnEffects.push({ type: type === 'DP' ? 'DP_MOD' : type, value, source: sourceCard?.name || 'system' });
+        });
+    }
+
+    deleteLowestLevelDigimon(oppId) {
+        const area = this.zones[oppId].battleArea;
+        if (!area.length) return;
+        area.sort((a,b) => this.getLv(a) - this.getLv(b));
+        this.applyDeletion(oppId, area.shift().instanceId);
+    }
+
+    deleteNoEvoDigimon(oppId) {
+        const area = this.zones[oppId].battleArea;
+        for (let i = area.length - 1; i >= 0; i--) {
+            if (!area[i].stack || area[i].stack.length === 0) {
+                this.applyDeletion(oppId, area[i].instanceId);
+                return;
+            }
+        }
+    }
+
+    trashBottomEvo(oppId) {
+        const area = this.zones[oppId].battleArea;
+        area.forEach(card => {
+            if (card.stack && card.stack.length > 0) {
+                const bottom = card.stack.shift();
+                this.sendToTrash(oppId, bottom);
+            }
+        });
+    }
+
+    recoveryDeck(playerId, count) {
+        const zone = this.zones[playerId];
+        for (let i = 0; i < count && zone.deck.length > 0; i++) {
+            zone.security.unshift(zone.deck.pop());
+        }
+        this.addLog(`🔄 ${playerId.toUpperCase()} Recovery +${count}`);
+    }
+
+    updateMemory(delta) {
+        this.memory += delta;
+        this.addLog(`💾 MEMORY ${delta > 0 ? '+' : ''}${delta}`);
+    }
+
+    // ====================== 待玩家选择效果（已对接前端） ======================
+    queueTargetSelection(playerId, actionType, count = 1) {
+        this.pendingTarget = {
+            playerId,
+            actionType,   // 'delete' / 'trash' / 'attach' 等
+            count,
+            message: `请选择 ${count} 个目标执行 ${actionType}`
+        };
+        // 前端会自动弹出 targeting banner
     }
 
     // ==========================================
