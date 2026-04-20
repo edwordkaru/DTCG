@@ -1150,7 +1150,7 @@ class GameState {
                 }
             }
 
-            this.checkGlobalRules();
+        this.checkGlobalRules();
 
             // 🔥 修复 1：解除爆裂进化死锁！
             // 如果是在等待反击效果结算，且队列已空，自动推动引擎进入 BLOCKER 阶段
@@ -1173,29 +1173,32 @@ class GameState {
 
         const constraints = this.pendingReveal.constraints;
         
-        // 1. 强制類型轉換
+        // 1. 强制类型转换，确保比对成功
         const normalizedIds = selectedInstanceIds.map(String);
         const selectedCards = this.pendingReveal.cards.filter(c => 
             normalizedIds.includes(String(c.instanceId))
         );
 
+        // 2. 如果玩家选了牌但后端没匹配上，报错
         if (normalizedIds.length > 0 && selectedCards.length === 0) {
-            console.error("🚨 [REVEAL] InstanceID 匹配失敗，請檢查類型轉換！");
+            console.error("🚨 [REVEAL] InstanceID 匹配失败，请检查类型转换！");
             return;
         }
 
+        // 3. 核心验证
         if (constraints.mode === "FILTERED" && selectedCards.length > 0) {
             let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
             if (!valid) {
-                console.warn(`🚫 [REVEAL] 選牌組合不合法！不滿足: ${JSON.stringify(constraints.targetGroups)}`);
+                console.warn(`🚫 [REVEAL] 选牌组合不合法！不满足: ${JSON.stringify(constraints.targetGroups)}`);
                 return; 
             }
         }
 
+        // 4. 成功后执行清理
         const selectedActualIds = selectedCards.map(c => String(c.instanceId));
         const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
         
-        console.log(`✅ [REVEAL] 驗證通過，${selectedCards.length} 張卡進入玩家 ${playerId} 手牌。`);
+        console.log(`✅ [REVEAL] 验证通过，${selectedCards.length} 张卡进入玩家 ${playerId} 手牌。`);
         this.finishRevealProcess(playerId, selectedCards, remaining);
     }
 
