@@ -735,6 +735,7 @@ class GameState {
                 console.log(`📡 [QUEUE] 处理翻牌效果，剩余任务数: ${this.effectQueue.length}`);
                 return;
             }
+        }
             
             const eff = this.effectQueue.shift();
             let text = eff.effectText; 
