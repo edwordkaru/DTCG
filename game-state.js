@@ -1631,8 +1631,7 @@ class GameState {
         // 🔥 2. 确认合法后，再执行支付（不再出现扣费不结算的死锁）
                 // 🔥 3. 【加强调试版】支付成本
         if (!isBlast) {
-            console.log(`%c[COST CALC] Player=${playerId} | Card=${card.name} | Type=${cardType} | isEvolve=${isEvolve} | finalCost=${finalCost} | playCost=${card.playCost} | digivolveCost=${card.digivolveCost || 'N/A'}`, 
-                        'color:#00ffcc; font-weight:bold');
+            console.log(`%c[COST CALC] Player=${playerId} | Card=${card.name} | Type=${cardType} | isEvolve=${isEvolve} | finalCost=${finalCost} | playCost=${card.playCost} | digivolveCost=${card.digivolveCost}`, 'color:#00ffcc; font-weight:bold');
 
             if (!this.canPay(playerId, finalCost)) {
                 console.warn(`🚫 [Rules] 内存不足！无法支付 ${finalCost} 费 (当前 memory=${this.memory})`);
