@@ -1159,37 +1159,35 @@ class GameState {
         const constraints = this.pendingReveal.constraints;
         const requiredTotal = constraints.totalSelectCount;
         
-        // 1. 放弃检索的情况
-        if (!selectedInstanceIds || selectedInstanceIds.length === 0) {
-            console.log(`⏩ [REVEAL] 玩家 ${playerId} 放弃检索。`);
-            this.finishRevealProcess(playerId, [], this.pendingReveal.cards);
-            return;
-        }
+        // 1. 预处理：强制转换为字符串数组，并过滤掉无效输入
+        const normalizedIds = (selectedInstanceIds || []).map(String);
 
-        // 2. 数量校验
-        if (selectedInstanceIds.length > requiredTotal) {
-            console.warn(`🚫 [REVEAL] 选牌超限！`);
-            return;
-        }
-
-        // 🔥 修复点：强制进行 String 转换比对，消除类型差异
+        // 2. 提取选中的卡牌（修复类型不匹配）
         const selectedCards = this.pendingReveal.cards.filter(c => 
-            selectedInstanceIds.map(String).includes(String(c.instanceId))
+            normalizedIds.includes(String(c.instanceId))
         );
 
-        // 3. 深度验证：确保选出的卡符合具体的 [Angel] / [Demon] 等分组条件
-        if (constraints.mode === "FILTERED") {
+        // 3. 严格校验：如果玩家点了卡，但后端一张都没匹配上，说明前端传值有问题
+        if (normalizedIds.length > 0 && selectedCards.length === 0) {
+            console.error("🚨 [REVEAL] 严重错误：前端选中的 ID 在后端翻开的卡中找不到！检查 InstanceID 类型。");
+            return;
+        }
+
+        // 4. 深度验证：多维槽位匹配 (处理 1黄 + 1紫 的逻辑核心)
+        if (constraints.mode === "FILTERED" && selectedCards.length > 0) {
             let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
             if (!valid) {
-                console.warn(`🚫 [REVEAL] 规则拦截：选定的组合不符合卡牌描述的要求！`);
-                return; 
+                // ⚠️ 这里就是拦截“选了两张紫色”的地方！
+                console.warn(`🚫 [REVEAL] 规则拦截：选定的卡牌组合无法同时满足所有独立条件！`);
+                return; // 拒绝操作，让玩家在 UI 上重选
             }
         }
 
-        const selectedIds = selectedCards.map(c => String(c.instanceId));
-        const remaining = this.pendingReveal.cards.filter(c => !selectedIds.includes(String(c.instanceId)));
+        // 5. 结算：将确认选中的卡移入手牌，剩下的处理
+        const selectedActualIds = selectedCards.map(c => String(c.instanceId));
+        const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
         
-        console.log(`✅ [REVEAL] 玩家 ${playerId} 成功检索 ${selectedCards.length} 张卡入对手牌。`);
+        console.log(`✅ [REVEAL] 玩家 ${playerId} 成功检索 ${selectedCards.length} 张卡。`);
         this.finishRevealProcess(playerId, selectedCards, remaining);
     }
 
