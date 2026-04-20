@@ -1509,7 +1509,7 @@ class GameState {
 
         if (this.gameOver || (this.turnPlayer !== playerId && !isBlast)) return;
 
-        // 🔥 规则锁：有效果正在结算或战斗中禁止出牌
+        // 🔥 规则锁
         if (this.effectQueue.length > 0 || this.pendingAttack || this.counterTiming.isActive) {
             console.warn(`🚫 规则拦截：当前有未结算效果，无法打出 ${card.name}`);
             return;
@@ -1528,13 +1528,9 @@ class GameState {
             isEvolve = true;
 
             target = cur.battleArea.find(c => c.instanceId === targetInstanceId) ||
-                    cur.breedingArea.find(c => c.instanceId === targetInstanceId);
+                     cur.breedingArea.find(c => c.instanceId === targetInstanceId);
 
-            if (!target) {
-                console.warn(`🚫 [Rules] 进化失败：未找到目标`);
-                return;
-            }
-        
+            if (!target) return console.warn(`🚫 [Rules] 进化失败：未找到目标`);
 
             targetZone = cur.battleArea.includes(target) ? 'battleArea' : 'breedingArea';
 
@@ -1542,8 +1538,7 @@ class GameState {
             const targetLv = this.getLv(target);
 
             if (cardLv === 0 || targetLv === 0 || cardLv !== targetLv + 1) {
-                console.warn(`🚫 [Rules] 违规进化：Lv.${targetLv} → Lv.${cardLv}`);
-                return;
+                return console.warn(`🚫 [Rules] 违规进化：Lv.${targetLv} → Lv.${cardLv}`);
             }
 
             // 颜色匹配
@@ -1553,55 +1548,45 @@ class GameState {
                 const cColors = cardColor.split(/[\/\s,]+/);
                 const tColors = targetColor.split(/[\/\s,]+/);
                 const colorMatch = cColors.some(cc => tColors.includes(cc)) || tColors.some(tc => cColors.includes(tc));
-                if (!colorMatch) {
-                    console.warn(`🚫 [Rules] 颜色不匹配`);
-                    return;
-                }
+                if (!colorMatch) return console.warn(`🚫 [Rules] 颜色不匹配`);
             }
 
-            // 严格读取进化费用
             finalCost = parseInt(card.digivolveCost ?? card.evocost ?? card.digivolve_cost) || 0;
-
             this.addLog(`>> <span style="color:var(--blue)">[${playerId.toUpperCase()}]</span> 进化 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
         } 
         // ====================== 普通出牌 ======================
         else {
             if (zone === 'hatch' && !isEvolve) {
-                console.warn(`🚫 [Rules] 不能直接普通登场到蛋区`);
-                return;
+                return console.warn(`🚫 [Rules] 不能直接普通登场到蛋区`);
             }
             finalCost = parseInt(card.playCost ?? card.play_cost) || 0;
             this.addLog(`>> <span style="color:var(--green)">[${playerId.toUpperCase()}]</span> 登场 <b>${card.name}</b> (消耗 ${finalCost} 费)`);
-            }
+        }
 
-            // 免费进化特判
-            if (isEvolve && card.mainEffect) {
+        // 免费进化特判
+        if (isEvolve && card.mainEffect) {
             const txt = card.mainEffect.toLowerCase();
-            if (txt.includes('free') || txt.includes('no cost') || txt.includes('不支付')) {
-                finalCost = 0;
-            }
+            if (txt.includes('free') || txt.includes('no cost') || txt.includes('不支付')) finalCost = 0;
         }
 
         // ====================== 支付费用 ======================
         if (!isBlast) {
-            if (!this.canPay(playerId, finalCost)) {
-                console.warn(`🚫 内存不足，无法支付 ${finalCost} 费`);
-                return;
+            // 🔥 补充 canPay 方法（如果你还没有就加在类里）
+            if (typeof this.canPay === 'function' && !this.canPay(playerId, finalCost)) {
+                return console.warn(`🚫 内存不足，无法支付 ${finalCost} 费`);
             }
-        
             const delta = (playerId === 'p1') ? -finalCost : finalCost;
-            this.updateMemory(delta);   // ← 这里只传 delta（如果你想保留 reason 可以再改 updateMemory）
+            this.updateMemory(delta);   // 只传一个参数
         } else {
             console.log(`💥 BLAST 进化 → 免单`);
         }
 
-        // ====================== 执行卡牌移动 ======================
+        // ====================== 执行移动 ======================
         const handIdx = cur.hand.findIndex(c => c.instanceId === card.instanceId);
         if (handIdx === -1) return;
         const [movedCard] = cur.hand.splice(handIdx, 1);
 
         if (isEvolve) {
-            // 进化堆叠
             const oldStack = target.stack || [];
             target.stack = [...oldStack, { ...target }];
             Object.assign(target, { 
@@ -1612,16 +1597,11 @@ class GameState {
 
             this.drawCard(playerId, 1);
 
-            // 蛋区进化不触发效果（官方规则）
             if (targetZone === 'battleArea') {
                 this.triggerEffect(playerId, target, "On Play");
                 this.triggerEffect(playerId, target, "When Digivolving");
-            } else {
-                console.log(`🥚 蛋区进化完成（静默）`);
             }
-        }
-        else {
-            // 普通登场
+        } else {
             if (cardType.includes('option')) {
                 cur.trash.push(movedCard);
                 this.triggerEffect(playerId, movedCard, "Main");
@@ -1634,7 +1614,6 @@ class GameState {
                 });
                 this.triggerEffect(playerId, movedCard, "On Play");
 
-                // 全场登场广播（给驯兽师、天女兽等监听用）
                 cur.battleArea.forEach(c => {
                     if (c.instanceId !== movedCard.instanceId) {
                         this.triggerEffect(playerId, c, "Your Turn");
@@ -1646,6 +1625,12 @@ class GameState {
 
         this.checkGlobalRules();
         this.checkTurnEnd();
+    }
+
+    canPay(playerId, cost) {
+        if (cost <= 0) return true;
+        const memoryOk = (playerId === 'p1') ? (this.memory <= -cost) : (this.memory >= cost);
+        return memoryOk;
     }
 
     // 🔥 加强版内存更新（带彩色调试日志）
