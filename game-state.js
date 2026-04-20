@@ -751,7 +751,8 @@ class GameState {
                 
                 if (!hasRequired) {
                     console.log(`🚫 [CONDITION] 魔法反制：玩家 ${eff.playerId} 场上没有 ${reqType}，效果落空！`);
-                    continue; // 拦截成功！直接切断当前循环，这效果废了
+                    this.resolveEffect();
+                    return; // 拦截成功！直接切断当前循环，这效果废了
                 }
                 
                 // 验证通过，把前面的 If 废话切掉，留下干货给后面的解析器
@@ -768,7 +769,8 @@ class GameState {
                 
                 if (oppCount < reqCount) {
                     console.log(`🚫 [CONDITION] 魔法反制：对手场上只有 ${oppCount} 只怪兽，不足 ${reqCount} 只，效果落空！`);
-                    continue;
+                    this.resolveEffect();
+                    return;
                 }
                 
                 console.log(`✨ [CONDITION] 条件达成！对手人头数达标，准备执行惩罚...`);
