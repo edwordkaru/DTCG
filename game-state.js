@@ -2088,11 +2088,10 @@ class GameState {
     queueTargetSelection(playerId, actionType, count = 1) {
         this.pendingTarget = {
             playerId,
-            actionType,   // 'delete' / 'trash' / 'attach' 等
+            actionType,
             count,
             message: `请选择 ${count} 个目标执行 ${actionType}`
         };
-        // 前端会自动弹出 targeting banner
     }
 
     // ==========================================
@@ -2115,10 +2114,9 @@ class GameState {
     getLinkLimit(card) {
         const text = ((card.mainEffect || "") + (card.cardText || "")).toLowerCase();
         const match = text.match(/link limit\s*(\d+)/i);
-        return match ? parseInt(match[1]) : 0;   // 0 = 无限制
+        return match ? parseInt(match[1]) : 0;
     }
 
-    // 在 playOrEvolve 或 digiXros 成功后调用
     applyLink(playerId, cardInstance) {
         if (!cardInstance) return;
         const limit = this.getLinkLimit(cardInstance);
@@ -2395,6 +2393,7 @@ class GameState {
         }
     }
 
+}
 // 🔥 让 Node.js 能够引入这台核动力引擎
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = GameState;
