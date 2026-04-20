@@ -1137,51 +1137,52 @@ class GameState {
         }
     }
 
-    // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds) {
-        // 1. 安全處理預設參數並去重（防止前端传入重复ID）
-        const rawIds = selectedInstanceIds || [];
-        const normalizedIds = [...new Set(rawIds.map(String))]; 
-
-        if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
-
-        // 确保 constraints 存在，提供默认值防止报错
-        const constraints = this.pendingReveal.constraints || {}; 
-    
-        // 2. 匹配卡牌实体
-        const selectedCards = this.pendingReveal.cards.filter(c => 
-            normalizedIds.includes(String(c.instanceId))
-        );
-
-        // 3. 严格的防作弊匹配检查：传入的ID必须100%在池子中找到
-        if (normalizedIds.length !== selectedCards.length) {
-            console.error(`🚨 [REVEAL] InstanceID 匹配失败！玩家 ${playerId} 试图选择不存在或不属于当前 Reveal 池的卡牌。`);
-            // TODO: 必须通知客户端匹配失败，解除客户端卡死状态
-            // this.sendErrorMessage(playerId, "选择的卡牌无效，请重试。");
+    // ====================== Reveal 多选提交（100% 修复版） ======================
+    submitRevealChoice(playerId, selectedCardInstanceIds) {
+        if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) {
+            console.warn(`🚫 [Reveal] 非法提交：没有 pendingReveal 或不是当前玩家`);
             return;
         }
 
-        // 4. 核心验证 (移除 length > 0 的短路判断，空数组也必须接受规则的审判)
-        if (constraints.mode === "FILTERED") {
-            // 如果 targetGroups 不存在，默认给空数组防报错
-            const groups = constraints.targetGroups || [];
-        
-            let valid = this.validateSelectionAgainstGroups(selectedCards, groups);
-            if (!valid) {
-                console.warn(`🚫 [REVEAL] 玩家 ${playerId} 选牌组合不合法！选择数量: ${selectedCards.length}`);
-                // TODO: 通知客户端非法选择，让其重新选择
-                // this.sendErrorMessage(playerId, "卡牌组合不满足条件，请重新选择。");
-                return; 
-            
-            }
+        const revealData = this.pendingReveal;
+        this.pendingReveal = null;   // 🔥 立即清空，防止重复提交
 
-            // 5. 成功后执行清理
-            const selectedActualIds = selectedCards.map(c => String(c.instanceId));
-            const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
-    
-            console.log(`✅ [REVEAL] 验证通过，${selectedCards.length} 张卡进入玩家 ${playerId} 手牌。`);
-            this.finishRevealProcess(playerId, selectedCards, remaining);
+        // 支持单个 ID 或数组（兼容前后端）
+        let selectedIds = Array.isArray(selectedCardInstanceIds) 
+            ? selectedCardInstanceIds 
+            : (selectedCardInstanceIds ? [selectedCardInstanceIds] : []);
+
+        console.log(`🔮 [Reveal] ${playerId} 选择了 ${selectedIds.length} 张卡`);
+
+        if (revealData.cards && revealData.cards.length > 0) {
+            // 选中的卡
+            const chosenCards = revealData.cards.filter(c => selectedIds.includes(c.instanceId));
+        
+            // 没选的卡放回牌库底部并洗牌
+            const remainingCards = revealData.cards.filter(c => !selectedIds.includes(c.instanceId));
+
+            // 最常见的处理：选中的卡加入手牌
+            chosenCards.forEach(card => {
+                this.zones[playerId].hand.push(card);
+                this.addLog(`🔮 ${playerId.toUpperCase()} 从检索中获得了 ${card.name}`);
+            });
+
+            // 剩余卡放回牌库底部 + 洗牌
+            if (remainingCards.length > 0) {
+                this.zones[playerId].deck.push(...remainingCards);
+                this.shuffle(this.zones[playerId].deck);
+            }
         }
+
+        // 如果这个 Reveal 后面还有后续效果，继续触发
+        if (revealData.continueEffect && revealData.sourceCard) {
+            this.triggerEffect(playerId, revealData.sourceCard, revealData.continueEffect);
+        }
+
+        this.checkGlobalRules();
+        this.checkTurnEnd();
+
+        console.log(`✅ [Reveal] 处理完成，已清空 pendingReveal`);
     }
 
     // 辅助方法：验证多维卡牌归属
