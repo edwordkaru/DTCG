@@ -1138,7 +1138,7 @@ class GameState {
     }
 
     // ====================== Reveal 多选提交（100% 修复版） ======================
-    submitRevealChoice(playerId, selectedCardInstanceIds) ;{
+    submitRevealChoice(playerId, selectedCardInstanceIds) {
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) {
             console.warn(`🚫 [Reveal] 非法提交：没有 pendingReveal 或不是当前玩家`);
             return;
@@ -1186,7 +1186,7 @@ class GameState {
     }
 
     // 辅助方法：验证多维卡牌归属
-    validateSelectionAgainstGroups(selectedCards, targetGroups) ;{
+    validateSelectionAgainstGroups(selectedCards, targetGroups) {
         // 复制一份每个组还需要几张卡
         const groupNeeds = targetGroups.map(g => g.count);
     
@@ -1209,7 +1209,7 @@ class GameState {
     }
 
     // 辅助方法：清理善后
-    finishRevealProcess(playerId, selectedCards, remainingCards) ;{
+    finishRevealProcess(playerId, selectedCards, remainingCards) {
         this.zones[playerId].hand.push(...selectedCards);
 
         if (this.pendingReveal.remainingAction === "BOTTOM") {
@@ -1229,7 +1229,7 @@ class GameState {
     }
 
     // 🔥 新增：接收前端的目标 ID，扣动扳机，然后解除刹车
-    submitTarget(playerId, targetInstanceId) ;{
+    submitTarget(playerId, targetInstanceId) {
         if (!this.pendingTarget || this.pendingTarget.playerId !== playerId) {
             console.warn("🚫 没有等待中的目标请求，或玩家不匹配！");
             return;
@@ -1394,7 +1394,7 @@ class GameState {
     }
 
     // 🦇 新增：接收前端的转生选择，把卡拉回战场并触发 On Play
-    submitTrashRevive(playerId, selectedCardInstanceId) ;{
+    submitTrashRevive(playerId, selectedCardInstanceId) {
         if (!this.pendingTrashRevive || this.pendingTrashRevive.playerId !== playerId) {
             console.warn("🚫 没有等待中的转生请求，或玩家不匹配！");
             return;
@@ -1432,7 +1432,7 @@ class GameState {
     }
 
     // 🛡️ 接收前端的抗性选择，决定是“免死”还是“认命”
-    submitProtectionChoice(playerId, choice) ;{
+    submitProtectionChoice(playerId, choice) {
         if (!this.pendingProtection || this.pendingProtection.playerId !== playerId) {
             console.warn("🚫 没有等待中的抗性请求！");
             return;
@@ -1469,7 +1469,7 @@ class GameState {
         this.checkTurnEnd();    // 🔥 新增：强迫引擎检查内存！
     }
 
-    hatchEgg(playerId) ;{
+    hatchEgg(playerId) {
         if (this.turnPlayer !== playerId || this.phase !== 'HATCH' || this.hasActionedInHatch) return;
         const cur = this.zones[playerId];
         if (cur.breedingArea.length === 0 && cur.eggDeck.length > 0) {
@@ -1484,7 +1484,7 @@ class GameState {
         }
     }
 
-    moveBreedingToBattle(playerId) ;{
+    moveBreedingToBattle(playerId) {
         if (this.turnPlayer !== playerId || this.phase !== 'HATCH' || this.hasActionedInHatch) return;
         const cur = this.zones[playerId];
         if (cur.breedingArea.length > 0) {
@@ -1504,7 +1504,7 @@ class GameState {
     }
 
     // ==================== 【最终调试版】playOrEvolve ====================
-    playOrEvolve(playerId, card, zone, targetInstanceId, isBlast) ;{
+    playOrEvolve(playerId, card, zone, targetInstanceId, isBlast) {
         targetInstanceId = targetInstanceId || null;
         isBlast = isBlast || false;
 
@@ -1628,7 +1628,7 @@ class GameState {
         this.checkTurnEnd();
     }
 
-    canPay(playerId, cost) ;{
+    canPay(playerId, cost) {
         if (cost <= 0) return true;
         const delta = (playerId === 'p1') ? -cost : cost;
         const projectedMemory = this.memory + delta;
@@ -1636,7 +1636,7 @@ class GameState {
     }
 
     // 🔥 加强版内存更新（带彩色调试日志）
-    updateMemory(amount, reason = "unknown") ;{
+    updateMemory(amount, reason = "unknown") {
         const old = this.memory;
         this.memory += amount;
         if (this.memory > 10) this.memory = 10;
@@ -1649,7 +1649,7 @@ class GameState {
     // ==========================================
     // 🔥 升级版通用 Reveal 解析器 (动态提取一切条件)
     // ==========================================
-    parseRevealInstruction(text) ;{
+    parseRevealInstruction(text) {
         text = text.toLowerCase();
 
         // ✅ 修复：必须把字典定义移到函数最顶部，防止 TDZ 报错！
@@ -1738,7 +1738,7 @@ class GameState {
         return { revealCount, isSecurity, constraints, remainingAction, instruction: text };
     }
 
-    triggerEffect(playerId, card, timing) ;{
+    triggerEffect(playerId, card, timing) {
         if (!card) return;
 
         const effectsToTrigger = [];
@@ -1804,12 +1804,12 @@ class GameState {
     }
 
     // ====================== 配套辅助方法（已修复） ======================
-    markEffectUsed(card, key) ;{
+    markEffectUsed(card, key) {
         if (!card.turnEffects) card.turnEffects = [];
         card.turnEffects.push({ type: 'ONCE_USED', key: key, turn: this.turnCount });
     }
 
-    isEffectUsedThisTurn(card, key) ;{
+    isEffectUsedThisTurn(card, key) {
         return card.turnEffects && card.turnEffects.some(e => 
             e.type === 'ONCE_USED' && e.key === key && e.turn === this.turnCount
         );
@@ -1818,7 +1818,7 @@ class GameState {
     // ==========================================
     // 🔥 效果执行引擎 v2.0
     // ==========================================
-    applyEffect(effect) ;{
+    applyEffect(effect) {
         if (!effect || !effect.effectText) return;
 
         const rawText = effect.effectText;
@@ -1849,7 +1849,7 @@ class GameState {
     }
 
     // ====================== 词条解析器 v2.0（推荐最终版） ======================
-    getKeywords(card) ;{
+    getKeywords(card) {
         if (!card) return {};
 
         // 把所有可能出现词条的字段全部合并（最全面）
@@ -1890,7 +1890,7 @@ class GameState {
     }
 
     // ====================== 等级安全获取（最稳版） ======================
-    getLv(card) ;{
+    getLv(card) {
         if (!card) return 0;
     
         // 优先级：card.level → card.lv → 从 cardnumber 里提取 Lv
@@ -1904,7 +1904,7 @@ class GameState {
     }
 
     // ====================== DP 计算（最完整版） ======================
-    getDp(cardInstance) ;{
+    getDp(cardInstance) {
         if (!cardInstance) return 0;
 
         // 1. 基础 DP
@@ -1932,7 +1932,7 @@ class GameState {
     }
 
     // ====================== 主效果核心 ======================
-    executeMainEffect(playerId, text, sourceCard) ;{
+    executeMainEffect(playerId, text, sourceCard) {
         const lower = text.toLowerCase();
 
         // 抽卡
@@ -1992,7 +1992,7 @@ class GameState {
     }
 
     // ====================== Security 效果 ======================
-    executeSecurityEffect(playerId, text, sourceCard) ;{
+    executeSecurityEffect(playerId, text, sourceCard) {
         const lower = text.toLowerCase();
 
         if (lower.includes('add this card to the hand') || lower.includes('add this card to hand')) {
@@ -2008,7 +2008,7 @@ class GameState {
     }
 
     // ====================== 常驻 / 继承效果 ======================
-    executePersistentOrInherited(playerId, text, sourceCard) ;{
+    executePersistentOrInherited(playerId, text, sourceCard) {
         const lower = text.toLowerCase();
         if (lower.includes('this digimon gets') && lower.includes('dp')) {
             const val = this.parseNumber(lower, /\+(\d+)/) || 2000;
@@ -2018,7 +2018,7 @@ class GameState {
     }
 
     // ====================== 系统指令 ======================
-    executeSystemCommand(effect) ;{
+    executeSystemCommand(effect) {
         const cmd = effect.effectText;
         if (cmd === 'execute_attack') this.executePendingAttack();
         if (cmd.startsWith('sec_check')) {
@@ -2032,7 +2032,7 @@ class GameState {
     }
 
     // ====================== 工具函数 ======================
-    parseNumber(text, regex) ;{
+    parseNumber(text, regex) {
         const m = text.match(regex);
         return m ? parseInt(m[1]) : null;
     }
@@ -2044,14 +2044,14 @@ class GameState {
         });
     }
 
-    deleteLowestLevelDigimon(oppId) ;{
+    deleteLowestLevelDigimon(oppId) {
         const area = this.zones[oppId].battleArea;
         if (!area.length) return;
         area.sort((a,b) => this.getLv(a) - this.getLv(b));
         this.applyDeletion(oppId, area.shift().instanceId);
     }
 
-    deleteNoEvoDigimon(oppId) ;{
+    deleteNoEvoDigimon(oppId) {
         const area = this.zones[oppId].battleArea;
         for (let i = area.length - 1; i >= 0; i--) {
             if (!area[i].stack || area[i].stack.length === 0) {
@@ -2061,7 +2061,7 @@ class GameState {
         }
     }
 
-    trashBottomEvo(oppId) ;{
+    trashBottomEvo(oppId) {
         const area = this.zones[oppId].battleArea;
         area.forEach(card => {
             if (card.stack && card.stack.length > 0) {
@@ -2071,7 +2071,7 @@ class GameState {
         });
     }
 
-    recoveryDeck(playerId, count) ;{
+    recoveryDeck(playerId, count) {
         const zone = this.zones[playerId];
         for (let i = 0; i < count && zone.deck.length > 0; i++) {
             zone.security.unshift(zone.deck.pop());
@@ -2079,13 +2079,13 @@ class GameState {
         this.addLog(`🔄 ${playerId.toUpperCase()} Recovery +${count}`);
     }
 
-    updateMemory(delta) ;{
+    updateMemory(delta) {
         this.memory += delta;
         this.addLog(`💾 MEMORY ${delta > 0 ? '+' : ''}${delta}`);
     }
 
     // ====================== 待玩家选择效果（已对接前端） ======================
-    queueTargetSelection(playerId, actionType, count = 1) ;{
+    queueTargetSelection(playerId, actionType, count = 1) {
         this.pendingTarget = {
             playerId,
             actionType,   // 'delete' / 'trash' / 'attach' 等
@@ -2098,7 +2098,7 @@ class GameState {
     // ==========================================
     // 🔥 Link 系统（手册 p.26-27）
     // ==========================================
-    calculateLinkDP(card) ;{
+    calculateLinkDP(card) {
         if (!card) return 0;
         let base = this.getDp(card);
         if (card.stack && card.stack.length > 0) {
@@ -2112,14 +2112,14 @@ class GameState {
         return base;
     }
 
-    getLinkLimit(card) ;{
+    getLinkLimit(card) {
         const text = ((card.mainEffect || "") + (card.cardText || "")).toLowerCase();
         const match = text.match(/link limit\s*(\d+)/i);
         return match ? parseInt(match[1]) : 0;   // 0 = 无限制
     }
 
     // 在 playOrEvolve 或 digiXros 成功后调用
-    applyLink(playerId, cardInstance) ;{
+    applyLink(playerId, cardInstance) {
         if (!cardInstance) return;
         const limit = this.getLinkLimit(cardInstance);
         if (limit > 0 && (cardInstance.stack || []).length >= limit) {
@@ -2130,12 +2130,12 @@ class GameState {
     }
 
     // 🔥 新增：once per turn 防护（放在类里任意位置即可）
-    markEffectUsed(card, effectKey) ;{
+    markEffectUsed(card, effectKey) {
         if (!card.turnEffects) card.turnEffects = [];
         card.turnEffects.push({ type: 'ONCE_USED', key: effectKey });
     }
 
-    isEffectUsedThisTurn(card, effectKey) ;{
+    isEffectUsedThisTurn(card, effectKey) {
         return card.turnEffects && card.turnEffects.some(e => e.type === 'ONCE_USED' && e.key === effectKey);
     }
 
@@ -2178,7 +2178,7 @@ class GameState {
         };
     }
 
-    processSecurityChecks(aId, attacker, defenderSide, count) ;{
+    processSecurityChecks(aId, attacker, defenderSide, count) {
         if (count <= 0 || defenderSide.security.length === 0) return;
         const defId = (defenderSide === this.zones['p1']) ? 'p1' : 'p2'; 
         const secCard = defenderSide.security.pop();
@@ -2219,7 +2219,7 @@ class GameState {
     // ==========================================
     // 🔥 Overflow 完整版（手册 Page 19 严格实现）
     // ==========================================
-    processOverflow(playerId, card) ;{
+    processOverflow(playerId, card) {
         if (!card) return;
 
         let total = 0;
@@ -2244,7 +2244,7 @@ class GameState {
     }
 
     // 🛡️ 死亡拦截中枢：所有“消灭”动作必须先过这一关
-    applyDeletion(playerId, instanceId) ;{
+    applyDeletion(playerId, instanceId) {
         const side = this.zones[playerId];
         const card = side.battleArea.find(c => c.instanceId === instanceId);
         if (!card) return;
@@ -2270,7 +2270,7 @@ class GameState {
     }
 
     // 💀 物理执行死亡：以前散落在各处的销毁逻辑，现在统一归口到这里
-    executePhysicalDeletion(playerId, card) ;{
+    executePhysicalDeletion(playerId, card) {
         const side = this.zones[playerId];
         const idx = side.battleArea.indexOf(card);
         if (idx === -1) return;
@@ -2286,7 +2286,7 @@ class GameState {
     }
 
     // ==================== 【修复版】passTurn ====================
-    passTurn() ;{
+    passTurn() {
         if (this.gameOver) return;
         const cp = this.turnPlayer;
 
@@ -2334,7 +2334,7 @@ class GameState {
         this.phase = 'HATCH';   // 进入 Breeding Phase
     }
 
-    startNewTurn() ;{
+    startNewTurn() {
         // this.turnCount++;  // ⚠️ 删掉这一行！开局已经在 constructor 设为 1 了，加 1 会导致直接变成第 2 回合
         this.eotTriggered = false;
         this.phase = 'UNSUSPEND';
@@ -2356,7 +2356,7 @@ class GameState {
         }
     }
     
-    handleBurstRegression(playerId) ;{
+    handleBurstRegression(playerId) {
         const area = this.zones[playerId].battleArea;
         for (let i = area.length - 1; i >= 0; i--) {
             const card = area[i];
@@ -2380,7 +2380,7 @@ class GameState {
         }
     }
 
-    drawCard(playerId, amount) ;{
+    drawCard(playerId, amount) {
         // 🔥 安全處理預設參數
         amount = amount || 1;
 
