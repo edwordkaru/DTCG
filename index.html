@@ -1326,13 +1326,18 @@
         if (state.pendingReveal && state.pendingReveal.playerId === myId) {
             rOverlay.style.display = 'flex';
             const container = document.getElementById('reveal-cards-container');
-            // 将引擎发来的卡片渲染出来
-            container.innerHTML = state.pendingReveal.cards.map(c => 
-                `<div class="reveal-card" style="background-image:url('${c.img}')" 
-                      onclick="submitReveal('${c.instanceId}')" 
+            container.innerHTML = state.pendingReveal.cards.map(c => {
+                // 如果后端判定这张卡没有任何 matchedGroups (isSelectable 为 false)，加个蒙版
+                const opacity = c.isSelectable ? '1' : '0.4';
+                const cursor = c.isSelectable ? 'pointer' : 'not-allowed';
+                // 在 onclick 里拦截非法点击
+                const clickEvent = c.isSelectable ? `onclick="toggleRevealSelection('${c.instanceId}')"` : '';
+    
+                return `<div class="reveal-card" style="background-image:url('${c.img}'); opacity: ${opacity}; cursor: ${cursor};" 
+                      ${clickEvent} 
                       onmouseenter="document.getElementById('fixed-preview').style.backgroundImage = 'url(${c.img})'">
-                 </div>`
-            ).join('');
+                 </div>`;
+            }).join('');
         } else {
             rOverlay.style.display = 'none';
         }
