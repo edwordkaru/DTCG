@@ -1428,20 +1428,23 @@
                 };
                 container.appendChild(img);
             });
-
+            
             // 🔥 绑定确认按钮的点击事件
             document.getElementById('reveal-confirm-btn').onclick = () => {
-                if (currentRevealSelections.length === requiredCount || currentRevealSelections.length === state.pendingReveal.cards.length) {
+                // 读取后端算好的当前最大合法拿取量
+                const maxTake = state.pendingReveal.constraints?.maxValidTake || 1;
+
+                // 只要选的卡不多于合法上限，就允许提交！(允许拿0张、拿1张)
+                if (currentRevealSelections.length <= maxTake) {
                     socket.emit('action', { 
                         type: 'submitRevealChoice', 
                         roomId, 
                         playerId: myId, 
-                        // 🔥 严格对齐 server.js 的变量名！
-                        selectedCardInstanceIds: currentRevealSelections
+                        selectedCardInstanceIds: currentRevealSelections 
                     });
                     document.getElementById('reveal-overlay').style.display = 'none';
                 } else {
-                    alert(`数量不对！你需要选择 ${requiredCount} 张卡。`);
+                    alert(`违规操作！根据翻出的卡，你最多只能选择 ${maxTake} 张卡。`);
                 }
             };
         } else {
