@@ -1165,7 +1165,10 @@ class GameState {
     }
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds = []) {
+    submitRevealChoice(playerId, selectedInstanceIds) {
+        // 🔥 安全处理默认参数（彻底解决 Render 解析报错）
+        selectedInstanceIds = selectedInstanceIds || [];
+
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
         const constraints = this.pendingReveal.constraints;
