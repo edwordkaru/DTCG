@@ -720,10 +720,10 @@ class GameState {
     resolveEffect() {
         if (this.gameOver || this.effectQueue.length === 0) return;
         
-        // 🚨 关键修复点 1：防止重复触发
-        if (this.pendingTarget || this.pendingReveal || this.pendingTrashRevive || this.pendingProtection) return;
+        // 1. 拦截器：如果当前有任何弹窗正在等待玩家操作，直接终止，不要重复触发！
+        if (this.pendingReveal || this.pendingTarget || this.pendingEffectSelection) return;
 
-        const effect = this.effectQueue[0]; // 先看第一个任务
+        const effect = this.effectQueue[0];
         
         if (effect.type === 'REVEAL') {
             const revealInstruction = this.parseRevealInstruction(effect.text);
