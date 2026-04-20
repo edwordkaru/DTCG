@@ -858,26 +858,40 @@ class GameState {
                 if (revealedCards.length > 0) {
                     // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
                     // 🔥 新增核心逻辑：基于提取到的关键词，过滤并标记哪些卡可以选！
-                    revealedCards.forEach(c => {
-                        if (revealInstruction.constraints.mode === "FILTERED") {
-                            
-                            // 🛑 核心修复：加上 digi_type！把所有 API 可能用的“种族”字段一网打尽！
-                            let cardText = [
-                                (c.name || ""), 
-                                (c.color || ""), 
-                                (c.type || c.cardType || ""), 
-                                (c.traits || c.digi_type || c.digitype || c.form || c.attribute || c.stage || "")
-                            ].join(" | ").toLowerCase();
-                            
-                            // 处理双色卡的特殊判断
-                            if (c.color && c.color.includes("/")) cardText += " | 2-color";
+                   // 🔥 动态计算最多能合法拿几张
+                    let matchACount = 0;
+                    let matchBCount = 0;
+                    let singleMatchCount = 0;
 
-                            // 只有卡牌的真实身份命中了要求，才允许被选择
+                    revealedCards.forEach(c => {
+                        let cardText = [(c.name || ""), (c.color || ""), (c.type || c.cardType || ""), (c.traits || c.digi_type || c.digitype || c.form || c.attribute || c.stage || "")].join(" | ").toLowerCase();
+                        if (c.color && c.color.includes("/")) cardText += " | 2-color";
+
+                        if (revealInstruction.constraints.mode === "DUAL_FILTER") {
+                            c.matchA = revealInstruction.constraints.conditionA.some(kw => cardText.includes(kw));
+                            c.matchB = revealInstruction.constraints.conditionB.some(kw => cardText.includes(kw));
+                            c.isSelectable = c.matchA || c.matchB;
+
+                            if (c.matchA) matchACount++;
+                            if (c.matchB) matchBCount++;
+                        } else if (revealInstruction.constraints.mode === "SINGLE_FILTER") {
                             c.isSelectable = revealInstruction.constraints.validKeywords.some(kw => cardText.includes(kw));
+                            if (c.isSelectable) singleMatchCount++;
                         } else {
-                            c.isSelectable = true; // 没限制就全都可以选
+                            c.isSelectable = true;
+                            singleMatchCount++;
                         }
                     });
+
+                    // 🧠 核心防作弊：计算玩家理论上【最多】能拿几张
+                    let maxValidTake = 0;
+                    if (revealInstruction.constraints.mode === "DUAL_FILTER") {
+                        if (matchACount > 0) maxValidTake++; // 如果有满足 A 的，最多拿1张A
+                        if (matchBCount > 0) maxValidTake++; // 如果有满足 B 的，最多拿1张B
+                    } else {
+                        maxValidTake = Math.min(revealInstruction.constraints.selectCount, singleMatchCount);
+                    }
+                    revealInstruction.constraints.maxValidTake = maxValidTake; // 传给后端和前端校验
 
                     this.pendingReveal = {
                         playerId: eff.playerId,
@@ -1152,15 +1166,31 @@ class GameState {
         }
     }
 
-    // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
-    submitRevealChoice(playerId, selectedInstanceIds = []) {   // 注意：现在是数组！
+    // 🔮 通用多选版 Reveal Choice (附带防作弊系统)
+    submitRevealChoice(playerId, selectedInstanceIds = []) {   
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
-        const required = this.pendingReveal.constraints?.selectCount || 1;
-        if (selectedInstanceIds.length !== required) {
-            console.warn(`🚫 选择数量错误，需要选 ${required} 张`);
+        const maxTake = this.pendingReveal.constraints.maxValidTake || 1;
+
+        // 🛡️ 防护 1：绝对不允许拿超过理论合法的上限！(但允许少拿或放弃)
+        if (selectedInstanceIds.length > maxTake) {
+            console.warn(`🚫 违规操作！按照当前翻出的卡，你最多只能拿 ${maxTake} 张。`);
             return;
         }
+
+        // 🛡️ 防护 2：如果是双重条件，且玩家想拿满2张，必须确保 A和B 各拿了一张！绝对不能拿 2张A。
+        if (this.pendingReveal.constraints.mode === "DUAL_FILTER" && selectedInstanceIds.length === 2) {
+            const cards = this.pendingReveal.cards.filter(c => selectedInstanceIds.includes(c.instanceId));
+            const hasA = cards.some(c => c.matchA);
+            const hasB = cards.some(c => c.matchB);
+            if (!hasA || !hasB) {
+                console.warn(`🚫 违规选择！你必须拿 1 张满足前半句条件的卡，1 张满足后半句的卡。`);
+                return;
+            }
+        }
+
+        const selectedCards = this.pendingReveal.cards.filter(c => selectedInstanceIds.includes(c.instanceId));
+        // ... (下面保留原本加入手牌和处理剩余卡的逻辑)
 
         const selectedCards = this.pendingReveal.cards.filter(c => 
             selectedInstanceIds.includes(c.instanceId)
@@ -1752,73 +1782,53 @@ class GameState {
     // ==========================================
     // 🔥 升级版通用 Reveal 解析器 (动态提取一切条件)
     // ==========================================
+    // ==========================================
+    // 🔥 升级版 Reveal 解析器 (支持双重独立条件过滤)
+    // ==========================================
     parseRevealInstruction(text) {
         text = text.toLowerCase();
-
         let revealCount = 0;
         let isSecurity = false;
 
         const topMatch = text.match(/reveal\s*(?:the\s*)?top\s*(\d+)\s*card/i);
         const secMatch = text.match(/(?:search|reveal)\s*(?:your\s*)?security\s*stack/i);
 
-        if (topMatch) {
-            revealCount = parseInt(topMatch[1]);
-        } else if (secMatch) {
-            isSecurity = true; 
-        } else {
-            return null; 
-        }
+        if (topMatch) revealCount = parseInt(topMatch[1]);
+        else if (secMatch) isSecurity = true; 
+        else return null; 
 
-        let constraints = { selectCount: 1, mode: "ANY", validKeywords: [] };
+        let constraints = { selectCount: 1, mode: "ANY", validKeywords: [], conditionA: [], conditionB: [] };
 
-        // 1. 动态抓取需要拿几张牌 (完美兼容 "add 1... and 1...")
-        const complexAddMatch = text.match(/add\s*(\d+).*?(?:and|,)\s*(\d+)/i);
-        if (complexAddMatch) {
-            // 如果句式是 add X ... and Y，就把两个数字加起来
-            constraints.selectCount = parseInt(complexAddMatch[1]) + parseInt(complexAddMatch[2]);
-        } else {
-            const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
-            if (addMatches.length > 0) {
-                constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
-            } else if (text.includes("add this card")) {
-                constraints.selectCount = 1;
-            }
-        }
-
-        // 2. 提取所有带方括号的特征或名字
-        const brackets = [...text.matchAll(/\[(.*?)\]/g)];
-        
-        // 🔥 规则词汇黑名单！防止系统把时点当成种族拿去检索
-        const ignoreTags = [
-            "on play", "when digivolving", "all turns", "your turn", "opponent's turn", 
-            "end of turn", "end of attack", "start of your turn", "start of turn", 
-            "main", "security", "hand", "trash", "once per turn", "rule", 
-            "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay",
-            "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"
-        ];
-        
-        brackets.forEach(b => {
-            const kw = b[1].toLowerCase();
-            // 只有不在黑名单里的词（比如 angel, mirei），才会被加入合法条件池！
-            if (!ignoreTags.includes(kw)) {
-                constraints.validKeywords.push(kw);
-            }
-        });
-
-        // 3. 提取颜色限制
+        const ignoreTags = ["on play", "when digivolving", "all turns", "your turn", "opponent's turn", "end of turn", "end of attack", "start of your turn", "start of turn", "main", "security", "hand", "trash", "once per turn", "rule", "dna digivolve", "burst digivolve", "digixros", "material save", "save", "delay", "security attack", "piercing", "blocker", "jamming", "reboot", "evade", "retaliation"];
         const colors = ["red", "blue", "yellow", "green", "black", "purple", "white", "2-color"];
-        colors.forEach(c => {
-            if (text.includes(c)) {
-                constraints.validKeywords.push(c);
-            }
-        });
 
-        // 只要抓取到了任何特征、名字或颜色，就开启过滤模式
-        if (constraints.validKeywords.length > 0) {
-            constraints.mode = "FILTERED";
+        // 提取关键词的内联工具
+        const extract = (str) => {
+            let kw = [];
+            [...str.matchAll(/\[(.*?)\]/g)].forEach(b => {
+                if (!ignoreTags.includes(b[1].toLowerCase())) kw.push(b[1].toLowerCase());
+            });
+            colors.forEach(c => { if (str.includes(c)) kw.push(c); });
+            return kw;
+        };
+
+        // 🔥 核心：探测是否为 "拿 1个A 和 1个B" 的双重检索 (如 Gatomon)
+        const dualMatch = text.match(/add\s*1\s*(.*?)\s*and\s*1\s*(.*)/i);
+        if (dualMatch) {
+            constraints.selectCount = 2;
+            constraints.mode = "DUAL_FILTER";
+            constraints.conditionA = extract(dualMatch[1]); // 把前半句要求存入 A 桶
+            constraints.conditionB = extract(dualMatch[2]); // 把后半句要求存入 B 桶
+        } else {
+            // 单重检索逻辑
+            const addMatches = [...text.matchAll(/add\s*(\d+)/g)];
+            if (addMatches.length > 0) constraints.selectCount = addMatches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+            else if (text.includes("add this card")) constraints.selectCount = 1;
+            
+            constraints.validKeywords = extract(text);
+            if (constraints.validKeywords.length > 0) constraints.mode = "SINGLE_FILTER";
         }
 
-        // 4. 剩余卡牌去向
         let remainingAction = "BOTTOM";
         if (text.includes("trash") || text.includes("discard")) remainingAction = "TRASH";
         else if (text.includes("top")) remainingAction = "TOP";
