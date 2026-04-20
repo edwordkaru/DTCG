@@ -2037,7 +2037,7 @@ class GameState {
         return m ? parseInt(m[1]) : null;
     }
 
-    addTurnBuff(playerId, sourceCard, type, value) ;{
+    addTurnBuff(playerId, sourceCard, type, value) {
         this.zones[playerId].battleArea.forEach(card => {
             if (!card.turnEffects) card.turnEffects = [];
             card.turnEffects.push({ type: type === 'DP' ? 'DP_MOD' : type, value, source: sourceCard?.name || 'system' });
@@ -2139,7 +2139,7 @@ class GameState {
         return card.turnEffects && card.turnEffects.some(e => e.type === 'ONCE_USED' && e.key === effectKey);
     }
 
-    resolveBattle(aId, attacker, dId, tId) ;{
+    resolveBattle(aId, attacker, dId, tId) {
         const dSide = this.zones[dId], aSide = this.zones[aId], tIdx = dSide.battleArea.findIndex(c => c.instanceId === tId);
         if (tIdx === -1) return { attackerSurvived: true, targetDeleted: false };
         
