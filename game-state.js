@@ -1135,7 +1135,6 @@ class GameState {
 
             this.checkTurnEnd(); 
         }
-    }
 
     // ====================== Reveal 多选提交（100% 修复版） ======================
     submitRevealChoice(playerId, selectedCardInstanceIds) {
