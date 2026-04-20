@@ -1166,38 +1166,46 @@ class GameState {
 
     // 🔮 通用多选版 Reveal Choice（支持 Gatomon 等所有卡）
     submitRevealChoice(playerId, selectedInstanceIds) {
-        // 🔥 安全處理預設參數（徹底解決 Render 解析報錯）
-        selectedInstanceIds = selectedInstanceIds || [];
+        // 1. 安全處理預設參數並去重（防止前端传入重复ID）
+        const rawIds = selectedInstanceIds || [];
+        const normalizedIds = [...new Set(rawIds.map(String))]; 
 
         if (!this.pendingReveal || this.pendingReveal.playerId !== playerId) return;
 
-        const constraints = this.pendingReveal.constraints;
-        
-        // 1. 强制类型转换，确保比对成功
-        const normalizedIds = selectedInstanceIds.map(String);
+        // 确保 constraints 存在，提供默认值防止报错
+        const constraints = this.pendingReveal.constraints || {}; 
+    
+        // 2. 匹配卡牌实体
         const selectedCards = this.pendingReveal.cards.filter(c => 
             normalizedIds.includes(String(c.instanceId))
         );
 
-        // 2. 如果玩家选了牌但后端没匹配上，报错
-        if (normalizedIds.length > 0 && selectedCards.length === 0) {
-            console.error("🚨 [REVEAL] InstanceID 匹配失败，请检查类型转换！");
+        // 3. 严格的防作弊匹配检查：传入的ID必须100%在池子中找到
+        if (normalizedIds.length !== selectedCards.length) {
+            console.error(`🚨 [REVEAL] InstanceID 匹配失败！玩家 ${playerId} 试图选择不存在或不属于当前 Reveal 池的卡牌。`);
+            // TODO: 必须通知客户端匹配失败，解除客户端卡死状态
+            // this.sendErrorMessage(playerId, "选择的卡牌无效，请重试。");
             return;
         }
 
-        // 3. 核心验证
-        if (constraints.mode === "FILTERED" && selectedCards.length > 0) {
-            let valid = this.validateSelectionAgainstGroups(selectedCards, constraints.targetGroups);
+        // 4. 核心验证 (移除 length > 0 的短路判断，空数组也必须接受规则的审判)
+        if (constraints.mode === "FILTERED") {
+            // 如果 targetGroups 不存在，默认给空数组防报错
+            const groups = constraints.targetGroups || [];
+        
+            let valid = this.validateSelectionAgainstGroups(selectedCards, groups);
             if (!valid) {
-                console.warn(`🚫 [REVEAL] 选牌组合不合法！不满足: ${JSON.stringify(constraints.targetGroups)}`);
+                console.warn(`🚫 [REVEAL] 玩家 ${playerId} 选牌组合不合法！选择数量: ${selectedCards.length}`);
+                // TODO: 通知客户端非法选择，让其重新选择
+                // this.sendErrorMessage(playerId, "卡牌组合不满足条件，请重新选择。");
                 return; 
             }
         }
 
-        // 4. 成功后执行清理
+        // 5. 成功后执行清理
         const selectedActualIds = selectedCards.map(c => String(c.instanceId));
         const remaining = this.pendingReveal.cards.filter(c => !selectedActualIds.includes(String(c.instanceId)));
-        
+    
         console.log(`✅ [REVEAL] 验证通过，${selectedCards.length} 张卡进入玩家 ${playerId} 手牌。`);
         this.finishRevealProcess(playerId, selectedCards, remaining);
     }
