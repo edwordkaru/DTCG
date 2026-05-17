@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DTCG Visual Replay</title>
+  <style>
+    :root {
+      --blue: #00d2ff;
+      --red: #ff4757;
+      --green: #00ffcc;
+      --gold: #ffcc00;
+      --bg: #06070b;
+      --panel: rgba(12, 16, 24, 0.86);
+      --line: rgba(255,255,255,0.14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: white;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #05070c url("bg.jpg") center / cover fixed;
+      overflow: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.58);
+      pointer-events: none;
+    }
+    .app {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      height: 100vh;
+    }
+    .field {
+      display: grid;
+      grid-template-rows: 1fr 46px 1fr 104px;
+      min-width: 0;
+      padding: 18px;
+      gap: 12px;
+    }
+    .player {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      backdrop-filter: blur(12px);
+    }
+    .p2 { border-color: rgba(255,71,87,0.34); }
+    .p1 { border-color: rgba(0,210,255,0.34); }
+    .side {
+      display: grid;
+      grid-template-rows: auto 1fr 1fr;
+      gap: 10px;
+      min-width: 0;
+    }
+    .name {
+      font-weight: 800;
+      letter-spacing: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .tag {
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #b7c2d8;
+    }
+    .pile, .breeding {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 7px;
+      background: rgba(0,0,0,0.34);
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 64px;
+    }
+    .pile strong, .breeding strong {
+      font-size: 12px;
+      color: #aab4c8;
+      font-weight: 650;
+    }
+    .security {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sec {
+      width: 18px;
+      height: 28px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: linear-gradient(145deg, #1c2538, #07090f);
+      box-shadow: 0 0 10px rgba(0,0,0,0.45);
+    }
+    .table {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+    }
+    .zone {
+      min-height: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 7px;
+      background: rgba(0,0,0,0.24);
+      padding: 10px;
+      overflow: hidden;
+    }
+    .zone-title {
+      height: 18px;
+      color: #9ba7bb;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      margin-bottom: 8px;
+    }
+    .cards {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      overflow-x: auto;
+      padding: 4px 0 10px;
+    }
+    .card {
+      width: 66px;
+      height: 92px;
+      flex: 0 0 auto;
+      border-radius: 5px;
+      border: 2px solid rgba(255,255,255,0.18);
+      background: #10131c center / cover no-repeat;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.45);
+      position: relative;
+    }
+    .card.tamer { border-color: rgba(255,204,0,0.62); }
+    .card.flash {
+      animation: flash 0.65s ease;
+    }
+    .card.dead {
+      opacity: 0.36;
+      filter: grayscale(0.8);
+      transform: rotate(90deg);
+    }
+    .caption {
+      position: absolute;
+      left: -2px;
+      right: -2px;
+      bottom: -28px;
+      min-height: 22px;
+      font-size: 10px;
+      line-height: 1.12;
+      color: #d8e0ef;
+      text-align: center;
+      background: rgba(0,0,0,0.72);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      padding: 3px;
+      overflow: hidden;
+    }
+    .memory {
+      display: grid;
+      grid-template-columns: repeat(21, minmax(22px, 1fr));
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,0,0,0.82);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+    .mem {
+      height: 30px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      color: #627086;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .mem.active {
+      background: var(--blue);
+      color: #001018;
+      box-shadow: 0 0 18px var(--blue);
+      transform: translateY(-2px);
+    }
+    .hand {
+      background: rgba(0,0,0,0.78);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+    .hand-title {
+      color: #9ba7bb;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .panel {
+      position: relative;
+      min-width: 0;
+      background: rgba(8, 11, 17, 0.9);
+      border-left: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(14px);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      height: 100vh;
+    }
+    .summary {
+      padding: 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+    .winner {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border: 1px solid rgba(0,255,204,0.45);
+      border-radius: 5px;
+      color: var(--green);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .current {
+      margin-top: 14px;
+      color: #d8e2f2;
+      line-height: 1.35;
+      min-height: 74px;
+      font-size: 14px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    button {
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      color: white;
+      padding: 10px 8px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    button:hover { border-color: var(--blue); color: var(--blue); }
+    .primary { background: var(--blue); color: #001018; border-color: var(--blue); }
+    .primary:hover { color: #001018; filter: brightness(1.08); }
+    .log {
+      overflow-y: auto;
+      padding: 12px 18px 20px;
+    }
+    .entry {
+      border-left: 3px solid rgba(255,255,255,0.12);
+      padding: 8px 10px;
+      color: #91a0b6;
+      font-size: 13px;
+      line-height: 1.25;
+      cursor: pointer;
+    }
+    .entry.active {
+      border-left-color: var(--blue);
+      background: rgba(0,210,255,0.08);
+      color: white;
+    }
+    @keyframes flash {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,210,255,0); }
+      45% { transform: scale(1.12); box-shadow: 0 0 28px rgba(0,210,255,0.88); }
+      100% { transform: scale(1); box-shadow: 0 10px 18px rgba(0,0,0,0.45); }
+    }
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+      .field { height: 840px; }
+      .panel { height: 620px; border-left: 0; border-top: 1px solid rgba(255,255,255,0.12); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="field">
+      <div class="player p2" id="p2"></div>
+      <div class="memory" id="memory"></div>
+      <div class="player p1" id="p1"></div>
+      <div class="hand">
+        <div class="hand-title">当前回放手牌区</div>
+        <div class="cards" id="handNote"></div>
+      </div>
+    </section>
+    <aside class="panel">
+      <div class="summary">
+        <h1>DTCG 自动对战回放</h1>
+        <div class="winner">结果：P1 获胜</div>
+        <div class="current" id="currentText"></div>
+      </div>
+      <div class="controls">
+        <button id="firstBtn">开头</button>
+        <button id="prevBtn">上一步</button>
+        <button class="primary" id="playBtn">播放</button>
+        <button id="nextBtn">下一步</button>
+      </div>
+      <div class="log" id="log"></div>
+    </aside>
+  </main>
+
+  <script>
+    const cardNames = {
+      "BT14-003": "Tokomon",
+      "BT11-083": "LadyDevimon",
+      "ST21-01": "Tsunomon",
+      "ST21-07": "Palmon",
+      "BT16-082": "Ukkomon",
+      "EX1-066": "Analog Youth",
+      "BT23-031": "Angewomon",
+      "AD1-019": "Matt & T.K.",
+      "BT21-102": "Tai Kamiya",
+      "BT11-042": "Angewomon",
+      "EX9-066": "Tai & Matt",
+      "BT23-067": "LadyDevimon",
+      "AD1-009": "BlitzGreymon",
+      "ST20-02": "Biyomon",
+      "BT22-089": "Mirei Mikagura",
+      "BT9-033": "Pillomon",
+      "EX6-020": "Gatomon",
+      "AD1-001": "Greymon",
+      "EX9-012": "MetalGreymon",
+      "BT14-033": "Patamon",
+      "BT22-034": "Reppamon",
+      "BT23-102": "Mastemon"
+    };
+
+    const tamers = new Set(["EX1-066", "AD1-019", "BT21-102", "EX9-066", "BT22-089"]);
+
+    const events = [
+      { p:"p1", text:"T1 P1 hatch egg", type:"hatch", card:"BT14-003", memory:0 },
+      { p:"p1", text:"T1 P1 play BT11-083 LadyDevimon cost 7", type:"play", card:"BT11-083", memory:-7 },
+      { p:"p2", text:"T2 P2 hatch egg", type:"hatch", card:"ST21-01", memory:3 },
+      { p:"p2", text:"T2 P2 play ST21-07 Palmon cost 3", type:"play", card:"ST21-07", memory:6 },
+      { p:"p2", text:"T2 P2 play BT16-082 Ukkomon cost 3", type:"play", card:"BT16-082", memory:9 },
+      { p:"p2", text:"T2 P2 play EX1-066 Analog Youth cost 2", type:"play", card:"EX1-066", memory:10 },
+      { p:"p1", text:"T3 P1 skip breeding", type:"note", memory:-3 },
+      { p:"p1", text:"T3 P1 attack player with BT11-083 LadyDevimon", type:"attackPlayer", card:"BT11-083", memory:-3 },
+      { p:"p1", text:"T3 P1 play BT23-031 Angewomon cost 7", type:"play", card:"BT23-031", memory:-10 },
+      { p:"p2", text:"T4 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T4 P2 attack player with BT16-082 Ukkomon", type:"attackPlayer", card:"BT16-082", memory:3 },
+      { p:"p2", text:"T4 P2 attack player with ST21-07 Palmon", type:"attackPlayer", card:"ST21-07", memory:3 },
+      { p:"p2", text:"T4 P2 play AD1-019 Matt Ishida & T.K. Takaishi cost 3", type:"play", card:"AD1-019", memory:6 },
+      { p:"p2", text:"T4 P2 play BT21-102 Tai Kamiya cost 4", type:"play", card:"BT21-102", memory:10 },
+      { p:"p1", text:"T5 P1 skip breeding", type:"note", memory:-3 },
+      { p:"p1", text:"T5 P1 attack player with BT23-031 Angewomon", type:"attackPlayer", card:"BT23-031", memory:-3 },
+      { p:"p1", text:"T5 P1 play BT11-042 Angewomon cost 7", type:"play", card:"BT11-042", memory:-10 },
+      { p:"p2", text:"T6 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T6 P2 play EX9-066 Tai Kamiya & Matt Ishida cost 4", type:"play", card:"EX9-066", memory:7 },
+      { p:"p1", text:"T7 P1 skip breeding", type:"note", memory:-3 },
+      { p:"p1", text:"T7 P1 attack player with BT11-042 Angewomon", type:"attackPlayer", card:"BT11-042", memory:-3 },
+      { p:"p1", text:"T7 P1 play BT23-067 LadyDevimon cost 7", type:"play", card:"BT23-067", memory:-10 },
+      { p:"p2", text:"T8 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T8 P2 attack AD1-009 BlitzGreymon -> BT11-042 Angewomon", type:"battle", card:"AD1-009", target:"BT11-042", memory:3 },
+      { p:"p2", text:"T8 P2 play ST20-02 Biyomon cost 3", type:"play", card:"ST20-02", memory:6 },
+      { p:"p1", text:"T9 P1 skip breeding", type:"note", memory:-3 },
+      { p:"p1", text:"T9 P1 attack player with BT23-067 LadyDevimon", type:"attackPlayer", card:"BT23-067", memory:-3 },
+      { p:"p1", text:"T9 P1 play BT22-089 Mirei Mikagura cost 3", type:"play", card:"BT22-089", memory:-6 },
+      { p:"p1", text:"T9 P1 evolve BT14-003 Tokomon -> BT9-033 Pillomon cost 0", type:"evolve", from:"BT14-003", card:"BT9-033", memory:0 },
+      { p:"p1", text:"T9 P1 evolve BT9-033 Pillomon -> EX6-020 Gatomon cost 2", type:"evolve", from:"BT9-033", card:"EX6-020", memory:-2 },
+      { p:"p2", text:"T10 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T10 P2 evolve ST20-02 Biyomon -> AD1-001 Greymon cost 0", type:"evolve", from:"ST20-02", card:"AD1-001", memory:3 },
+      { p:"p2", text:"T10 P2 evolve AD1-001 Greymon -> EX9-012 MetalGreymon: Alterous Mode cost 4", type:"evolve", from:"AD1-001", card:"EX9-012", memory:7 },
+      { p:"p1", text:"T11 P1 raise EX6-020 Gatomon", type:"raise", card:"EX6-020", memory:-3 },
+      { p:"p1", text:"T11 P1 evolve EX6-020 Gatomon -> BT11-042 Angewomon cost 3", type:"evolve", from:"EX6-020", card:"BT11-042", memory:-6 },
+      { p:"p2", text:"T12 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T12 P2 evolve EX9-012 MetalGreymon: Alterous Mode -> AD1-009 BlitzGreymon cost 4", type:"evolve", from:"EX9-012", card:"AD1-009", memory:7 },
+      { p:"p1", text:"T13 P1 hatch egg", type:"hatch", card:"BT14-003", memory:-3 },
+      { p:"p1", text:"T13 P1 evolve BT14-003 Tokomon -> BT14-033 Patamon cost 0", type:"evolve", from:"BT14-003", card:"BT14-033", memory:0 },
+      { p:"p1", text:"T13 P1 evolve BT14-033 Patamon -> BT22-034 Reppamon cost 2", type:"evolve", from:"BT14-033", card:"BT22-034", memory:-2 },
+      { p:"p2", text:"T14 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T14 P2 attack player with AD1-009 BlitzGreymon", type:"attackPlayer", card:"AD1-009", memory:3 },
+      { p:"p2", text:"T14 P2 play ST21-07 Palmon cost 3", type:"play", card:"ST21-07", memory:6 },
+      { p:"p1", text:"T15 P1 raise BT22-034 Reppamon", type:"raise", card:"BT22-034", memory:-3 },
+      { p:"p1", text:"T15 P1 evolve BT11-042 Angewomon -> BT23-102 Mastemon cost 5", type:"evolve", from:"BT11-042", card:"BT23-102", memory:-8 },
+      { p:"p1", text:"T15 P1 attack BT23-102 Mastemon -> AD1-009 BlitzGreymon", type:"battle", card:"BT23-102", target:"AD1-009", memory:-8 },
+      { p:"p2", text:"T16 P2 skip breeding", type:"note", memory:3 },
+      { p:"p2", text:"T16 P2 attack ST21-07 Palmon -> BT23-102 Mastemon", type:"battle", card:"ST21-07", target:"BT23-102", memory:3 },
+      { p:"p2", text:"T16 P2 play ST21-07 Palmon cost 3", type:"play", card:"ST21-07", memory:6 },
+      { p:"p1", text:"T17 P1 hatch egg", type:"hatch", card:"BT14-003", memory:-3 },
+      { p:"p1", text:"T17 P1 attack player with BT23-102 Mastemon", type:"attackPlayer", card:"BT23-102", memory:-3 },
+      { p:"p1", text:"T17 P1 attack player with BT22-034 Reppamon", type:"attackPlayer", card:"BT22-034", memory:4, win:true }
+    ];
+
+    const initial = () => ({
+      memory: 0,
+      winner: null,
+      p1: { security: 5, breeding: [], battle: [], tamers: [], trash: [] },
+      p2: { security: 5, breeding: [], battle: [], tamers: [], trash: [] },
+      flash: null
+    });
+
+    let step = 0;
+    let timer = null;
+
+    function label(id) {
+      return `${id}<br>${cardNames[id] || ""}`;
+    }
+
+    function removeFirst(list, id) {
+      const idx = list.findIndex(card => card.id === id && !card.dead);
+      if (idx !== -1) return list.splice(idx, 1)[0];
+      return null;
+    }
+
+    function findAndReplace(state, p, from, to) {
+      const zones = [state[p].breeding, state[p].battle];
+      for (const zone of zones) {
+        const found = zone.find(card => card.id === from && !card.dead);
+        if (found) {
+          found.id = to;
+          found.stack = (found.stack || 0) + 1;
+          return found;
+        }
+      }
+      state[p].breeding.push({ id: to, stack: 1 });
+      return state[p].breeding[state[p].breeding.length - 1];
+    }
+
+    function buildState(toStep) {
+      const state = initial();
+      for (let i = 0; i < toStep; i++) {
+        const e = events[i];
+        const player = state[e.p];
+        const opponent = state[e.p === "p1" ? "p2" : "p1"];
+        state.memory = e.memory;
+        state.flash = e.card || e.target || null;
+        if (e.type === "hatch") {
+          player.breeding = [{ id: e.card, stack: 0 }];
+        }
+        if (e.type === "raise") {
+          const raised = removeFirst(player.breeding, e.card) || { id: e.card, stack: 0 };
+          player.battle.push(raised);
+        }
+        if (e.type === "play") {
+          const target = tamers.has(e.card) ? player.tamers : player.battle;
+          target.push({ id: e.card, stack: 0 });
+        }
+        if (e.type === "evolve") {
+          findAndReplace(state, e.p, e.from, e.card);
+        }
+        if (e.type === "attackPlayer") {
+          opponent.security = Math.max(0, opponent.security - 1);
+          if (e.win) state.winner = e.p;
+        }
+        if (e.type === "battle") {
+          const targetOwner = e.p === "p1" ? "p2" : "p1";
+          const target = removeFirst(state[targetOwner].battle, e.target);
+          if (target) state[targetOwner].trash.push({ ...target, dead: true });
+          if (e.card === "ST21-07" && e.target === "BT23-102") {
+            const attacker = removeFirst(player.battle, e.card);
+            if (attacker) player.trash.push({ ...attacker, dead: true });
+          }
+        }
+      }
+      return state;
+    }
+
+    function cardHtml(card, flashId) {
+      const classes = ["card"];
+      if (tamers.has(card.id)) classes.push("tamer");
+      if (card.dead) classes.push("dead");
+      if (card.id === flashId) classes.push("flash");
+      return `<div class="${classes.join(" ")}" style="background-image:url('img/${card.id}.jpg')"><div class="caption">${label(card.id)}</div></div>`;
+    }
+
+    function renderPlayer(id, state) {
+      const p = state[id];
+      const title = id === "p1" ? "P1 Mastemon" : "P2 Alter-S";
+      const battle = p.battle.map(c => cardHtml(c, state.flash)).join("");
+      const tamersHtml = p.tamers.map(c => cardHtml(c, state.flash)).join("");
+      const breed = p.breeding.length ? p.breeding.map(c => cardHtml(c, state.flash)).join("") : `<span class="tag">空</span>`;
+      const sec = Array.from({ length: p.security }, () => `<div class="sec"></div>`).join("");
+      document.getElementById(id).innerHTML = `
+        <div class="side">
+          <div class="name">${title}<span class="tag">${p.security} security</span></div>
+          <div class="pile"><strong>Security</strong><div class="security">${sec || '<span class="tag">0</span>'}</div></div>
+          <div class="breeding"><strong>Breeding</strong><div class="cards">${breed}</div></div>
+        </div>
+        <div class="table">
+          <div class="zone"><div class="zone-title">Battle Area</div><div class="cards">${battle || '<span class="tag">无数码兽</span>'}</div></div>
+          <div class="zone"><div class="zone-title">Tamers / Trash highlight</div><div class="cards">${tamersHtml || '<span class="tag">无驯兽师</span>'}</div></div>
+        </div>
+      `;
+    }
+
+    function renderMemory(value) {
+      const nums = [];
+      for (let i = -10; i <= 10; i++) nums.push(i);
+      document.getElementById("memory").innerHTML = nums.map(n => `<div class="mem ${n === value ? "active" : ""}">${n}</div>`).join("");
+    }
+
+    function renderLog() {
+      document.getElementById("log").innerHTML = events.map((e, i) => (
+        `<div class="entry ${i === step - 1 ? "active" : ""}" data-step="${i + 1}">${i + 1}. ${e.text}</div>`
+      )).join("");
+      document.querySelectorAll(".entry").forEach(el => {
+        el.addEventListener("click", () => {
+          step = Number(el.dataset.step);
+          render();
+        });
+      });
+      const active = document.querySelector(".entry.active");
+      if (active) active.scrollIntoView({ block: "nearest" });
+    }
+
+    function render() {
+      const state = buildState(step);
+      renderPlayer("p2", state);
+      renderMemory(state.memory);
+      renderPlayer("p1", state);
+      renderLog();
+      const current = step === 0 ? "点击“下一步”开始查看模拟过程。" : events[step - 1].text;
+      const extra = state.winner ? "<br><strong style='color:var(--green)'>P1 完成最后攻击，比赛结束。</strong>" : "";
+      document.getElementById("currentText").innerHTML = `步骤 ${step} / ${events.length}<br>${current}${extra}`;
+      document.getElementById("handNote").innerHTML = `<span class="tag">此页展示公开场面与攻击过程；手牌细节仍以原模拟器为准。</span>`;
+    }
+
+    function setPlaying(on) {
+      const btn = document.getElementById("playBtn");
+      btn.textContent = on ? "暂停" : "播放";
+      if (timer) clearInterval(timer);
+      timer = null;
+      if (on) {
+        timer = setInterval(() => {
+          if (step >= events.length) return setPlaying(false);
+          step++;
+          render();
+        }, 950);
+      }
+    }
+
+    document.getElementById("firstBtn").addEventListener("click", () => { step = 0; setPlaying(false); render(); });
+    document.getElementById("prevBtn").addEventListener("click", () => { step = Math.max(0, step - 1); render(); });
+    document.getElementById("nextBtn").addEventListener("click", () => { step = Math.min(events.length, step + 1); render(); });
+    document.getElementById("playBtn").addEventListener("click", () => setPlaying(!timer));
+    render();
+  </script>
+</body>
+</html>
