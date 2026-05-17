@@ -211,7 +211,13 @@
     "optionColorRequirementRuntimeLeak": [],
     "optionIgnoreColorConditionLeak": [],
     "guardedActionPhaseTelemetryLeak": [],
-    "searchSecurityRecoveryShuffleOrderLeak": [],
+    "searchSecurityRecoveryShuffleOrderLeak": [
+      {
+        "id": "RUNTIME",
+        "name": "SEARCH_SECURITY_TO_HAND",
+        "reason": "SEARCH_SECURITY_TO_HAND with thenRecovery must call recoveryDeck before shuffle(zone.security), so recovered cards are included in the final security shuffle."
+      }
+    ],
     "securityToHandCostEncodingLeak": [],
     "optionBattleAreaCostAtomicityLeak": [],
     "luiOhwadaCompositeCostLeak": [],
@@ -1053,8 +1059,8 @@
       "cards": 0
     },
     "searchSecurityRecoveryShuffleOrderLeak": {
-      "issues": 0,
-      "cards": 0
+      "issues": 1,
+      "cards": 1
     },
     "securityToHandCostEncodingLeak": {
       "issues": 0,

@@ -658,6 +658,22 @@ function maskZone(cards, zoneName) {
     return Array.isArray(cards) ? cards.map((card, index) => maskHiddenCard(card, zoneName, index)) : [];
 }
 
+function maskPrivatePendingSearch(pending, viewer) {
+    if (!pending || pending.privateSearch !== true) return pending;
+    const owner = pending.playerId;
+    if (viewer === owner) return pending;
+    const maskCards = cards => Array.isArray(cards) ? cards.map((card, index) => maskHiddenCard(card, `${owner || 'unknown'}-${pending.privateZone || 'private-search'}`, index)) : cards;
+    return {
+        ...pending,
+        cards: maskCards(pending.cards),
+        choices: maskCards(pending.choices),
+        candidates: maskCards(pending.candidates),
+        revealedCards: maskCards(pending.revealedCards),
+        uiPrompt: pending.uiPrompt ? 'Private search in progress.' : pending.uiPrompt,
+        instruction: pending.instruction ? 'Private search in progress.' : pending.instruction
+    };
+}
+
 function sanitizeGameStateForRole(game, role = 'spectator') {
     const state = clonePlain(game);
     if (!state || !state.zones) return state;
@@ -677,6 +693,13 @@ function sanitizeGameStateForRole(game, role = 'spectator') {
             zone.hand = maskZone(zone.hand, `${playerId}-hand`);
         }
     }
+
+    // Round 22EO: effects that search private zones (for example BT11-042
+    // Angewomon searching security) must show the choices only to the acting
+    // player. Opponents/spectators may see that a pending search exists, but
+    // never the hidden security contents being searched.
+    state.pendingChoice = maskPrivatePendingSearch(state.pendingChoice, viewer);
+    state.pendingReveal = maskPrivatePendingSearch(state.pendingReveal, viewer);
 
     state.privateViewRole = viewer;
     return state;
@@ -1878,6 +1901,11 @@ io.on('connection', (socket) => {
         if (!applied.ok) {
             console.warn(`🚫 [ACTION GUARD] ${applied.error}`);
             socket.emit('systemMessage', applied.error || 'Action rejected.');
+            // Round 22EO: executeGuardedRoomAction may legitimately mutate state
+            // before rejecting the original action, e.g. HATCH -> MAIN opens a
+            // Start-of-Main pending/effect window. Emit the updated private state
+            // so the owning player sees the required choice instead of a dead UI.
+            emitPrivateStateToRoom(data.roomId, room);
             return;
         }
         game.autoResolveSystemEffects?.();

@@ -10552,32 +10552,100 @@ class GameState {
         return false;
     }
 
-    searchSecurityToHand(playerId, action = {}) {
+    buildSecuritySearchInstruction(playerId, action = {}, sourceCard = null, candidates = []) {
+        const target = action.target || {};
+        const parts = [];
+        const traitTokens = Array.isArray(target.traitAny) ? target.traitAny
+            : (target.trait ? String(target.trait).split(/\s+or\s+/i).map(x => x.trim()).filter(Boolean) : []);
+        if (traitTokens.length) parts.push(traitTokens.join(' / '));
+        if (target.name) parts.push(target.name);
+        if (target.nameContains) parts.push(`name contains ${target.nameContains}`);
+        if (target.color) parts.push(String(target.color));
+        const count = Number(target.count || action.amount || 1);
+        const sourceName = sourceCard?.name || action.sourceName || 'Security search';
+        const filterText = parts.length ? parts.join(' / ') : 'matching card';
+        return `${sourceName}: search your security stack and choose up to ${count} ${filterText} card(s) to reveal and add to hand.${action.thenRecovery ? ' If a card is added, <Recovery +1 (Deck)> resolves before shuffling security.' : ''} Then shuffle your security stack.`;
+    }
+
+    completeSecuritySearchToHand(playerId, selectedInstanceId = null, pending = null) {
+        const data = pending || this.pendingChoice || {};
+        const action = data.structuredAction || data.action || {};
+        const zone = this.zones[playerId];
+        if (!zone) return false;
+
+        const selectedId = Array.isArray(selectedInstanceId) ? selectedInstanceId[0] : selectedInstanceId;
+        let movedCard = null;
+        if (selectedId) {
+            const idx = (zone.security || []).findIndex(card => card.instanceId === selectedId);
+            if (idx !== -1 && this.cardMatchesTarget(zone.security[idx], action.target || { cardType: 'card' })) {
+                [movedCard] = zone.security.splice(idx, 1);
+                zone.hand.push(movedCard);
+                this.recordAddedToHandByThisEffect(data.structuredEffectContext || this.effectQueue?.[0]?.context, playerId, movedCard, playerId, { ...action, type: 'SEARCH_SECURITY_TO_HAND', fromZone: 'security' });
+                this.triggerSecurityRemoved(playerId, movedCard, { byEffect: true, destination: 'hand', cause: 'SEARCH_SECURITY_TO_HAND' });
+                this.triggerCardAddedToHand(playerId, movedCard, { byEffect: true, fromZone: 'security', sourceCard: data.sourceCard || action.sourceCard || null, cause: 'SEARCH_SECURITY_TO_HAND' });
+            } else {
+                this.addLog('⏩ SEARCH_SECURITY_TO_HAND: selected card was not legal or no longer in security.');
+            }
+        }
+
+        // Round 22EO: security-search cards such as BT11-042 Angewomon are real
+        // player choices, not autopicks. Resolve the chosen card, then recover,
+        // then shuffle, and finally release the pending window so the turn can proceed.
+        // Round 22CT: the recovered card must be included in the final shuffle.
+        // Round 22EC: color-gated recovery only happens if the selected security
+        // card matched the printed recovery condition.
+        if (movedCard) {
+            const recoveryTarget = action.thenRecoveryTarget || (action.thenRecoveryIfColor ? { cardType: 'card', color: action.thenRecoveryIfColor } : null);
+            const shouldRecoverAfterSecuritySearch = action.thenRecovery === true
+                || (recoveryTarget && this.cardMatchesTarget(movedCard, recoveryTarget));
+            if (shouldRecoverAfterSecuritySearch) this.recoveryDeck(playerId, Number(action.recoveryAmount || 1));
+        }
+        if (action.shuffle !== false) this.shuffle(zone.security);
+        this.addLog(movedCard
+            ? `🛡️ Searched security and added ${movedCard.name} to hand.`
+            : '🔎 Searched security and added no card to hand.');
+        return true;
+    }
+
+    resolveSecuritySearchChoice(playerId, selectedInstanceId = null) {
+        const pending = this.pendingChoice;
+        if (!pending || pending.playerId !== playerId || pending.mode !== 'SECURITY_SEARCH_TO_HAND_CHOICE') return false;
+        this.completeSecuritySearchToHand(playerId, selectedInstanceId, pending);
+        this.pendingChoice = null;
+        this.resolveEffect();
+        this.checkGlobalRules();
+        this.checkTurnEnd();
+        return true;
+    }
+
+    searchSecurityToHand(playerId, action = {}, sourceCard = null, effectContext = null) {
         const zone = this.zones[playerId];
         const target = action.target || { cardType: 'card' };
-        const idx = zone.security.findIndex(card => this.cardMatchesTarget(card, target));
-        if (idx === -1) {
+        const candidates = (zone.security || []).filter(card => this.cardMatchesTarget(card, target));
+        if (candidates.length === 0) {
             this.addLog('⏩ SEARCH_SECURITY_TO_HAND: no matching security card found.');
-            return false;
+            if (action.shuffle !== false) this.shuffle(zone.security);
+            return true;
         }
-        const [card] = zone.security.splice(idx, 1);
-        zone.hand.push(card);
-        this.triggerSecurityRemoved(playerId, card, { byEffect: true, destination: 'hand', cause: 'SEARCH_SECURITY_TO_HAND' });
-        this.triggerCardAddedToHand(playerId, card, { byEffect: true, fromZone: 'security', cause: 'SEARCH_SECURITY_TO_HAND' });
-        // Round 22CT: printed cards such as BT11-042 Angewomon say:
-        // search security -> add 1 to hand -> if added, Recovery +1 -> then shuffle security.
-        // The recovered card must be part of the final security shuffle, so recovery must
-        // happen before shuffling the security stack.
-        // Round 22EC: classic T.K. Takaishi-style Tamers recover only if the
-        // chosen/revealed security card has the printed color. Do not recover
-        // unconditionally when the searched card is not yellow.
-        const recoveryTarget = action.thenRecoveryTarget || (action.thenRecoveryIfColor ? { cardType: 'card', color: action.thenRecoveryIfColor } : null);
-        const shouldRecoverAfterSecuritySearch = action.thenRecovery === true
-            || (recoveryTarget && this.cardMatchesTarget(card, recoveryTarget));
-        if (shouldRecoverAfterSecuritySearch) this.recoveryDeck(playerId, Number(action.recoveryAmount || 1));
-        if (action.shuffle !== false) this.shuffle(zone.security);
-        this.addLog(`🛡️ Searched security and added ${card.name} to hand.`);
-        return true;
+        if (action.autoSelect === true) {
+            return this.completeSecuritySearchToHand(playerId, candidates[0].instanceId, { structuredAction: action, sourceCard, structuredEffectContext: effectContext });
+        }
+        this.pendingChoice = {
+            playerId,
+            mode: 'SECURITY_SEARCH_TO_HAND_CHOICE',
+            optional: true,
+            privateSearch: true,
+            privateZone: 'security',
+            cards: candidates,
+            choices: candidates,
+            structuredAction: action,
+            action,
+            sourceCard,
+            structuredEffectContext: effectContext || null,
+            instruction: this.buildSecuritySearchInstruction(playerId, action, sourceCard, candidates),
+            uiPrompt: this.buildSecuritySearchInstruction(playerId, action, sourceCard, candidates)
+        };
+        return false;
     }
 
     placeSourceCardInDelayArea(playerId, sourceCard) {
@@ -12374,7 +12442,8 @@ class GameState {
                     break;
                 }
                 case 'SEARCH_SECURITY_TO_HAND': {
-                    this.searchSecurityToHand(effect.playerId, action);
+                    const completed = this.searchSecurityToHand(effect.playerId, action, effect.sourceCard, effect.context || {});
+                    if (!completed) return;
                     break;
                 }
                 case 'PLACE_IN_DELAY_AREA': {
@@ -14454,6 +14523,11 @@ class GameState {
 
         if (pending.mode === 'TOTAL_PLAY_COST_TARGET_CHOICE' || pending.mode === 'TOTAL_DP_TARGET_CHOICE' || pending.mode === 'TOTAL_PLAY_COST_ZONE_CHOICE' || pending.mode === 'TARGET_SELECTION_V3') {
             this.resolvePendingChoiceV3(playerId, selectedCardInstanceId);
+            return;
+        }
+
+        if (pending.mode === 'SECURITY_SEARCH_TO_HAND_CHOICE') {
+            this.resolveSecuritySearchChoice(playerId, selectedCardInstanceId);
             return;
         }
 
