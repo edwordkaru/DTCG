@@ -1,0 +1,1150 @@
+{
+  "missingMechanics": [],
+  "invalidTrigger": [],
+  "invalidAction": [],
+  "invalidCondition": [],
+  "badRevealReturn": [],
+  "stunTooBroad": [],
+  "semanticKeywordErrors": [],
+  "semanticIssues": {
+    "timingTraitPollution": [],
+    "staticLikeAction": [],
+    "dedigiAsDelete": [],
+    "keywordAsDpMod": [],
+    "badCostType": [],
+    "effectLockOrImmunityScope": [],
+    "revealSelectedConsumerLeak": [],
+    "nestedTargetCondition": [],
+    "impossibleSecurityRemovedCondition": [],
+    "printedKeywordOnlyMechanic": [],
+    "metadataTraitTextPollution": [],
+    "mechanicsTraitNamePollution": [],
+    "mechanicsTraitColorPollution": [],
+    "hasSpecificCardTraitConditionPollution": [],
+    "compoundTraitStringLeak": [],
+    "colorTraitSelectorLeak": [],
+    "compoundColorStringLeak": [],
+    "compoundCardTypeStringLeak": [],
+    "uniqueEmblemDelayTriggerLeak": [],
+    "optionUseCostConditionLeak": [],
+    "tamerSuspendedEventBindingLeak": [],
+    "playedByThisEffectKeywordBuffLeak": [],
+    "handCountAsMemoryCountLeak": [],
+    "multicolorTraitConditionLeak": [],
+    "noSourceTraitConditionLeak": [],
+    "noCardsUnderTraitConditionLeak": [],
+    "grantedSuspendTriggerKeywordLeak": [],
+    "grantedOnDeletionTriggerKeywordLeak": [],
+    "grantedEventTextKeywordLeak": [],
+    "grantedWhenAttackingTriggerKeywordLeak": [],
+    "grantedEndOfAttackTriggerKeywordLeak": [],
+    "attachEndAttackOnDeletionTimingLeak": [],
+    "grantedEndOfTurnDeletionKeywordLeak": [],
+    "activatePrintedTriggerKeywordLeak": [],
+    "mayAttackKeywordRequestLeak": [],
+    "dualOptionSideMissing": [],
+    "dualGenericPlayLeak": [],
+    "dualUngatedOptionSideLeak": [],
+    "dualOptionInfoScopeLeak": [],
+    "dualFieldOptionReferenceLeak": [],
+    "dualArtsDigivolveRuntimeLeak": [],
+    "memoryDrawOrderLeak": [],
+    "piercingImmediateProcessingLeak": [],
+    "returnToEggDeckCostLeak": [],
+    "breedingScopeLeak": [],
+    "playTokenAmountRuntimeLeak": [],
+    "tokenAsNormalPlayLeak": [],
+    "staticTextScopeLeak": [],
+    "selfSourceColorStaticConditionLeak": [],
+    "placedCardLevelCostBindingLeak": [],
+    "faceUpSecurityStaticClauseLeak": [],
+    "tokenFieldRuleLeak": [],
+    "tokenOfficial20260508RuntimeLeak": [],
+    "tokenControllerOwnerRuntimeLeak": [],
+    "officialTokenCardPoolCoverageLeak": [],
+    "officialTokenImagePullerLeak": [],
+    "officialNamedTokenAssetCoverageLeak": [],
+    "startTurnOnPlayBleedLeak": [],
+    "optionalTriggerConfirmLeak": [],
+    "violetInbootsTimingLeak": [],
+    "suspendTamerCostTargetLeak": [],
+    "bt25057FinalJudgmentErrataDurationLeak": [],
+    "st1006MastemonErrataSecuritySearchLeak": [],
+    "effectAttackDuringExistingAttackLeak": [],
+    "bt4105TacticalRetreatSecurityMoveLeak": [],
+    "officialAd01ColorMetadataLeak": [],
+    "staticWhileHaveZoneLeak": [],
+    "selfTargetTraitLeak": [],
+    "delayedActionConditionLeak": [],
+    "sourceCountHostScopeLeak": [],
+    "cantSuspendEncodingLeak": [],
+    "digiXrosMaterialStackLeak": [],
+    "playFromSourceTotalCostLeak": [],
+    "playFromSourceHostSelectorLeak": [],
+    "aeroVeedramonZeroCostTrashLeak": [],
+    "dpCheckOwnerTargetScopeLeak": [],
+    "dynamicTotalPlayCostSourceBonusLeak": [],
+    "dynamicLevelMaximumTargetLeak": [],
+    "amphimonRb1UnderCardCostLeak": [],
+    "amphimonLmUnderCardCostLeak": [],
+    "teslaJellymonEndAttackCostLeak": [],
+    "simpleEndAttackTimingLeak": [],
+    "endAttackSelfLeaveTimingLeak": [],
+    "inheritedEndAttackTimingLeak": [],
+    "pulsemonInheritedEndAttackSecurityCostLeak": [],
+    "herculesKabuterimonEndAttackTwicePerTurnLeak": [],
+    "blackRapidmonEndAttackDedigivolveLeak": [],
+    "magnadramonBt9043EndAttackSecurityToHandCostLeak": [],
+    "glowingDawnInheritedEndAttackTamerSourceCostLeak": [],
+    "megadramonEx9064InheritedEndAttackUnsuspendCostLeak": [],
+    "sameLevelDeletedHandCostLeak": [],
+    "effectImmunityActivationLockLeak": [],
+    "dnaPostconditionLeak": [],
+    "totalDpSelectionLeak": [],
+    "totalPlayCostSelectionLeak": [],
+    "implicitSelfTargetMissingLeak": [],
+    "totalValueFeasibleTargetLeak": [],
+    "trashMoveAtomicityLeak": [],
+    "modalChoiceEncodingLeak": [],
+    "sameNameTamerRestrictionLeak": [],
+    "printedKeywordRebootMechanicLeak": [],
+    "allScopeCountOneLeak": [],
+    "verifiedMainEffectMissingLeak": [],
+    "sameTargetFollowupLeak": [],
+    "placeSourceSameTargetBuffLeak": [],
+    "playedByThisEffectFollowupLeak": [],
+    "suspendAnyIfOwnSuspendedLeak": [],
+    "deletedOwnByThisEffectLeak": [],
+    "notDeletedByThisEffectLeak": [],
+    "returnedByThisEffectLeak": [],
+    "trashedByThisEffectLeak": [],
+    "placedByThisEffectLeak": [],
+    "placedByThisEffectCountLeak": [],
+    "trashedByThisEffectCountLeak": [],
+    "deletedByThisEffectLevelCountLeak": [],
+    "addedToHandByThisEffectCountLeak": [],
+    "suspendedByThisEffectCountLeak": [],
+    "blockerWindowNoLegalBlockerLeak": [],
+    "patamonBt14033EncodingLeak": [],
+    "mulliganOrderLeak": [],
+    "mulliganRedrawProcedureLeak": [],
+    "counterBlastPermissionLeak": [],
+    "blastDnaEncodingLeak": [],
+    "effectDnaPrintedRequirementLeak": [],
+    "guardedActionNoOpSuccessLeak": [],
+    "officialReportTelemetryLeak": [],
+    "dualOptionSourceLinkScopeLeak": [],
+    "threeMusketeersOptionSourceCostAtomicityLeak": [],
+    "costSelectorSemanticLeak": [],
+    "effectDigivolveFixedCostLeak": [],
+    "handSpecialDigivolvePermissionLeak": [],
+    "reducedPlayCostEffectPlayLeak": [],
+    "tamerAutoAnimationTelemetryLeak": [],
+    "attackPendingTargetDeadlockLeak": [],
+    "bt25OfficialCardPoolCoverageLeak": [],
+    "bt25OfficialImagePullerLeak": [],
+    "discordDotenvConfigLeak": [],
+    "npmTestEntryPointLeak": [],
+    "fragmentRuntimeLeak": [],
+    "jammingOverprotectionLeak": [],
+    "decoyRuntimeLeak": [],
+    "retaliationKeywordEncodingLeak": [],
+    "armorPurgeInstanceIdLeak": [],
+    "barrierOptionalWindowLeak": [],
+    "partitionColorLevelRuntimeLeak": [],
+    "fortitudeTriggerRuntimeLeak": [],
+    "materialSaveOptionalRuntimeLeak": [],
+    "vortexOptionalTargetRuntimeLeak": [],
+    "unsuspendedDigimonConditionLeak": [],
+    "effectAttackBindingLeak": [],
+    "raidTargetLegalityLeak": [],
+    "cantBeAttackedRuntimeLeak": [],
+    "forcedAttackTargetLegalityLeak": [],
+    "blitzTimingRuntimeLeak": [],
+    "cantAttackDigimonTargetLeak": [],
+    "cantAttackOrBlockCantBlockLeak": [],
+    "cantAttackRestrictionEncodingLeak": [],
+    "cantBeBlockedKeywordLeak": [],
+    "cantUseOptionEncodingLeak": [],
+    "cantGainMemoryEncodingLeak": [],
+    "cantReduceCostEncodingLeak": [],
+    "cantPlayEncodingLeak": [],
+    "cantMoveEncodingLeak": [],
+    "cantDigivolveEncodingLeak": [],
+    "dpReductionImmunityEncodingLeak": [],
+    "cantBeDeletedEncodingLeak": [],
+    "cantBeReturnedEncodingLeak": [],
+    "sourceScopedOpponentEffectImmunityLeak": [],
+    "opponentEffectImmunityEncodingLeak": [],
+    "securityCheckAutoResolutionLeak": [],
+    "securityRemovedByEffectConditionLeak": [],
+    "staleTurnTransitionRuntimeLeak": [],
+    "liveBotSocketActionPathLeak": [],
+    "sourceOverflowDoubleChargeLeak": [],
+    "fieldOverflowBreedingAreaLeak": [],
+    "attackTimingSimultaneousPriorityLeak": [],
+    "ownerAnyConditionRuntimeLeak": [],
+    "explicitConditionRuntimeLeak": [],
+    "activationLockBracketClauseLeak": [],
+    "multiSecurityCheckFlowLeak": [],
+    "piercingSecurityContinuationLeak": [],
+    "securityCheckedSelfBindingLeak": [],
+    "battleDeletionThisBindingLeak": [],
+    "securityRemovedOwnerOpponentBindingLeak": [],
+    "oncePerTurnBindingFilterLeak": [],
+    "faceUpSecurityStaticScopeLeak": [],
+    "evadeRuntimeLeak": [],
+    "allianceCantSuspendRuntimeLeak": [],
+    "collisionImmunityBlockerLeak": [],
+    "securityDigimonStaticScopeLeak": [],
+    "suppressOnPlayEncodingLeak": [],
+    "activationLockEncodingLeak": [],
+    "securitySuppressionEncodingLeak": [],
+    "attackTargetChangeLockEncodingLeak": [],
+    "deDigivolveReminderTrashSecurityLeak": [],
+    "unsuspendedAttackPermissionEncodingLeak": [],
+    "canOnlyAttackSuspendedDigimonEncodingLeak": [],
+    "forcedOpponentAttackEncodingLeak": [],
+    "colorChangeEncodingLeak": [],
+    "tamerAsDigimonEncodingLeak": [],
+    "zeroDpPlaceholderLeak": [],
+    "optionColorRequirementRuntimeLeak": [],
+    "optionIgnoreColorConditionLeak": [],
+    "guardedActionPhaseTelemetryLeak": [],
+    "searchSecurityRecoveryShuffleOrderLeak": [],
+    "securityToHandCostEncodingLeak": [],
+    "optionBattleAreaCostAtomicityLeak": [],
+    "luiOhwadaCompositeCostLeak": [],
+    "placeSourceCostAtomicityLeak": [],
+    "returnSourceToHandCostAtomicityLeak": [],
+    "digimonOptionTargetLeak": [],
+    "endAttackManualLeak": [],
+    "attackTargetMoveEncodingLeak": [],
+    "effectAttackMoveEncodingLeak": [],
+    "stunBroadEncodingLeak": [],
+    "fakeGrantKeywordSemanticLeak": [],
+    "preventLeavePlaySemanticLeak": [],
+    "digivolveOnlyColorEncodingLeak": [],
+    "breedingMoveEncodingLeak": [],
+    "copySourceEffectsEncodingLeak": [],
+    "saveSelfToTamerEncodingLeak": [],
+    "taomonSt22InheritedEndAttackSecurityCostLeak": [],
+    "alphamonNameInheritedEndAttackSourceLeak": [],
+    "ex4AllianceInheritedEndAttackAnotherSuspendedLeak": [],
+    "beastAntylamonInheritedEndAttackCostLeak": [],
+    "metalGreymonBt19025InheritedEndAttackTamerSourcePlayLeak": [],
+    "dexDoruGreymonInheritedEndAttackChosenLevelLeak": []
+  },
+  "semanticSummary": {
+    "timingTraitPollution": {
+      "issues": 0,
+      "cards": 0
+    },
+    "staticLikeAction": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dedigiAsDelete": {
+      "issues": 0,
+      "cards": 0
+    },
+    "keywordAsDpMod": {
+      "issues": 0,
+      "cards": 0
+    },
+    "badCostType": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectLockOrImmunityScope": {
+      "issues": 0,
+      "cards": 0
+    },
+    "revealSelectedConsumerLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "nestedTargetCondition": {
+      "issues": 0,
+      "cards": 0
+    },
+    "impossibleSecurityRemovedCondition": {
+      "issues": 0,
+      "cards": 0
+    },
+    "printedKeywordOnlyMechanic": {
+      "issues": 0,
+      "cards": 0
+    },
+    "metadataTraitTextPollution": {
+      "issues": 0,
+      "cards": 0
+    },
+    "mechanicsTraitNamePollution": {
+      "issues": 0,
+      "cards": 0
+    },
+    "mechanicsTraitColorPollution": {
+      "issues": 0,
+      "cards": 0
+    },
+    "hasSpecificCardTraitConditionPollution": {
+      "issues": 0,
+      "cards": 0
+    },
+    "compoundTraitStringLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "colorTraitSelectorLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "compoundColorStringLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "compoundCardTypeStringLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "uniqueEmblemDelayTriggerLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "optionUseCostConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tamerSuspendedEventBindingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "playedByThisEffectKeywordBuffLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "handCountAsMemoryCountLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "multicolorTraitConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "noSourceTraitConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "noCardsUnderTraitConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "grantedSuspendTriggerKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "grantedOnDeletionTriggerKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "grantedEventTextKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "grantedWhenAttackingTriggerKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "grantedEndOfAttackTriggerKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "attachEndAttackOnDeletionTimingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "grantedEndOfTurnDeletionKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "activatePrintedTriggerKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "mayAttackKeywordRequestLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualOptionSideMissing": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualGenericPlayLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualUngatedOptionSideLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualOptionInfoScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualFieldOptionReferenceLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualArtsDigivolveRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "memoryDrawOrderLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "piercingImmediateProcessingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "returnToEggDeckCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "breedingScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "playTokenAmountRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tokenAsNormalPlayLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "staticTextScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "selfSourceColorStaticConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "placedCardLevelCostBindingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "faceUpSecurityStaticClauseLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tokenFieldRuleLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tokenOfficial20260508RuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tokenControllerOwnerRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "officialTokenCardPoolCoverageLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "officialTokenImagePullerLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "officialNamedTokenAssetCoverageLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "startTurnOnPlayBleedLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "optionalTriggerConfirmLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "violetInbootsTimingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "suspendTamerCostTargetLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "bt25057FinalJudgmentErrataDurationLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "st1006MastemonErrataSecuritySearchLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectAttackDuringExistingAttackLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "bt4105TacticalRetreatSecurityMoveLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "officialAd01ColorMetadataLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "staticWhileHaveZoneLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "selfTargetTraitLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "delayedActionConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "sourceCountHostScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantSuspendEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "digiXrosMaterialStackLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "playFromSourceTotalCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "playFromSourceHostSelectorLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "aeroVeedramonZeroCostTrashLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dpCheckOwnerTargetScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dynamicTotalPlayCostSourceBonusLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dynamicLevelMaximumTargetLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "amphimonRb1UnderCardCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "amphimonLmUnderCardCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "teslaJellymonEndAttackCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "simpleEndAttackTimingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "endAttackSelfLeaveTimingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "inheritedEndAttackTimingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "pulsemonInheritedEndAttackSecurityCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "herculesKabuterimonEndAttackTwicePerTurnLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "blackRapidmonEndAttackDedigivolveLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "magnadramonBt9043EndAttackSecurityToHandCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "glowingDawnInheritedEndAttackTamerSourceCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "megadramonEx9064InheritedEndAttackUnsuspendCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "sameLevelDeletedHandCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectImmunityActivationLockLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dnaPostconditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "totalDpSelectionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "totalPlayCostSelectionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "implicitSelfTargetMissingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "totalValueFeasibleTargetLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "trashMoveAtomicityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "modalChoiceEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "sameNameTamerRestrictionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "printedKeywordRebootMechanicLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "allScopeCountOneLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "verifiedMainEffectMissingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "sameTargetFollowupLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "placeSourceSameTargetBuffLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "playedByThisEffectFollowupLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "suspendAnyIfOwnSuspendedLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "deletedOwnByThisEffectLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "notDeletedByThisEffectLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "returnedByThisEffectLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "trashedByThisEffectLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "placedByThisEffectLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "placedByThisEffectCountLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "trashedByThisEffectCountLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "deletedByThisEffectLevelCountLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "addedToHandByThisEffectCountLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "suspendedByThisEffectCountLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "blockerWindowNoLegalBlockerLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "patamonBt14033EncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "mulliganOrderLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "mulliganRedrawProcedureLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "counterBlastPermissionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "blastDnaEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectDnaPrintedRequirementLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "guardedActionNoOpSuccessLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "officialReportTelemetryLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dualOptionSourceLinkScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "threeMusketeersOptionSourceCostAtomicityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "costSelectorSemanticLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectDigivolveFixedCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "handSpecialDigivolvePermissionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "reducedPlayCostEffectPlayLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tamerAutoAnimationTelemetryLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "attackPendingTargetDeadlockLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "bt25OfficialCardPoolCoverageLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "bt25OfficialImagePullerLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "discordDotenvConfigLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "npmTestEntryPointLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "fragmentRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "jammingOverprotectionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "decoyRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "retaliationKeywordEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "armorPurgeInstanceIdLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "barrierOptionalWindowLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "partitionColorLevelRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "fortitudeTriggerRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "materialSaveOptionalRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "vortexOptionalTargetRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "unsuspendedDigimonConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectAttackBindingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "raidTargetLegalityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantBeAttackedRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "forcedAttackTargetLegalityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "blitzTimingRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantAttackDigimonTargetLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantAttackOrBlockCantBlockLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantAttackRestrictionEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantBeBlockedKeywordLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantUseOptionEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantGainMemoryEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantReduceCostEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantPlayEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantMoveEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantDigivolveEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dpReductionImmunityEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantBeDeletedEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "cantBeReturnedEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "sourceScopedOpponentEffectImmunityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "opponentEffectImmunityEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securityCheckAutoResolutionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securityRemovedByEffectConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "staleTurnTransitionRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "liveBotSocketActionPathLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "sourceOverflowDoubleChargeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "fieldOverflowBreedingAreaLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "attackTimingSimultaneousPriorityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "ownerAnyConditionRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "explicitConditionRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "activationLockBracketClauseLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "multiSecurityCheckFlowLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "piercingSecurityContinuationLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securityCheckedSelfBindingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "battleDeletionThisBindingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securityRemovedOwnerOpponentBindingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "oncePerTurnBindingFilterLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "faceUpSecurityStaticScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "evadeRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "allianceCantSuspendRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "collisionImmunityBlockerLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securityDigimonStaticScopeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "suppressOnPlayEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "activationLockEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securitySuppressionEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "attackTargetChangeLockEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "deDigivolveReminderTrashSecurityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "unsuspendedAttackPermissionEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "canOnlyAttackSuspendedDigimonEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "forcedOpponentAttackEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "colorChangeEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "tamerAsDigimonEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "zeroDpPlaceholderLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "optionColorRequirementRuntimeLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "optionIgnoreColorConditionLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "guardedActionPhaseTelemetryLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "searchSecurityRecoveryShuffleOrderLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "securityToHandCostEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "optionBattleAreaCostAtomicityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "luiOhwadaCompositeCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "placeSourceCostAtomicityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "returnSourceToHandCostAtomicityLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "digimonOptionTargetLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "endAttackManualLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "attackTargetMoveEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "effectAttackMoveEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "stunBroadEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "fakeGrantKeywordSemanticLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "preventLeavePlaySemanticLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "digivolveOnlyColorEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "breedingMoveEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "copySourceEffectsEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "saveSelfToTamerEncodingLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "taomonSt22InheritedEndAttackSecurityCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "alphamonNameInheritedEndAttackSourceLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "ex4AllianceInheritedEndAttackAnotherSuspendedLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "beastAntylamonInheritedEndAttackCostLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "metalGreymonBt19025InheritedEndAttackTamerSourcePlayLeak": {
+      "issues": 0,
+      "cards": 0
+    },
+    "dexDoruGreymonInheritedEndAttackChosenLevelLeak": {
+      "issues": 0,
+      "cards": 0
+    }
+  },
+  "manualRequiredByCategory": [],
+  "other": []
+}

@@ -5817,6 +5817,193 @@ class GameState {
         return ordered.length;
     }
 
+
+    // Round 22EN: Human-readable pending-window prompts for live UI.
+    // SERVER_TARGET / reveal / zone-choice windows should tell players what the
+    // effect is doing (for example: reveal top 3, add up to 1 Angel/Fallen Angel
+    // card and 1 Mirei; or choose 1 opponent Digimon with 7000 DP or less to delete).
+    formatUiOwnerLabel(owner = 'opponent') {
+        const raw = String(owner || 'opponent').toLowerCase();
+        if (raw === 'own' || raw === 'self') return 'your';
+        if (raw === 'opponent') return "opponent's";
+        if (raw === 'any') return 'any player\'s';
+        return raw;
+    }
+
+    formatUiCardTypeLabel(target = {}) {
+        const type = String(target.cardType || target.type || 'card').toLowerCase();
+        if (type.includes('digimon')) return 'Digimon';
+        if (type.includes('tamer')) return 'Tamer';
+        if (type.includes('option')) return 'Option';
+        if (type.includes('digi-egg') || type.includes('egg')) return 'Digi-Egg';
+        return 'card';
+    }
+
+    normalizeUiList(value) {
+        if (Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
+        if (value === undefined || value === null || value === '') return [];
+        return String(value).split(/\s+or\s+|,\s*|\s*\/\s*/i).map(v => v.trim()).filter(Boolean);
+    }
+
+    formatUiTargetFilter(target = {}, conditions = {}) {
+        const pieces = [];
+        const names = [
+            ...this.normalizeUiList(target.name),
+            ...this.normalizeUiList(target.nameAny),
+            ...this.normalizeUiList(target.nameContains),
+            ...this.normalizeUiList(target.nameContainsAny),
+            ...this.normalizeUiList(conditions.name),
+            ...this.normalizeUiList(conditions.nameContains)
+        ];
+        if (names.length) pieces.push(`[${names.join('] / [')}]`);
+        const traits = [
+            ...this.normalizeUiList(target.trait),
+            ...this.normalizeUiList(target.traitAny),
+            ...this.normalizeUiList(target.traits),
+            ...this.normalizeUiList(conditions.trait)
+        ];
+        if (traits.length) pieces.push(`with ${traits.map(t => `[${t}]`).join(' / ')} in traits/text`);
+        const colors = [
+            ...this.normalizeUiList(target.color),
+            ...this.normalizeUiList(target.colorAny),
+            ...this.normalizeUiList(target.colors)
+        ];
+        if (colors.length) pieces.push(`${colors.join('/')} color`);
+        const maxDp = target.maxDp ?? conditions.maxDp;
+        const minDp = target.minDp ?? conditions.minDp;
+        const maxLevel = target.maxLevel ?? conditions.maxLevel;
+        const minLevel = target.minLevel ?? conditions.minLevel;
+        const maxCost = target.maxCost ?? conditions.maxCost;
+        const minCost = target.minCost ?? conditions.minCost;
+        const maxSourceCount = target.maxSourceCount ?? conditions.maxSourceCount;
+        const minSourceCount = target.minSourceCount ?? conditions.minSourceCount;
+        if (maxDp !== undefined && maxDp !== null && maxDp !== '') pieces.push(`${maxDp} DP or less`);
+        if (minDp !== undefined && minDp !== null && minDp !== '') pieces.push(`${minDp} DP or more`);
+        if (maxLevel !== undefined && maxLevel !== null && maxLevel !== '') pieces.push(`Lv.${maxLevel} or lower`);
+        if (minLevel !== undefined && minLevel !== null && minLevel !== '') pieces.push(`Lv.${minLevel} or higher`);
+        if (maxCost !== undefined && maxCost !== null && maxCost !== '') pieces.push(`play cost ${maxCost} or less`);
+        if (minCost !== undefined && minCost !== null && minCost !== '') pieces.push(`play cost ${minCost} or more`);
+        if (maxSourceCount !== undefined && maxSourceCount !== null && maxSourceCount !== '') {
+            pieces.push(Number(maxSourceCount) === 0 ? 'with no digivolution cards' : `with ${maxSourceCount} or fewer digivolution cards`);
+        }
+        if (minSourceCount !== undefined && minSourceCount !== null && minSourceCount !== '') pieces.push(`with ${minSourceCount} or more digivolution cards`);
+        return pieces;
+    }
+
+    formatUiTargetSummary(target = {}, conditions = {}) {
+        const owner = this.formatUiOwnerLabel(target.owner || conditions.owner || 'opponent');
+        const count = target.count || conditions.count || 1;
+        const type = this.formatUiCardTypeLabel(target);
+        const filters = this.formatUiTargetFilter(target, conditions);
+        const countText = String(count) === 'all' ? 'all' : `${count}`;
+        return `${countText} ${owner} ${filters.length ? filters.join(' ') + ' ' : ''}${type}`.replace(/\s+/g, ' ').trim();
+    }
+
+    formatUiActionSummary(action = {}, conditions = {}) {
+        const type = String(action.type || conditions.actionType || '').toUpperCase();
+        const amount = action.amount ?? conditions.amount;
+        const modValue = action.amount ?? action.value ?? action.buff?.value ?? conditions.modValue;
+        const duration = action.duration || action.buff?.duration || conditions.duration || null;
+        const durationText = duration ? ` (${String(duration).replace(/_/g, ' ').toLowerCase()})` : '';
+        switch (type) {
+            case 'DP_MOD': {
+                const v = Number(modValue || 0);
+                return `${v >= 0 ? '+' : ''}${v} DP${durationText}`;
+            }
+            case 'DELETE':
+            case 'DELETE_DIGIMON': return 'delete the selected target';
+            case 'BOUNCE': return 'return the selected target to hand';
+            case 'RETURN_TO_DECK': return `return the selected target to the ${String(action.position || action.to || 'deck').toLowerCase()}`;
+            case 'DE_DIGIVOLVE':
+            case 'DEDIGIVOLVE': return `De-Digivolve ${amount || conditions.count || 1}`;
+            case 'TRASH_BOTTOM_EVO': return `trash ${amount || conditions.count || 1} digivolution card(s)`;
+            case 'SUSPEND': return 'suspend the selected target';
+            case 'UNSUSPEND': return 'unsuspend the selected target';
+            case 'SEND_TO_SECURITY': return `place the selected target on ${String(action.position || 'top')} of security`;
+            case 'SEC_MOD': return `Security Attack ${Number(modValue || 0) >= 0 ? '+' : ''}${modValue}`;
+            case 'GRANT_KEYWORD': return `give ${action.buff?.keyword || action.keyword || 'keyword'}${durationText}`;
+            case 'GRANT_TRIGGER_EFFECT': return `give a ${action.trigger || action.grantTriggerData?.trigger || 'trigger'} effect${durationText}`;
+            case 'CANT_ATTACK': return `can't attack${durationText}`;
+            case 'CANT_ATTACK_PLAYER': return `can't attack players${durationText}`;
+            case 'CANT_UNSUSPEND': return `can't unsuspend${durationText}`;
+            case 'CANT_BE_DELETED': return `can't be deleted${durationText}`;
+            case 'CANT_BE_RETURNED': return `can't be returned${durationText}`;
+            case 'UNAFFECTED_BY_OPPONENT_EFFECTS': return `unaffected by opponent effects${durationText}`;
+            default: return type ? type.replace(/_/g, ' ') : 'resolve this effect';
+        }
+    }
+
+    buildPendingTargetUiPrompt(playerId, action = {}, effect = {}, legalCount = null) {
+        const target = action.target || {};
+        const conditions = {
+            count: target.count || action.count || 1,
+            amount: this.getDynamicActionAmount(playerId, action.amount || target.amount || action.count || 1, effect?.sourceCard || null, effect?.context || {}),
+            modValue: action.amount ?? action.value ?? action.buff?.value ?? action.modValue,
+            cardType: target.cardType,
+            trait: target.trait,
+            name: target.name,
+            nameContains: target.nameContains,
+            maxDp: target.maxDp,
+            minDp: target.minDp,
+            maxLevel: target.maxLevel,
+            minLevel: target.minLevel,
+            minCost: target.minCost,
+            maxCost: target.maxCost,
+            maxSourceCount: target.maxSourceCount,
+            minSourceCount: target.minSourceCount,
+            duration: action.duration || action.buff?.duration || null,
+            actionType: action.type
+        };
+        const targetSummary = this.formatUiTargetSummary(target, conditions);
+        const effectSummary = this.formatUiActionSummary(action, conditions);
+        const sourceName = effect?.sourceName || effect?.sourceCard?.name || action.sourceName || action.sourceCard?.name || 'Effect';
+        const legalText = Number.isFinite(Number(legalCount)) ? ` Legal targets: ${Number(legalCount)}.` : '';
+        const uiPrompt = `${sourceName}: choose ${targetSummary}. Effect: ${effectSummary}.${legalText}`;
+        return {
+            sourceName,
+            targetSummary,
+            effectSummary,
+            uiPrompt,
+            instruction: uiPrompt
+        };
+    }
+
+    formatUiRevealSlot(slot = {}) {
+        const count = slot.count === 'all' ? 'all' : Number(slot.count || 1);
+        const target = slot.target || {};
+        const targetSummary = this.formatUiTargetSummary({ ...target, owner: target.owner || 'own' }, { count });
+        return `${slot.optional ? 'up to ' : ''}${count} ${targetSummary.replace(/^\d+\s+/, '')}`.replace(/\s+/g, ' ').trim();
+    }
+
+    buildRevealUiPrompt(playerId, sourceCard, action = {}, revealed = [], selections = [], revealSourceZone = 'deck') {
+        const amount = Number(action.amount || revealed.length || 0);
+        const fromLabel = revealSourceZone === 'security' ? 'your security stack' : (revealSourceZone === 'hand' ? 'your hand' : 'the top of your deck');
+        const sourceName = sourceCard?.name || action.sourceName || 'Effect';
+        const slotText = (selections || []).map(slot => this.formatUiRevealSlot(slot)).filter(Boolean);
+        const selectText = slotText.length ? `Select ${slotText.join(' and ')}.` : 'Select any legal card shown.';
+        const destination = this.getRevealSelectedDestination(action);
+        const destText = destination === 'hand' ? 'add to hand' : destination;
+        const restAction = String(action.then || action.remainingAction || '').toUpperCase();
+        let restText = '';
+        if (/BOTTOM/.test(restAction) || /RETURN_REVEALED_REST_TO_DECK_BOTTOM/.test(JSON.stringify(action))) restText = ' Return the rest to the bottom of the deck.';
+        else if (/TOP/.test(restAction)) restText = ' Return the rest to the top of the deck.';
+        else if (/SHUFFLE_SECURITY/.test(restAction) || revealSourceZone === 'security') restText = ' Shuffle the remaining security cards.';
+        const uiPrompt = `${sourceName}: reveal ${amount} card(s) from ${fromLabel}. ${selectText} Then ${destText}.${restText}`;
+        return uiPrompt.replace(/\s+/g, ' ').trim();
+    }
+
+    buildStructuredChoiceUiPrompt(playerId, action = {}, candidates = [], fallback = '') {
+        const source = action.sourceCard?.name || action.sourceName || 'Effect';
+        const type = String(action.type || '').toUpperCase();
+        const targetSummary = this.formatUiTargetSummary(action.target || { owner: 'own', cardType: 'card', count: 1 }, { count: action.target?.count || action.count || 1 });
+        let verb = 'choose';
+        if (type.startsWith('PLAY_FROM')) verb = 'play';
+        else if (type === 'ADD_TO_HAND') verb = 'add to hand';
+        else if (type === 'PLACE_SOURCE' || type === 'LINK_FROM_HAND') verb = 'place as digivolution card/link';
+        else if (type.includes('DIGIVOLVE')) verb = 'digivolve';
+        return `${source}: ${verb} ${targetSummary}. Legal choices: ${candidates.length}. ${fallback || ''}`.replace(/\s+/g, ' ').trim();
+    }
+
     startRevealSelection(playerId, sourceCard, action, effectContext = null) {
         const zone = this.zones[playerId];
         const amount = Number(action.amount || 0);
@@ -5877,6 +6064,8 @@ class GameState {
         };
 
         this.pendingReveal.slotSummary = this.getRevealSlotSummary(this.pendingReveal);
+        this.pendingReveal.uiPrompt = this.buildRevealUiPrompt(playerId, sourceCard, action, revealed, selections, revealSourceZone);
+        this.pendingReveal.instruction = this.pendingReveal.uiPrompt;
         this.addLog(`🔍 ${this.players[playerId].name} revealed ${revealed.length} card(s) from ${revealSourceZone}.`);
 
         return { type: "PENDING_REVEAL_SELECTION", playerId, revealedCards: revealed, cards: revealed, selections, slotSummary: this.pendingReveal.slotSummary };
@@ -10546,13 +10735,17 @@ class GameState {
     }
 
     startStructuredZoneChoice(playerId, action, candidates, instruction, effectContext = null) {
+        const uiPrompt = this.buildStructuredChoiceUiPrompt(playerId, action, candidates, instruction);
         this.pendingTrashRevive = {
             playerId,
             cards: candidates.map(x => ({ ...x.card, _sourceZone: x.zone, _sourceOwner: x.owner, _hostInstanceId: x.hostInstanceId })),
             structuredAction: action,
             structuredEffectContext: effectContext,
             mode: 'STRUCTURED_ZONE_CHOICE',
-            instruction
+            instruction: uiPrompt,
+            uiPrompt,
+            actionSummary: this.formatUiActionSummary(action, { count: action.target?.count || action.count || 1 }),
+            targetSummary: this.formatUiTargetSummary(action.target || { owner: 'own', cardType: 'card', count: 1 }, { count: action.target?.count || action.count || 1 })
         };
         this.pendingChoice = this.pendingTrashRevive;
     }
@@ -11421,7 +11614,8 @@ class GameState {
                         candidateOwnerByInstanceId: Object.fromEntries(legalTargetEntries.map(entry => [entry.card.instanceId, entry.owner])),
                         structuredAction: action,
                         structuredEffectContext: effect.context || {},
-                        sourceCard: effect.sourceCard
+                        sourceCard: effect.sourceCard,
+                        ...this.buildPendingTargetUiPrompt(effect.playerId, contextualAction, effect, legalTargetEntries.length)
                     };
                     return; // 🛑 挂起引擎，等玩家开火
                 case 'STUN':
@@ -11673,7 +11867,10 @@ class GameState {
                                 isOncePerTurn: !!(action.isOncePerTurn || action.oncePerTurn || action.buff?.isOncePerTurn || action.buff?.oncePerTurn)
                             },
                             instruction: `请选择 ${requestedTargetCount} 只目标获得触发效果`,
-                            candidates: legalTargetEntries.map(entry => entry.card)
+                            candidates: legalTargetEntries.map(entry => entry.card),
+                            candidateOwnerByInstanceId: Object.fromEntries(legalTargetEntries.map(entry => [entry.card.instanceId, entry.owner])),
+                            sourceCard: effect.sourceCard,
+                            ...this.buildPendingTargetUiPrompt(effect.playerId, { ...action, type: 'GRANT_TRIGGER_EFFECT' }, effect, legalTargetEntries.length)
                         };
                         return;
                     }
@@ -11859,7 +12056,12 @@ class GameState {
                                 minCost: action.target?.minCost
                             },
                             instruction: `请选择 ${owner === 'own' ? '己方' : '对手'} ${count} 只目标获得 ${modValue} DP`,
-                            candidates: legalTargetEntries.map(entry => entry.card)
+                            candidates: legalTargetEntries.map(entry => entry.card),
+                            candidateOwnerByInstanceId: Object.fromEntries(legalTargetEntries.map(entry => [entry.card.instanceId, entry.owner])),
+                            structuredAction: action,
+                            structuredEffectContext: effect.context || {},
+                            sourceCard: effect.sourceCard,
+                            ...this.buildPendingTargetUiPrompt(effect.playerId, { ...action, type: 'DP_MOD' }, effect, legalTargetEntries.length)
                         };
                         return;
                     }
@@ -12144,7 +12346,8 @@ class GameState {
                         candidateOwnerByInstanceId: Object.fromEntries(legalTargetEntries.map(entry => [entry.card.instanceId, entry.owner])),
                         structuredAction: action,
                         structuredEffectContext: effect.context || {},
-                        sourceCard: effect.sourceCard
+                        sourceCard: effect.sourceCard,
+                        ...this.buildPendingTargetUiPrompt(effect.playerId, { ...action, type: mappedAction, target: { ...(action.target || {}), owner } }, effect, legalTargetEntries.length)
                     };
                     return;
                 }
@@ -18612,13 +18815,26 @@ class GameState {
 
     getLeaveProtectionText(card) {
         if (!card) return "";
-        const parts = [card.mainEffect || "", card.sourceEffect || "", card.inheritedEffect || "", card.cardText || "", card.effectText || "", card.searchText || ""];
+        // Round 22EL: top-card leave protection must not read its own
+        // inherited/source text. fetch-cards stores sourceEffect inside
+        // effectText/searchText for convenience, so use the scoped runtime text
+        // helper for the battle-area top card and source-only text for stack cards.
+        // This prevents top BT23-067 LadyDevimon from using its inherited
+        // <Scapegoat> text when it has no digivolution cards.
+        const parts = [
+            typeof this.getBattleRuntimeText === 'function'
+                ? this.getBattleRuntimeText(card)
+                : [card.mainEffect || "", card.cardText || ""].filter(Boolean).join(" ")
+        ];
         if (Array.isArray(card.stack)) {
             card.stack.forEach(src => {
                 // Round 15M: do not treat DUAL Option-side/feed-combined text as
                 // inherited protection text while it is a digivolution card.
                 if (this.isDualCard(src)) return;
-                parts.push(src.sourceEffect || "", src.inheritedEffect || "", src.mainEffect || "", src.effectText || "", src.searchText || "");
+                const sourceText = typeof this.getSourceRuntimeText === 'function'
+                    ? this.getSourceRuntimeText(src)
+                    : [src.sourceEffect || "", src.inheritedEffect || ""].filter(Boolean).join(" ");
+                parts.push(sourceText);
             });
         }
         // Round 19H: protection keywords can be granted by temporary/static effects
@@ -18883,7 +19099,10 @@ class GameState {
             const mechs = Array.isArray(sourceCard?.mechanics) ? sourceCard.mechanics : [];
             mechs.forEach((mech, index) => {
                 if (this.normalizeTriggerName(mech?.trigger) !== normalized) return;
-                if ((mech?.isInherited === true) !== isSource && isSource) return;
+                // Round 22EL: inherited replacement effects only function while
+                // the card is a digivolution source; non-inherited replacements
+                // only function from the top battle-area card.
+                if ((mech?.isInherited === true) !== isSource) return;
                 entries.push({ sourceCard, hostCard, isSource, mech, index });
             });
         };
@@ -18917,7 +19136,11 @@ class GameState {
         for (const entry of entries) {
             const mech = entry.mech || {};
             const sourceCard = entry.hostCard || entry.sourceCard || card;
-            const fullText = this.getLeaveProtectionText(entry.sourceCard || card);
+            const fullText = entry.isSource
+                ? (typeof this.getSourceRuntimeText === 'function'
+                    ? this.getSourceRuntimeText(entry.sourceCard)
+                    : [entry.sourceCard?.sourceEffect || '', entry.sourceCard?.inheritedEffect || ''].filter(Boolean).join(' '))
+                : this.getLeaveProtectionText(entry.sourceCard || card);
             if (!this.canApplyStructuredReplacementTextGate(fullText, options)) continue;
             if (!this.evaluateStructuredCondition(playerId, mech.condition, sourceCard, { protectedCard: card, replacement: options })) continue;
 

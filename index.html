@@ -603,6 +603,46 @@
             text-shadow: 0 0 6px var(--gold);
         }
         .server-target-illegal .top-card { filter: grayscale(.85) brightness(.58); }
+
+        /* Round 22EM: SERVER_TARGET guidance must never sit as a click-blocking
+           modal over the field. Legal targets are already highlighted on-card;
+           the prompt is now a compact HUD pinned near the log edge and allows
+           clicks to pass through to the battlefield. Only explicit buttons keep
+           pointer events so players can still fizzle when needed. */
+        body.targeting-mode.server-target-mode #targeting-banner {
+            position: fixed;
+            top: 72px;
+            left: calc(100vw - var(--log-right-w) - 18px);
+            right: auto;
+            transform: translateX(-100%);
+            width: min(340px, 24vw);
+            min-width: 250px;
+            padding: 10px 14px;
+            gap: 7px;
+            background: rgba(0,0,0,0.64);
+            border-color: rgba(255,204,0,0.58);
+            box-shadow: 0 0 20px rgba(255,204,0,0.18);
+            backdrop-filter: blur(5px);
+            pointer-events: none;
+        }
+        body.targeting-mode.server-target-mode #targeting-text {
+            font-size: 12px;
+            line-height: 1.35;
+            letter-spacing: 1px;
+        }
+        body.targeting-mode.server-target-mode #targeting-banner .ring-btn,
+        body.targeting-mode.server-target-mode #targeting-banner .execute-btn {
+            pointer-events: auto;
+        }
+        @media (max-width: 900px) {
+            body.targeting-mode.server-target-mode #targeting-banner {
+                left: 50%;
+                top: 56px;
+                transform: translateX(-50%);
+                width: min(94vw, 360px);
+                min-width: 0;
+            }
+        }
         @keyframes legalTargetPulse { from { transform: scale(1); } to { transform: scale(1.045); } }
         
         .targeted-1 .top-card, .targeted-1.hand-card { border: 3px solid var(--blue) !important; box-shadow: 0 0 25px var(--blue) !important; transform: scale(1.05); }
@@ -1129,9 +1169,9 @@
             #chat-widget { width: min(120px, calc(var(--info-left-w) - 14px)); }
         }
 
-        .mobile-battle-tools, .mobile-orientation-hint, .mobile-portrait-lock { display: none; }
+        .mobile-battle-tools, .mobile-orientation-hint { display: none; }
 
-        @media (max-width: 900px) {
+        @media (max-width: 760px) {
             body.in-game {
                 --field-min-w: 0px;
                 --side-w: 58px;
@@ -1250,7 +1290,6 @@
                 bottom: 4px;
                 min-height: calc(var(--hand-card-h) + 12px);
                 height: calc(var(--hand-card-h) + 12px);
-                transform: translateX(-50%) translateY(0);
             }
             body.in-game .hand-card:hover { transform: translateY(var(--hand-rest-y, 7px)) rotate(var(--hand-rot, 0deg)); }
             body.in-game #action-ring {
@@ -1324,271 +1363,22 @@
             body.in-game .surrender-btn { padding: 10px 8px; font-size: 10px; }
         }
 
-        @media (max-width: 900px) and (orientation: landscape) {
-            body.in-game {
-                --side-w: clamp(78px, 10.2vw, 88px);
-                --card-w: clamp(50px, 6.35vw, 56px);
-                --zone-card-w: clamp(43px, 5.4vw, 48px);
-                --zone-card-h: calc(var(--zone-card-w) * 1.4);
-                --hand-card-w: clamp(48px, 5.9vw, 52px);
-                --hand-peek: 24px;
-                --memory-h: 22px;
-                --memory-dot: 17px;
-                --memory-font: 9px;
-            }
-            body.in-game .language-switcher { display: none; }
-            body.in-game #match-series-panel {
-                top: 6px;
-                left: auto;
-                right: 8px;
-                transform: none;
-                min-width: 0;
-                max-width: 250px;
-                padding: 6px 10px;
-                font-size: 9px;
-                letter-spacing: .4px;
-            }
-            body.in-game .mobile-battle-tools {
-                top: 6px;
-                left: 8px;
-                transform: none;
-                padding: 4px;
-                gap: 4px;
-            }
-            body.in-game .mobile-tool-btn {
-                padding: 5px 8px;
-                font-size: 9px;
-                letter-spacing: .7px;
-            }
-            body.in-game .player-area {
-                grid-template-columns: var(--side-w) minmax(0, 1fr) var(--side-w);
-                padding: 2px 6px;
-                gap: 5px;
-            }
-            body.in-game .player-area.opponent {
-                padding-top: 3px;
-                padding-bottom: 1px;
-            }
-            body.in-game .player-area.self {
-                padding-top: 1px;
-                padding-bottom: 4px;
-            }
-            body.in-game .battle-slots {
-                gap: 3px;
-                padding: 1px 2px;
-            }
-            body.in-game .player-area.opponent .battle-slots {
-                grid-template-rows: minmax(36px, .58fr) minmax(calc(var(--card-h) + 8px), 1.42fr);
-            }
-            body.in-game .player-area.self .battle-slots {
-                grid-template-rows: minmax(calc(var(--card-h) + 8px), 1.42fr) minmax(36px, .58fr);
-                transform: translateY(10px);
-            }
-            body.in-game .field-lane {
-                min-height: calc(var(--card-h) + 10px);
-                padding: 8px 5px 3px;
-                grid-auto-columns: var(--card-w);
-                gap: 9px;
-                border-color: rgba(255,255,255,0.075);
-                background: rgba(0,0,0,0.035);
-            }
-            body.in-game .digimon-lane {
-                min-height: calc(var(--card-h) + 13px);
-            }
-            body.in-game .support-lane {
-                min-height: 38px;
-                padding-top: 7px;
-                align-items: end;
-                opacity: .9;
-            }
-            body.in-game .support-lane .stack-wrap {
-                transform: scale(.74);
-                transform-origin: center bottom;
-            }
-            body.in-game .support-lane .stack-wrap:hover {
-                transform: scale(.78);
-            }
-            body.in-game .stack-wrap.suspended .top-card {
-                transform: rotate(90deg) scale(1);
-            }
-            body.in-game .stack-wrap.suspended:hover .top-card,
-            body.in-game .stack-wrap.suspended.attack-target:hover .top-card {
-                transform: rotate(90deg) scale(1.03);
-            }
-            body.in-game .side-container {
-                padding: 2px 3px;
-                gap: 2px;
-                background: rgba(2,10,22,0.26);
-                border-color: rgba(255,255,255,0.055);
-            }
-            body.in-game .deck-trash-column,
-            body.in-game .mini-zone,
-            body.in-game .zone-stack {
-                gap: 2px;
-            }
-            body.in-game .label {
-                font-size: 6.5px;
-                letter-spacing: .35px;
-            }
-            body.in-game .hatch-slot,
-            body.in-game .trash-pile,
-            body.in-game .egg-pile {
-                width: var(--zone-card-w);
-                height: var(--zone-card-h);
-            }
-            body.in-game .security-wrapper {
-                width: calc(var(--zone-card-h) + 8px);
-                height: calc(var(--zone-card-w) + 22px);
-            }
-            body.in-game .sec-card-visual {
-                width: var(--zone-card-w);
-                height: var(--zone-card-h);
-                box-shadow: 0 4px 9px rgba(0,0,0,0.42);
-            }
-            body.in-game .hand-area {
-                bottom: 0;
-                width: min(62vw, 500px);
-                min-height: calc(var(--hand-card-h) + 10px);
-                height: calc(var(--hand-card-h) + 10px);
-                padding-top: 11px;
-                background: transparent;
-                border-color: transparent;
-                box-shadow: none;
-                backdrop-filter: none;
-                transform: translateX(-50%) translateY(calc(var(--hand-card-h) + 2px));
-            }
-            body.in-game.mobile-hand-open .hand-area,
-            body.in-game .hand-area.hand-dock-open,
-            body.in-game .hand-area:focus-within {
-                transform: translateX(-50%) translateY(0);
-                width: min(66vw, 520px);
-                border-top-color: rgba(0,210,255,0.20);
-                border-left-color: rgba(0,210,255,0.10);
-                border-right-color: rgba(0,210,255,0.10);
-                backdrop-filter: blur(3px);
-                background: linear-gradient(180deg, rgba(0,210,255,0.08), rgba(0,0,0,0.42) 70%, rgba(0,0,0,0.70));
-            }
-            body.in-game .hand-area::before { display: none; }
-            body.in-game.mobile-hand-open .hand-area::before,
-            body.in-game .hand-area.hand-dock-open::before,
-            body.in-game .hand-area:focus-within::before { display: block; }
-            body.in-game.mobile-hand-open .hand-card,
-            body.in-game .hand-area.hand-dock-open .hand-card,
-            body.in-game .hand-area:focus-within .hand-card {
-                transform: translateY(-18px) rotate(var(--hand-rot, 0deg));
-                border-color: rgba(255,255,255,0.72);
-                box-shadow: 0 0 16px rgba(0,210,255,0.28), 0 5px 12px rgba(0,0,0,0.72);
-            }
-            body.in-game.mobile-hand-open .mobile-tool-btn[onclick*="toggleMobileHand"] {
-                color: var(--gold);
-                border-color: rgba(255,204,0,0.55);
-                background: rgba(255,204,0,0.08);
-            }
-            body.in-game .hand-card:hover {
-                transform: translateY(var(--hand-rest-y, 7px)) rotate(var(--hand-rot, 0deg));
-            }
-            body.in-game .opponent-hand-rack {
-                top: 1px;
-                transform: translateX(-50%) scale(.68);
-            }
-            body.in-game #mobile-touch-banner {
-                bottom: 54px;
-                width: min(72vw, 430px);
-                padding: 8px 10px;
-                font-size: 10px;
-            }
-            body.in-game #action-ring {
-                bottom: 58px !important;
-            }
-            body.in-game #targeting-banner {
-                top: 42px;
-                width: min(72vw, 430px);
-            }
-            body.in-game #card-inspector-panel,
-            body.in-game #trash-viewer-panel {
-                width: min(92vw, 680px);
-                max-height: 88dvh;
-            }
-        }
-
-        @media (max-width: 900px) and (orientation: portrait) {
-            body.in-game {
-                overflow: hidden;
-            }
-            body.in-game .main-layout,
-            body.in-game .mobile-battle-tools,
-            body.in-game #mobile-touch-banner,
-            body.in-game #targeting-banner,
-            body.in-game #action-ring {
-                pointer-events: none;
-                filter: blur(5px) brightness(.42) saturate(.7);
-            }
-            body.in-game .mobile-portrait-lock {
-                display: flex;
+        @media (max-width: 760px) and (orientation: portrait) {
+            body.in-game .mobile-orientation-hint {
+                display: block;
                 position: fixed;
-                inset: 0;
-                z-index: 90000;
-                align-items: center;
-                justify-content: center;
-                padding: 28px;
-                background: radial-gradient(circle at 50% 35%, rgba(0,210,255,0.10), transparent 34%), rgba(3,4,10,0.93);
-                backdrop-filter: blur(12px);
-                color: #fff;
-                text-align: center;
-                font-family: Consolas, monospace;
-            }
-            .mobile-portrait-card {
-                width: min(320px, 88vw);
-                border: 1px solid rgba(255,204,0,0.34);
-                border-radius: 14px;
-                padding: 22px 18px;
-                background: rgba(7,10,20,0.82);
-                box-shadow: 0 0 34px rgba(255,204,0,0.10), inset 0 0 24px rgba(255,255,255,0.03);
-            }
-            .mobile-portrait-icon {
-                width: 64px;
-                height: 42px;
-                margin: 0 auto 16px;
-                border: 2px solid var(--gold);
-                border-radius: 8px;
-                position: relative;
-                box-shadow: 0 0 18px rgba(255,204,0,0.24);
-            }
-            .mobile-portrait-icon::after {
-                content: '';
-                position: absolute;
-                width: 7px;
-                height: 7px;
-                border-radius: 50%;
-                right: 6px;
-                top: 50%;
-                transform: translateY(-50%);
-                background: var(--gold);
-            }
-            .mobile-portrait-title {
+                left: 50%;
+                top: 50px;
+                transform: translateX(-50%);
+                z-index: 6200;
+                padding: 6px 10px;
+                border: 1px solid rgba(255,204,0,0.32);
+                border-radius: 999px;
+                background: rgba(0,0,0,0.58);
                 color: var(--gold);
-                font-size: 18px;
-                font-weight: 900;
-                letter-spacing: 2px;
-                margin-bottom: 10px;
-            }
-            .mobile-portrait-copy {
-                color: #cfd2e6;
-                font-size: 12px;
-                line-height: 1.65;
-                letter-spacing: .6px;
-                margin-bottom: 16px;
-            }
-            .mobile-portrait-btn {
-                width: 100%;
-                border: 1px solid rgba(0,210,255,0.55);
-                border-radius: 8px;
-                background: rgba(0,210,255,0.08);
-                color: var(--blue);
-                padding: 11px 12px;
-                font: 900 11px Consolas, monospace;
+                font: 900 10px Consolas, monospace;
                 letter-spacing: 1px;
-                cursor: pointer;
+                pointer-events: none;
             }
         }
 
@@ -1897,19 +1687,10 @@
 
 <div id="mobile-battle-tools" class="mobile-battle-tools" aria-label="Mobile battle tools">
     <button type="button" class="mobile-tool-btn hot" onclick="toggleMobilePanel('left')">PREVIEW</button>
-    <button type="button" class="mobile-tool-btn" onclick="toggleMobileHand()">HAND</button>
     <button type="button" class="mobile-tool-btn" onclick="toggleMobilePanel('right')">LOG</button>
-    <button type="button" class="mobile-tool-btn" onclick="closeMobilePanels(); closeMobileHand()">TABLE</button>
+    <button type="button" class="mobile-tool-btn" onclick="closeMobilePanels()">TABLE</button>
 </div>
 <div class="mobile-orientation-hint">ROTATE FOR BEST BATTLE VIEW</div>
-<div class="mobile-portrait-lock" aria-live="polite">
-    <div class="mobile-portrait-card">
-        <div class="mobile-portrait-icon" aria-hidden="true"></div>
-        <div class="mobile-portrait-title">ROTATE DEVICE</div>
-        <div class="mobile-portrait-copy">Battle view is locked to landscape for cleaner play and recording.</div>
-        <button type="button" class="mobile-portrait-btn" onclick="requestLandscapeMode()">LOCK LANDSCAPE</button>
-    </div>
-</div>
 <div id="mobile-touch-banner">
     <div id="mobile-touch-text">SELECT ACTION</div>
     <button type="button" class="mobile-touch-cancel" onclick="clearMobileSelection()">CANCEL</button>
@@ -2912,58 +2693,20 @@
 
     function setInGameMode(enabled) {
         document.body.classList.toggle('in-game', !!enabled);
-        if (!enabled) {
-            closeMobilePanels();
-            closeMobileHand();
-        }
-        if (enabled) requestLandscapeMode({ silent: true });
+        if (!enabled) closeMobilePanels();
     }
 
     function closeMobilePanels() {
         document.body.classList.remove('mobile-panel-open-left', 'mobile-panel-open-right');
     }
 
-    function closeMobileHand() {
-        document.body.classList.remove('mobile-hand-open');
-        document.getElementById('hand')?.classList.remove('hand-dock-open');
-    }
-
-    function toggleMobileHand(force) {
-        if (!document.body.classList.contains('in-game')) return;
-        const handBox = document.getElementById('hand');
-        const shouldOpen = typeof force === 'boolean'
-            ? force
-            : !document.body.classList.contains('mobile-hand-open');
-        if (shouldOpen) closeMobilePanels();
-        document.body.classList.toggle('mobile-hand-open', shouldOpen);
-        handBox?.classList.toggle('hand-dock-open', shouldOpen);
-    }
-
     function toggleMobilePanel(side) {
         if (!document.body.classList.contains('in-game')) return;
-        closeMobileHand();
         const cls = side === 'right' ? 'mobile-panel-open-right' : 'mobile-panel-open-left';
         const other = side === 'right' ? 'mobile-panel-open-left' : 'mobile-panel-open-right';
         const open = document.body.classList.contains(cls);
         document.body.classList.remove(cls, other);
         if (!open) document.body.classList.add(cls);
-    }
-
-    async function requestLandscapeMode(options = {}) {
-        if (!window.matchMedia || !window.matchMedia('(max-width: 900px)').matches) return false;
-        try {
-            const root = document.documentElement;
-            if (!document.fullscreenElement && root.requestFullscreen && !options.silent) {
-                await root.requestFullscreen();
-            }
-            if (screen.orientation?.lock) {
-                await screen.orientation.lock('landscape');
-                return true;
-            }
-        } catch (err) {
-            if (!options.silent) console.info('Landscape lock unavailable:', err?.message || err);
-        }
-        return false;
     }
 
     function showLegalNotice(kind) {
@@ -3757,6 +3500,130 @@
         return true;
     }
 
+
+    // Round 22EN: make every pending effect window explain the actual action.
+    // Examples: Gatomon reveal windows show "reveal top 3" and each slot to add;
+    // DP/delete target windows show owner, target restrictions, DP number, and action result.
+    function normalizeUiList(value) {
+        if (Array.isArray(value)) return value.map(v => String(v || '').trim()).filter(Boolean);
+        if (value === undefined || value === null || value === '') return [];
+        return String(value).split(/\s+or\s+|,\s*|\s*\/\s*/i).map(v => v.trim()).filter(Boolean);
+    }
+
+    function targetOwnerLabel(owner) {
+        const raw = String(owner || 'opponent').toLowerCase();
+        if (raw === 'own' || raw === 'self') return '己方 / your';
+        if (raw === 'opponent') return '对方 / opponent\'s';
+        if (raw === 'any') return '任意玩家 / any player\'s';
+        return raw;
+    }
+
+    function targetCardTypeLabel(type) {
+        const raw = String(type || 'card').toLowerCase();
+        if (raw.includes('digimon')) return 'Digimon / 数码兽';
+        if (raw.includes('tamer')) return 'Tamer / 驯兽师';
+        if (raw.includes('option')) return 'Option / 选项';
+        if (raw.includes('egg')) return 'Digi-Egg / 数码蛋';
+        return 'card / 卡';
+    }
+
+    function describeTargetObject(target = {}, conditions = {}) {
+        const count = target.count ?? conditions.count ?? 1;
+        const countText = String(count) === 'all' ? '全部 / all' : `${count}`;
+        const parts = [];
+        const names = [
+            ...normalizeUiList(target.name),
+            ...normalizeUiList(target.nameAny),
+            ...normalizeUiList(target.nameContains),
+            ...normalizeUiList(target.nameContainsAny),
+            ...normalizeUiList(conditions.name),
+            ...normalizeUiList(conditions.nameContains)
+        ];
+        if (names.length) parts.push(`[${names.join('] / [')}]`);
+        const traits = [
+            ...normalizeUiList(target.trait),
+            ...normalizeUiList(target.traitAny),
+            ...normalizeUiList(target.traits),
+            ...normalizeUiList(conditions.trait)
+        ];
+        if (traits.length) parts.push(`特征/文本含 ${traits.map(t => `[${t}]`).join(' / ')}`);
+        const colors = [...normalizeUiList(target.color), ...normalizeUiList(target.colorAny), ...normalizeUiList(target.colors)];
+        if (colors.length) parts.push(`${colors.join('/')} 色`);
+        const maxDp = target.maxDp ?? conditions.maxDp;
+        const minDp = target.minDp ?? conditions.minDp;
+        const maxLevel = target.maxLevel ?? conditions.maxLevel;
+        const minLevel = target.minLevel ?? conditions.minLevel;
+        const maxCost = target.maxCost ?? conditions.maxCost;
+        const minCost = target.minCost ?? conditions.minCost;
+        const maxSourceCount = target.maxSourceCount ?? conditions.maxSourceCount;
+        const minSourceCount = target.minSourceCount ?? conditions.minSourceCount;
+        if (maxDp !== undefined && maxDp !== null && maxDp !== '') parts.push(`DP ${maxDp} 或以下 / ${maxDp} DP or less`);
+        if (minDp !== undefined && minDp !== null && minDp !== '') parts.push(`DP ${minDp} 或以上 / ${minDp} DP or more`);
+        if (maxLevel !== undefined && maxLevel !== null && maxLevel !== '') parts.push(`Lv.${maxLevel} 或以下 / Lv.${maxLevel} or lower`);
+        if (minLevel !== undefined && minLevel !== null && minLevel !== '') parts.push(`Lv.${minLevel} 或以上 / Lv.${minLevel} or higher`);
+        if (maxCost !== undefined && maxCost !== null && maxCost !== '') parts.push(`登场费用 ${maxCost} 或以下 / play cost ${maxCost} or less`);
+        if (minCost !== undefined && minCost !== null && minCost !== '') parts.push(`登场费用 ${minCost} 或以上 / play cost ${minCost} or more`);
+        if (maxSourceCount !== undefined && maxSourceCount !== null && maxSourceCount !== '') parts.push(Number(maxSourceCount) === 0 ? '没有进化源 / no digivolution cards' : `进化源 ${maxSourceCount} 张或以下`);
+        if (minSourceCount !== undefined && minSourceCount !== null && minSourceCount !== '') parts.push(`进化源 ${minSourceCount} 张或以上`);
+        return `${countText} ${targetOwnerLabel(target.owner || conditions.owner || 'opponent')} ${parts.join(' ')} ${targetCardTypeLabel(target.cardType || conditions.cardType)}`.replace(/\s+/g, ' ').trim();
+    }
+
+    function describeActionResult(actionType, conditions = {}, pending = {}) {
+        const type = String(actionType || '').toUpperCase();
+        const action = pending.structuredAction || {};
+        const modValue = conditions.modValue ?? action.amount ?? action.value ?? action.buff?.value;
+        const duration = action.duration || action.buff?.duration || conditions.duration || '';
+        const durationText = duration ? `（${String(duration).replace(/_/g, ' ').toLowerCase()}）` : '';
+        if (type === 'DP_MOD') return `给予 ${Number(modValue || 0) >= 0 ? '+' : ''}${modValue} DP ${durationText}`;
+        if (type === 'DELETE' || type === 'DELETE_DIGIMON') return '删除选择目标 / delete selected target';
+        if (type === 'BOUNCE') return '返回手牌 / return to hand';
+        if (type === 'RETURN_TO_DECK') return '返回卡组 / return to deck';
+        if (type === 'DE_DIGIVOLVE' || type === 'DEDIGIVOLVE') return `退化 ${conditions.amount || conditions.count || 1} 层 / De-Digivolve`;
+        if (type === 'TRASH_BOTTOM_EVO') return `废弃 ${conditions.amount || conditions.count || 1} 张进化源`;
+        if (type === 'SUSPEND') return '横置目标 / suspend target';
+        if (type === 'UNSUSPEND') return '重置目标 / unsuspend target';
+        if (type === 'SEND_TO_SECURITY') return '放到安保 / place into security';
+        if (type === 'SEC_MOD') return `Security Attack ${Number(modValue || 0) >= 0 ? '+' : ''}${modValue}`;
+        if (type === 'GRANT_KEYWORD') return `获得 ${action.buff?.keyword || action.keyword || 'keyword'} ${durationText}`;
+        if (type === 'GRANT_TRIGGER_EFFECT') return '获得触发效果 / gain triggered effect';
+        if (type.startsWith('CANT_') || type === 'UNAFFECTED_BY_OPPONENT_EFFECTS') return type.replace(/_/g, ' ');
+        return type.replace(/_/g, ' ');
+    }
+
+    function htmlLines(text) {
+        return escapeHtml(String(text || '')).replace(/\n/g, '<br>');
+    }
+
+    function describePendingTarget(pending, candidateCount = null) {
+        if (!pending) return '';
+        const serverPrompt = pending.uiPrompt || pending.instruction;
+        const sourceName = pending.sourceName || pending.sourceCard?.name || pending.structuredAction?.sourceName || 'Effect';
+        const targetSummary = pending.targetSummary || describeTargetObject(pending.target || {}, pending.conditions || {});
+        const effectSummary = pending.effectSummary || describeActionResult(pending.actionType, pending.conditions || {}, pending);
+        const legal = candidateCount === null ? '' : `<br><span style="color:${candidateCount ? 'var(--gold)' : 'var(--red)'}; font-size:12px;">[ LEGAL TARGETS: ${candidateCount} ]</span>`;
+        const base = serverPrompt
+            ? htmlLines(serverPrompt)
+            : `${escapeHtml(sourceName)}<br><span style="color:var(--gold)">目标 / Target:</span> ${escapeHtml(targetSummary)}<br><span style="color:var(--blue)">效果 / Effect:</span> ${escapeHtml(effectSummary)}`;
+        return `${base}${legal}`;
+    }
+
+    function describeRevealSlot(slot = {}) {
+        const count = slot.count === 'all' ? '全部 / all' : Number(slot.count || 1);
+        const summary = describeTargetObject({ ...(slot.target || {}), owner: (slot.target || {}).owner || 'own' }, { count });
+        return `${slot.optional ? '最多 / up to ' : ''}${count}：${summary.replace(/^\d+\s+/, '')}`;
+    }
+
+    function describePendingReveal(pendingReveal, maxPick) {
+        if (!pendingReveal) return '';
+        if (pendingReveal.uiPrompt || pendingReveal.instruction) return htmlLines(pendingReveal.uiPrompt || pendingReveal.instruction);
+        const action = pendingReveal.action || {};
+        const amount = action.amount || pendingReveal.cards?.length || 0;
+        const from = pendingReveal.revealSourceZone === 'security' ? '安保区 / security stack' : (pendingReveal.revealSourceZone === 'hand' ? '手牌 / hand' : '卡组顶 / top of deck');
+        const slots = Array.isArray(pendingReveal.selections) ? pendingReveal.selections.map(describeRevealSlot) : [];
+        const slotText = slots.length ? slots.join('；') : `最多选择 ${maxPick} 张 / select up to ${maxPick}`;
+        return `翻开 ${from} ${amount} 张。<br>${escapeHtml(slotText)}<br><span style="color:#aaa">确认后加入手牌；其余按卡牌效果处理。</span>`;
+    }
+
     function updateTargetingUI() {
         const textObj = document.getElementById('targeting-text'); 
         const btn = document.getElementById('execute-btn');
@@ -3787,10 +3654,7 @@
 
             const candidateIds = applyServerTargetCandidateMarkers(currentPendingTarget);
             const candidateCount = candidateIds ? candidateIds.size : null;
-            const candidateText = candidateCount === null
-                ? ''
-                : `<br><span style="color:${candidateCount ? 'var(--gold)' : 'var(--red)'}; font-size:12px;">[ LEGAL TARGETS: ${candidateCount} ]</span>`;
-            textObj.innerHTML = `>> 🎯 SYSTEM WAITING << <br> PLEASE SELECT TARGET FOR: <b>[${action}]</b> ${restrictionStr}${candidateText}`;
+            textObj.innerHTML = `>> 🎯 TARGET REQUIRED << <br><b>[${escapeHtml(action)}]</b><br>${describePendingTarget(currentPendingTarget, candidateCount)}`;
 
             if (candidateCount === 0) {
                 textObj.innerHTML += `<br><span style="color:#aaa; font-size:11px;">No legal target. Auto-fizzling...</span>`;
@@ -5189,7 +5053,7 @@
             const maxPick = constraints.totalSelectCount || (Array.isArray(state.pendingReveal.selections)
                 ? state.pendingReveal.selections.reduce((sum, slot) => sum + Number(slot.count || 1), 0)
                 : 1);
-            document.getElementById('reveal-instruction-text').innerText = `SELECT UP TO ${maxPick} CARD(S). GOLD = SELECTED.`;
+            document.getElementById('reveal-instruction-text').innerHTML = describePendingReveal(state.pendingReveal, maxPick);
             container.innerHTML = state.pendingReveal.cards.map(c => {
                 const opacity = c.isSelectable ? '1' : '0.4';
                 const cursor = c.isSelectable ? 'pointer' : 'not-allowed';

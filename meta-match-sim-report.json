@@ -1,0 +1,2533 @@
+{
+  "createdAt": "2026-05-17T15:57:23.219Z",
+  "tests": [
+    {
+      "name": "Round 22EN effect popup wording guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EM server-target HUD non-blocking guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EL inherited replacement top-card scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EK hand dock memory center regression guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EJ BT4-105 Tactical Retreat send-to-security guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EI effect-created attack during existing attack guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EH ST10-06 Mastemon errata security-search guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EG BT25-057 Final Judgment errata duration guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EF suspend-cost Tamer targeting guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EE Violet Inboots timing guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22ED optional Start-of-Turn processing guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EC legacy memory Tamer start/on-play split guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EB complete official named Token asset coverage guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22EA Angel/Mastemon official color metadata guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DY official trash-choice UI wording guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DX server-target candidate UI guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DW YGO-style hand dock UI guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DV attack pending-target deadlock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DT Tamer auto activation animation telemetry guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DS self-only cost-reduction runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DR memory centerline and zoom gutter UI guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DQ reduced play-cost effect-play guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DP hand special digivolve permission guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DO effect digivolve fixed-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DN cost selector semantic guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DM deeper official semantic spot-check guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DL official tournament administration guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DK remaining official no-mechanics completion guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DJ official AD-01 color metadata guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DI official Token image puller guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DH official Token cardlist coverage guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DF npm test entrypoint guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DE Discord dotenv configuration guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DD official BT25 overlay image puller guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DC official BT25 card-pool coverage guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DB Three Musketeers Option-source cost atomicity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22DA DUAL Option source/link scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CZ official report writer CLI guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CY official report writer integration guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CX official report telemetry guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CW guarded no-op action rejection guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CV effect DNA printed requirement guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CU guarded action Main Phase telemetry guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CT SEARCH_SECURITY_TO_HAND recovery-before-shuffle guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CS BT9-043 Magnadramon X End-of-Attack security-to-hand cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CR Glowing Dawn inherited End-of-Attack Tamer-source cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CQ EX9-064 Megadramon inherited End-of-Attack unsuspend-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CP BT19-025 MetalGreymon inherited End-of-Attack Tamer-source play guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CO DexDoruGreymon inherited End-of-Attack chosen-level guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CN Beast Antylamon inherited End-of-Attack other-suspended cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CM EX4 Alliance inherited End-of-Attack another-suspended source guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CL BT16-071 MadLeomon inherited End-of-Attack self-delete guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CK ST22-04 Taomon inherited End-of-Attack security-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CJ Alphamon-name inherited End-of-Attack source guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CI HerculesKabuterimon End-of-Attack twice-per-turn guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CH inherited End-of-Attack gain-memory source scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CG BlackRapidmon End-of-Attack De-Digivolve guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CF Pulsemon inherited End-of-Attack security-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CE inherited source End-of-Attack timing guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CD self-leave End-of-Attack timing guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CC simple End-of-Attack timing guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CB TeslaJellymon End-of-Attack cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22CA LM Amphimon under-card trash binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BZ RB1 Amphimon under-card trash binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BY remaining dynamic level maximum variants guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BX dynamic level maximum target guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BW Destromon dynamic total-play-cost source bonus guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BV DP_CHECK owner/target scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BU AeroVeedramon Zero cost/trash guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BT not-deleted follow-up precision guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BS same-level deleted hand-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BR PLAY_FROM_SOURCE host/source selector guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BQ placed-card level cost binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BP self-source color static condition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BO same-level source-return payoff guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BN official tournament banned/restricted deck legality guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BM security-to-hand remaining cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BL source-return-to-hand cost atomicity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BK remaining source-placement payoff guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BJ source-placement cost atomicity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BI Lui Ohwada composite breeding-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BH battle-area Option cost atomicity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BG owner-any condition aggregate guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BF DUAL field Option-reference guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BE security-to-hand cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BD Option ignore-color condition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BC attack-timing simultaneous priority guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BB field/breeding-area Overflow guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22BA Token owner/controller guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AZ DUAL Arts Digivolve guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AY official Token rules guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AX Save self-to-Tamer guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AW copied source-effects guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AV PREVENT_LEAVE keyword/name-digivolve cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AU breeding/hatch movement cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AT digivolve-only-color restriction guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AS PREVENT_LEAVE_PLAY semantic cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AR fake GRANT_KEYWORD semantic cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AQ effect-created attack MOVE cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AP STUN semantic cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AO attack-target MOVE cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AN end-the-attack runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AM unblockable CANT_BE_BLOCKED guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AL Digimon option-target guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AK effect attack request guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AJ Option color requirement guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AI Tamer-as-Digimon guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AH color-change encoding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AG forced opponent attack guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AF zero-DP placeholder cleanup guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AE self cannot-attack-opponent-Digimon guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AD De-Digivolve reminder no-security-trash guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AC can-only-attack-suspended Digimon guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AB unsuspended-attack permission guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22AA attack-target-change lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22Z De-Digivolve reminder trash-security guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22Y cannot-attack restriction encoding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22X opponent-effect immunity encoding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22W checked-security suppression scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22V activation-lock encoding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22U suppress-On-Play-by-this-effect guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22T effects-can’t-delete protection guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22S suspend/unsuspend restriction guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22R cannot-have-DP-reduced immunity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22Q source-scoped opponent-effect immunity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22P cannot-be-returned hand/deck guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22O cannot-be-deleted scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22N cannot-be-blocked restriction guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22M DP-reduction immunity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22L cannot-digivolve legality lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22K cannot-move breeding lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22J cannot-play player lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22I cost-reduction lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22H memory-gain lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22G can't-use-Option player lock guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22F can't-attack-or-block CANT_BLOCK guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22E activate-this-Digimon trigger-effect guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22C may-attack request guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22B granted On-Deletion play/gain trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 22A attach End-of-Attack to On Deletion guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21Z granted End-of-Turn deletion trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21Y activate printed trigger-effect guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21X granted attack/suspend trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21W granted End-of-Attack trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21V granted When-Attacking trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21U granted Start-of-Main forced-attack guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21T granted On Deletion trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21S cards-under source-host guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21R no-digivolution-cards source-count guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21Q multicolor condition and Tamer-suspend cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21P granted event-text trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21O granted suspend-trigger memory-loss guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21M hand-count condition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21L played-by-this-effect keyword binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21K Tamer-suspend event binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21J Option-use cost-condition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21I Security Digimon static scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21H comma-delimited name selector canonicalization guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21G Tamer/Option card-type OR selector guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21F Digimon/Tamer card-type OR selector guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21E Unique Emblem Delay suspend-trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21D compound color selector canonicalization guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21C level-check and compound-trait guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21B color+trait selector guard",
+      "issues": []
+    },
+    {
+      "name": "Round 21A compound name selector canonicalization guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20Z leave-source own-effect exclusion and selector guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20Y Decode/Partition source-play card broadcast guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20X played Tamer source-binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20V start-of-main-phase timing guard",
+      "checkedStartMainCards": 228,
+      "issues": []
+    },
+    {
+      "name": "Round 20U without-source host restriction guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20T all-lowest/all-highest tied targets guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20S empty-breeding play destination guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20R Abbadomon same-level-as-placed-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20Q same-level source-cost runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20P D-Reaper Mother source-count DP guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20O D-Reaper source/host PLACE_SOURCE binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20N PLACE_SOURCE cost scope / Abbadomon Core guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20M full meta archetype regression pack",
+      "archetypes": [
+        "dReaper",
+        "mastemon",
+        "appmon",
+        "greymonRaid",
+        "blueSource",
+        "securityControl",
+        "aceBlast",
+        "tokenOverclock"
+      ],
+      "matchReports": [
+        {
+          "pairing": "mastemon vs appmon",
+          "turns": 10,
+          "turnPlayer": "p2",
+          "phase": "HATCH",
+          "memory": -1,
+          "gameOver": false,
+          "zones": {
+            "p1": {
+              "deck": 27,
+              "hand": 7,
+              "battle": 2,
+              "security": 7,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 33,
+              "hand": 11,
+              "battle": 1,
+              "security": 1,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            "🛡️ p1 recovered 1 card(s) to security top.",
+            "⏩ SEND_TO_SECURITY: action condition not met.",
+            "⏩ TRASH_SECURITY_STACK: action condition not met.",
+            "💰 Cost: trashed 1 security card(s)",
+            "▶️ P1 played Salamon without paying cost.",
+            "💸 Gatomon reduced Gatomon digivolution cost by 2.",
+            "💸 Gatomon reduced Gatomon digivolution cost by 2.",
+            ">> <span style=\"color:var(--blue)\">[P1]</span> 进化 <b>Gatomon</b> (消耗 1 费)",
+            "💾 MEMORY -1",
+            "⏩ DNA_DIGIVOLVE: no valid Digimon card in hand.",
+            "⏩ DNA_DIGIVOLVE: no valid Digimon card in hand.",
+            "🌅 P2 turn 10 started. Drew 1."
+          ]
+        },
+        {
+          "pairing": "dReaper vs greymonRaid",
+          "turns": 15,
+          "turnPlayer": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "gameOver": false,
+          "zones": {
+            "p1": {
+              "deck": 32,
+              "hand": 9,
+              "battle": 3,
+              "security": 1,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 33,
+              "hand": 8,
+              "battle": 1,
+              "security": 2,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            "⏩ Abbadomon Core: cost could not be paid.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🛡️ Agumon was trashed after security resolution.",
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Abbadomon</b> (消耗 11 费)",
+            "💾 MEMORY -11",
+            "⏩ Abbadomon: condition not met.",
+            "🧬 Abbadomon placed under Abbadomon.",
+            "💰 Cost: placed 1 card(s) as digivolution cards under Abbadomon.",
+            "⏩ DELETE_DIGIMON: no legal target, action fizzles.",
+            "🌅 P2 turn 14 started. Drew 1.",
+            "⏩ Abbadomon: cost could not be paid.",
+            "🌅 P1 turn 15 started. Drew 1."
+          ]
+        },
+        {
+          "pairing": "blueSource vs securityControl",
+          "turns": 13,
+          "turnPlayer": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "gameOver": false,
+          "zones": {
+            "p1": {
+              "deck": 33,
+              "hand": 8,
+              "battle": 3,
+              "security": 2,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 34,
+              "hand": 10,
+              "battle": 1,
+              "security": 0,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            "💾 MEMORY +1",
+            "🌅 P1 turn 11 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Gabumon</b> (消耗 3 费)",
+            "💾 MEMORY -3",
+            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
+            "🌅 P2 turn 12 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🛡️ Gomamon was trashed after security resolution.",
+            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Acid Injection</b> (消耗 1 费)",
+            "💾 MEMORY +1",
+            "🌅 P1 turn 13 started. Drew 1."
+          ]
+        },
+        {
+          "pairing": "aceBlast vs tokenOverclock",
+          "turns": 9,
+          "turnPlayer": "p1",
+          "phase": "GAME_OVER",
+          "memory": 3,
+          "gameOver": true,
+          "zones": {
+            "p1": {
+              "deck": 36,
+              "hand": 5,
+              "battle": 3,
+              "security": 5,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 36,
+              "hand": 10,
+              "battle": 0,
+              "security": 0,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            "🌅 P1 turn 7 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🛡️ ShineGreymon: Burst Mode was trashed after security resolution.",
+            "🛡️ Atratusmon was trashed after security resolution.",
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Zudomon</b> (消耗 4 费)",
+            "💾 MEMORY -4",
+            "⏩ TRASH_BOTTOM_EVO: no legal target, action fizzles.",
+            "⏩ BOUNCE: no legal target, action fizzles.",
+            "🌅 P2 turn 8 started. Drew 1.",
+            "🌅 P1 turn 9 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🏁 GAME OVER: P1 wins. Reason: DIRECT_ATTACK."
+          ]
+        },
+        {
+          "pairing": "appmon vs blueSource",
+          "turns": 12,
+          "turnPlayer": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "gameOver": false,
+          "zones": {
+            "p1": {
+              "deck": 35,
+              "hand": 7,
+              "battle": 0,
+              "security": 4,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 33,
+              "hand": 7,
+              "battle": 4,
+              "security": 4,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            "✅ CANT_UNSUSPEND: applied to previous target (Gammamon).",
+            "⏩ GRANT_KEYWORD: action condition not met.",
+            "⏩ DP_MOD: action condition not met.",
+            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
+            "🌪️ Vortex: choose an opponent Digimon to attack, or skip.",
+            "⏸️ End phase paused for pending effect window.",
+            "🌪️ Vortex: Aegiochusmon: Green attacks Gammamon.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🌅 P1 turn 11 started. Drew 1.",
+            "🚫 Aegiochusmon: Green can't unsuspend (unsuspend phase).",
+            "🚫 Aegiochusmon: Green can't unsuspend (unsuspend phase).",
+            "🌅 P2 turn 12 started. Drew 1."
+          ]
+        },
+        {
+          "pairing": "securityControl vs dReaper",
+          "turns": 10,
+          "turnPlayer": "p2",
+          "phase": "GAME_OVER",
+          "memory": -3,
+          "gameOver": true,
+          "zones": {
+            "p1": {
+              "deck": 36,
+              "hand": 9,
+              "battle": 1,
+              "security": 0,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 35,
+              "hand": 9,
+              "battle": 2,
+              "security": 2,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Acid Injection</b> (消耗 1 费)",
+            "💾 MEMORY -1",
+            "🌅 P2 turn 8 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "⏩ PLAY_FROM_HAND_OR_TRASH: no valid card found.",
+            "🛡️ Advent of the Ancient Steel Angel was added from security to hand.",
+            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>ADR-01 Jeri</b> (消耗 5 费)",
+            "💾 MEMORY +5",
+            "🌅 P1 turn 9 started. Drew 1.",
+            "🌅 P2 turn 10 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🏁 GAME OVER: P2 wins. Reason: DIRECT_ATTACK."
+          ]
+        }
+      ],
+      "issues": []
+    },
+    {
+      "name": "Round 20L face-up security static scope / reminder guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20K once-per-turn binding filters guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20J SECURITY_REMOVED owner/opponent binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20I battle-deletion this-Digimon binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20H SECURITY_CHECKED self-binding / face-up security guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20G Piercing + security continuation / attack survival guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20F multi-security-check official flow guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20E activation-lock bracket clause guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20D explicit condition runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20C source/link Overflow single-charge guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20B live bot/socket action path guard",
+      "issues": []
+    },
+    {
+      "name": "Round 20A security-removed condition and stale turn-transition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19Z security check auto-resolution guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19Y can’t-attack-Digimon target legality guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19X Blitz timing/legality guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19W forced attack target legality guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19V cannot-be-attacked target legality guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19U Raid target-change legality guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19T Alliance can-suspend guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19S Collision immunity/blocker guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19R Evade optional suspension guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19Q effect-created attack binding guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19P unsuspended-Digimon condition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19O Vortex optional target guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19N Material Save optional/runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19M Fortitude trigger/runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19L Partition color/level guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19K Barrier optional protection guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19J Armor Purge instance identity guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19I Retaliation keyword/battle guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19H Decoy replacement/color-scope guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19G Jamming overprotection guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19F Fragment replacement guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19E Blast DNA Counter encoding/runtime guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19D Counter/Blast ACE permission guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19C ACE/Overflow source-leave guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19B Mind Link/Tamer-as-source guard",
+      "issues": []
+    },
+    {
+      "name": "Round 19A Appmon Start/Main linked-trigger guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18Z App Fusion/linked-material guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18Y Link/Appmon linked-state guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18X Overclock runtime/token-cost guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18W Token runtime/preparation guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18V Decode runtime/Aegio line guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18U piercing / may-battle transition guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18T DUAL option metadata/use-requirement guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18S DUAL runtime/card semantics guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18R Angel/Mastemon second-pass semantic guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18Q Angel/Mastemon/anti-play lock card encoding guard",
+      "issues": []
+    },
+    {
+      "name": "Suspended stack UI rotates only active top card",
+      "issues": []
+    },
+    {
+      "name": "Official security stack and deck-under-trash UI layout",
+      "issues": []
+    },
+    {
+      "name": "Official mulligan/security setup regression",
+      "summary": {
+        "turnPlayer": "p1",
+        "turnCount": 1,
+        "phase": "MAIN",
+        "memory": 0,
+        "pending": {
+          "target": false,
+          "targetType": null,
+          "targetCandidates": null,
+          "targetCandidateIds": null,
+          "reveal": false,
+          "choice": false,
+          "choiceMode": null,
+          "choiceCandidates": null,
+          "choiceCandidateIds": null,
+          "trashRevive": false,
+          "protection": false,
+          "effectSelection": false,
+          "startPhase": false,
+          "counter": false,
+          "counterStep": "IDLE"
+        },
+        "queueLength": 0,
+        "queueHead": null,
+        "logs": 0,
+        "zones": {
+          "p1": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          },
+          "p2": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          }
+        },
+        "lastGuardedActionTelemetry": null
+      },
+      "securityOrder": {
+        "p1": [
+          {
+            "index": 0,
+            "position": "bottom",
+            "id": "BT1-014",
+            "name": "Kokatorimon",
+            "instanceId": "uz68iipw51779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 1,
+            "position": "middle",
+            "id": "BT1-010",
+            "name": "Agumon",
+            "instanceId": "eg1mzz5fx1779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 2,
+            "position": "middle",
+            "id": "BT1-013",
+            "name": "Muchomon",
+            "instanceId": "j49a6jw0f1779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 3,
+            "position": "middle",
+            "id": "BT1-011",
+            "name": "Agumon Expert",
+            "instanceId": "pj1lgk5co1779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 4,
+            "position": "top",
+            "id": "BT1-010",
+            "name": "Agumon",
+            "instanceId": "x3teu4jnq1779033448821",
+            "faceUp": false
+          }
+        ],
+        "p2": [
+          {
+            "index": 0,
+            "position": "bottom",
+            "id": "BT2-011",
+            "name": "Vorvomon",
+            "instanceId": "u4sem8fhj1779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 1,
+            "position": "middle",
+            "id": "BT2-012",
+            "name": "Birdramon",
+            "instanceId": "ocmr5wcbo1779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 2,
+            "position": "middle",
+            "id": "BT2-011",
+            "name": "Vorvomon",
+            "instanceId": "w3u5l2kq71779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 3,
+            "position": "middle",
+            "id": "BT2-012",
+            "name": "Birdramon",
+            "instanceId": "b4qdicuxy1779033448821",
+            "faceUp": false
+          },
+          {
+            "index": 4,
+            "position": "top",
+            "id": "BT2-011",
+            "name": "Vorvomon",
+            "instanceId": "x1kj0q4yo1779033448821",
+            "faceUp": false
+          }
+        ]
+      },
+      "issues": []
+    },
+    {
+      "name": "Reveal dual-slot selection / cleanup",
+      "events": [
+        "reveal:1"
+      ],
+      "summary": {
+        "turnPlayer": "p1",
+        "turnCount": 1,
+        "phase": "MAIN",
+        "memory": 0,
+        "pending": {
+          "target": false,
+          "targetType": null,
+          "targetCandidates": null,
+          "targetCandidateIds": null,
+          "reveal": false,
+          "choice": false,
+          "choiceMode": null,
+          "choiceCandidates": null,
+          "choiceCandidateIds": null,
+          "trashRevive": false,
+          "protection": false,
+          "effectSelection": false,
+          "startPhase": false,
+          "counter": false,
+          "counterStep": "IDLE"
+        },
+        "queueLength": 0,
+        "queueHead": null,
+        "logs": 3,
+        "zones": {
+          "p1": {
+            "deck": 2,
+            "hand": 6,
+            "battle": 1,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          },
+          "p2": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          }
+        },
+        "lastGuardedActionTelemetry": null
+      },
+      "issues": []
+    },
+    {
+      "name": "Total DP target choice",
+      "events": [
+        "choice:TOTAL_DP_TARGET_CHOICE:2"
+      ],
+      "lastChoice": {
+        "mode": "TOTAL_DP_TARGET_CHOICE",
+        "playerId": "p1",
+        "selectedIds": [
+          "BT1-010-battle-g9oi53",
+          "BT1-011-battle-pb1t53"
+        ],
+        "selectedCards": [
+          {
+            "id": "BT1-010",
+            "name": "Agumon",
+            "instanceId": "BT1-010-battle-g9oi53"
+          },
+          {
+            "id": "BT1-011",
+            "name": "Agumon Expert",
+            "instanceId": "BT1-011-battle-pb1t53"
+          }
+        ],
+        "selectedCount": 2,
+        "totalPlayCost": 6,
+        "totalDp": 5000
+      },
+      "p2Battle": [
+        "Biyomon:6000"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Total play-cost target choice",
+      "events": [
+        "choice:TOTAL_DP_TARGET_CHOICE:3"
+      ],
+      "lastChoice": {
+        "mode": "TOTAL_DP_TARGET_CHOICE",
+        "playerId": "p1",
+        "selectedIds": [
+          "BT1-010-battle-za68mx",
+          "BT2-010-battle-qfrlju",
+          "BT3-010-battle-uxl7vy"
+        ],
+        "selectedCards": [
+          {
+            "id": "BT1-010",
+            "name": "Agumon",
+            "instanceId": "BT1-010-battle-za68mx"
+          },
+          {
+            "id": "BT2-010",
+            "name": "Biyomon",
+            "instanceId": "BT2-010-battle-qfrlju"
+          },
+          {
+            "id": "BT3-010",
+            "name": "ZubaEagermon",
+            "instanceId": "BT3-010-battle-uxl7vy"
+          }
+        ],
+        "selectedCount": 3,
+        "totalPlayCost": 10,
+        "totalDp": 8000
+      },
+      "p2Battle": [],
+      "issues": []
+    },
+    {
+      "name": "Total DP/play-cost selection requires at least one legal target",
+      "before": {
+        "mode": "TOTAL_DP_TARGET_CHOICE",
+        "playerId": "p1",
+        "minCount": 1,
+        "maxCount": "all",
+        "optional": false,
+        "chooseAnyNumber": false,
+        "selectionRule": "",
+        "totalMetric": "dp",
+        "totalLimit": 5000,
+        "candidates": [
+          {
+            "id": "BT1-010",
+            "name": "Agumon",
+            "instanceId": "BT1-010-battle-melnia",
+            "playCost": 2,
+            "dp": 2000
+          },
+          {
+            "id": "BT1-011",
+            "name": "Agumon Expert",
+            "instanceId": "BT1-011-battle-aj5jx0",
+            "playCost": 3,
+            "dp": 3000
+          }
+        ]
+      },
+      "emptyAccepted": false,
+      "accepted": true,
+      "p2Battle": [
+        "Agumon Expert"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Total play-cost canonical encoding guard",
+      "events": [
+        "choice:TOTAL_PLAY_COST_TARGET_CHOICE:3"
+      ],
+      "actionTarget": {
+        "owner": "opponent",
+        "cardType": "digimon",
+        "count": "all",
+        "selection": "total_play_cost",
+        "totalPlayCost": 14
+      },
+      "lastChoice": {
+        "mode": "TOTAL_PLAY_COST_TARGET_CHOICE",
+        "playerId": "p1",
+        "selectedIds": [
+          "BT1-010-battle-lrkjd5",
+          "BT2-010-battle-w8mvss",
+          "BT3-010-battle-d25ngw"
+        ],
+        "selectedCards": [
+          {
+            "id": "BT1-010",
+            "name": "Agumon",
+            "instanceId": "BT1-010-battle-lrkjd5"
+          },
+          {
+            "id": "BT2-010",
+            "name": "Biyomon",
+            "instanceId": "BT2-010-battle-w8mvss"
+          },
+          {
+            "id": "BT3-010",
+            "name": "ZubaEagermon",
+            "instanceId": "BT3-010-battle-d25ngw"
+          }
+        ],
+        "selectedCount": 3,
+        "totalPlayCost": 10,
+        "totalDp": 8000
+      },
+      "p2Battle": [],
+      "issues": []
+    },
+    {
+      "name": "sendToTrash removes original battle reference",
+      "p1Battle": [],
+      "p1Trash": [
+        "Agumon"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Total DP selection with no feasible non-empty target fizzles",
+      "events": [],
+      "p2Battle": [
+        "Agumon:9000"
+      ],
+      "logs": [
+        "⏩ DELETE_DIGIMON: no feasible total-DP target within 5000, action fizzles."
+      ],
+      "issues": []
+    },
+    {
+      "name": "Implicit self-target buffs stay on this Digimon",
+      "events": [],
+      "p213": {
+        "sourceEffects": [
+          {
+            "type": "GRANT_KEYWORD",
+            "keyword": "Rush",
+            "duration": "OPPONENTS_END_OF_TURN",
+            "sourcePlayerId": "p1"
+          },
+          {
+            "type": "DP_MOD",
+            "value": 3000,
+            "duration": "OPPONENTS_END_OF_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ],
+        "otherEffects": []
+      },
+      "green": {
+        "sourceEffects": [
+          {
+            "type": "GRANT_KEYWORD",
+            "keyword": "Piercing",
+            "duration": "END_OF_TURN",
+            "sourcePlayerId": "p1"
+          },
+          {
+            "type": "DP_MOD",
+            "value": 5000,
+            "duration": "END_OF_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ],
+        "otherEffects": []
+      },
+      "issues": []
+    },
+    {
+      "name": "All-scope buffs apply to every matching Digimon",
+      "dReaper": {
+        "a": [
+          {
+            "type": "DP_MOD",
+            "value": 1000,
+            "duration": "THIS_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ],
+        "b": [
+          {
+            "type": "DP_MOD",
+            "value": 1000,
+            "duration": "THIS_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ],
+        "non": []
+      },
+      "ts": {
+        "a": [
+          {
+            "type": "GRANT_KEYWORD",
+            "keyword": "Blocker",
+            "duration": "END_OF_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ],
+        "b": [],
+        "non": []
+      },
+      "issues": []
+    },
+    {
+      "name": "All-scope keyword filters use count all and keyword selectors",
+      "issues": []
+    },
+    {
+      "name": "Verified [Main] effect is not dropped when Security effect exists",
+      "rebootEffects": [
+        [
+          {
+            "type": "DP_MOD",
+            "value": 1000,
+            "duration": "OPPONENTS_END_OF_TURN",
+            "sourcePlayerId": "p1"
+          },
+          {
+            "type": "GRANT_KEYWORD",
+            "keyword": "Blocker",
+            "duration": "OPPONENTS_END_OF_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ],
+        [
+          {
+            "type": "DP_MOD",
+            "value": 1000,
+            "duration": "OPPONENTS_END_OF_TURN",
+            "sourcePlayerId": "p1"
+          },
+          {
+            "type": "GRANT_KEYWORD",
+            "keyword": "Blocker",
+            "duration": "OPPONENTS_END_OF_TURN",
+            "sourcePlayerId": "p1"
+          }
+        ]
+      ],
+      "plainEffects": [],
+      "issues": []
+    },
+    {
+      "name": "Same-target CANT_UNSUSPEND follow-up binds to previous target",
+      "issues": []
+    },
+    {
+      "name": "Played-by-this-effect attack redirects bind to successful play result",
+      "issues": []
+    },
+    {
+      "name": "Generic Suspend 1 Digimon gates If-this-effect-suspended-your-Digimon follow-up",
+      "issues": []
+    },
+    {
+      "name": "If-this-effect-deleted-one-of-your-Digimon gates follow-up by same-effect own deletion",
+      "issues": []
+    },
+    {
+      "name": "If-this-effect-did-not-delete gates follow-up by same-effect deletion failure",
+      "issues": []
+    },
+    {
+      "name": "If-this-effect-returned / did-not-return gates follow-up by same-effect return result",
+      "issues": []
+    },
+    {
+      "name": "If-this-effect-trashed gates follow-up by same-effect trash result",
+      "issues": []
+    },
+    {
+      "name": "If-this-effect-placed gates follow-up by same-effect placement result",
+      "issues": []
+    },
+    {
+      "name": "For-each-card-placed repeats follow-up by actual same-effect placement count",
+      "issues": []
+    },
+    {
+      "name": "For-each-card-trashed repeats follow-up by actual same-effect trash count",
+      "issues": []
+    },
+    {
+      "name": "For-each-level-deleted uses actual same-effect deleted Digimon level",
+      "issues": []
+    },
+    {
+      "name": "For-each-card-added-to-hand repeats follow-up by actual same-effect hand-add count",
+      "issues": []
+    },
+    {
+      "name": "For-each-opponent-Digimon-suspended uses actual same-effect suspended count",
+      "issues": []
+    },
+    {
+      "name": "Modal choose-one effects resolve only selected branch",
+      "modalIds": [
+        "EX4-066",
+        "EX4-051",
+        "P-128",
+        "P-195",
+        "P-127",
+        "BT10-036",
+        "BT17-027",
+        "EX3-008",
+        "BT14-094",
+        "EX3-058",
+        "P-129",
+        "P-012",
+        "BT22-025",
+        "BT17-015",
+        "EX3-070",
+        "BT10-095",
+        "BT5-082",
+        "BT13-059"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Same-name Tamer play restrictions filter candidates",
+      "candidates": [
+        "Dan Yuki"
+      ],
+      "trashCandidates": [
+        "Arukenimon & Mummymon"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Printed Reboot uses keyword runtime, not fake END_OF_TURN mechanic",
+      "rebootSuspended": false,
+      "plainSuspended": true,
+      "issues": []
+    },
+    {
+      "name": "Digivolve instanceId regression",
+      "top": "DarkTyrannomon",
+      "hostInstance": "BT1-010-agumon-cuvmv3",
+      "sourceIds": [
+        "src-e1jpv1h-1779033449094"
+      ],
+      "issues": []
+    },
+    {
+      "name": "De-Digivolve peeled shell keeps unique trash instanceId",
+      "survivorInstance": "BT25-025-dedigiHost-s9bezu",
+      "shellInstance": "BT25-025-dedigiHost-s9bezu-shell-0-mxs38s",
+      "issues": []
+    },
+    {
+      "name": "Security Digimon does not false-trigger non-[Security] text",
+      "events": [
+        "counter:pass"
+      ],
+      "attackerStack": 2,
+      "p2Trash": [
+        "BT25-025"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Legacy free-text target parser does not reference undefined structured action",
+      "issues": []
+    },
+    {
+      "name": "Blocker timing auto-skips when defender has no legal blockers",
+      "events": [
+        "counter:pass"
+      ],
+      "issues": []
+    },
+    {
+      "name": "BT14-033 Patamon start-main security digivolve and if-digivolved follow-up",
+      "events": [
+        "choice:WARP_CARD_CHOICE:1"
+      ],
+      "issues": []
+    },
+    {
+      "name": "Security check reveal UI shows checked card before continuing",
+      "issues": []
+    },
+    {
+      "name": "Official RPS winner automatically goes first before opening setup",
+      "summary": {
+        "turnPlayer": "p2",
+        "turnCount": 1,
+        "phase": "HATCH",
+        "memory": 0,
+        "pending": {
+          "target": false,
+          "targetType": null,
+          "targetCandidates": null,
+          "targetCandidateIds": null,
+          "reveal": false,
+          "choice": false,
+          "choiceMode": null,
+          "choiceCandidates": null,
+          "choiceCandidateIds": null,
+          "trashRevive": false,
+          "protection": false,
+          "effectSelection": false,
+          "startPhase": false,
+          "counter": false,
+          "counterStep": "IDLE"
+        },
+        "queueLength": 0,
+        "queueHead": null,
+        "logs": 2,
+        "zones": {
+          "p1": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          },
+          "p2": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          }
+        },
+        "lastGuardedActionTelemetry": null
+      },
+      "issues": []
+    },
+    {
+      "name": "Round 18B official RPS setup UI/server guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18A visual-only animation layer guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18C animation speed/safety guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18D battle presentation visual-only guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18E card inspector visual-only guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18F effect stack monitor visual-only guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18G full-audit performance/cache guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18H official mulligan declaration order guard",
+      "summary": {
+        "turnPlayer": "p2",
+        "turnCount": 1,
+        "phase": "HATCH",
+        "memory": 0,
+        "pending": {
+          "target": false,
+          "targetType": null,
+          "targetCandidates": null,
+          "targetCandidateIds": null,
+          "reveal": false,
+          "choice": false,
+          "choiceMode": null,
+          "choiceCandidates": null,
+          "choiceCandidateIds": null,
+          "trashRevive": false,
+          "protection": false,
+          "effectSelection": false,
+          "startPhase": false,
+          "counter": false,
+          "counterStep": "IDLE"
+        },
+        "queueLength": 0,
+        "queueHead": null,
+        "logs": 2,
+        "zones": {
+          "p1": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          },
+          "p2": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          }
+        },
+        "lastGuardedActionTelemetry": null
+      },
+      "issues": []
+    },
+    {
+      "name": "Round 18I official re-draw procedure guard",
+      "summary": {
+        "turnPlayer": "p1",
+        "turnCount": 1,
+        "phase": "HATCH",
+        "memory": 0,
+        "pending": {
+          "target": false,
+          "targetType": null,
+          "targetCandidates": null,
+          "targetCandidateIds": null,
+          "reveal": false,
+          "choice": false,
+          "choiceMode": null,
+          "choiceCandidates": null,
+          "choiceCandidateIds": null,
+          "trashRevive": false,
+          "protection": false,
+          "effectSelection": false,
+          "startPhase": false,
+          "counter": false,
+          "counterStep": "IDLE"
+        },
+        "queueLength": 0,
+        "queueHead": null,
+        "logs": 1,
+        "zones": {
+          "p1": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          },
+          "p2": {
+            "deck": 40,
+            "hand": 5,
+            "battle": 0,
+            "security": 5,
+            "eggs": 5,
+            "revealed": 0
+          }
+        },
+        "lastGuardedActionTelemetry": null
+      },
+      "issues": []
+    },
+    {
+      "name": "Round 18J cinematic polish visual-only guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18L deck builder cockpit guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18M match lifecycle rematch consensus guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18N BO3 match-series shell guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18O tournament deck-lock / no-side-deck guard",
+      "issues": []
+    },
+    {
+      "name": "Round 18P match history / replay log guard",
+      "issues": []
+    },
+    {
+      "name": "10-turn mixed official-flow smoke match",
+      "turnReports": [
+        {
+          "turn": 1,
+          "next": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 35,
+              "hand": 5,
+              "battle": 1,
+              "security": 5,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 39,
+              "hand": 6,
+              "battle": 0,
+              "security": 5,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 2,
+          "next": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 34,
+              "hand": 5,
+              "battle": 2,
+              "security": 5,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 38,
+              "hand": 7,
+              "battle": 0,
+              "security": 4,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 3,
+          "next": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 34,
+              "hand": 5,
+              "battle": 2,
+              "security": 5,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 37,
+              "hand": 9,
+              "battle": 0,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 4,
+          "next": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 33,
+              "hand": 6,
+              "battle": 2,
+              "security": 5,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 36,
+              "hand": 9,
+              "battle": 1,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 5,
+          "next": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 32,
+              "hand": 7,
+              "battle": 2,
+              "security": 4,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 35,
+              "hand": 9,
+              "battle": 2,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 6,
+          "next": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 28,
+              "hand": 8,
+              "battle": 2,
+              "security": 3,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 30,
+              "hand": 10,
+              "battle": 2,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 7,
+          "next": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 27,
+              "hand": 10,
+              "battle": 2,
+              "security": 2,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 29,
+              "hand": 10,
+              "battle": 3,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 8,
+          "next": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 26,
+              "hand": 11,
+              "battle": 2,
+              "security": 1,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 28,
+              "hand": 10,
+              "battle": 3,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 9,
+          "next": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 25,
+              "hand": 11,
+              "battle": 1,
+              "security": 1,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 27,
+              "hand": 11,
+              "battle": 2,
+              "security": 2,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 10,
+          "next": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 25,
+              "hand": 11,
+              "battle": 1,
+              "security": 1,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 26,
+              "hand": 12,
+              "battle": 2,
+              "security": 1,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        }
+      ],
+      "logs": [
+        "🚫 [Rules] Abbadomon Core cannot digivolve on Aegiochusmon: Blue: special digivolution requirement not met.",
+        ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Abbadomon Core</b> (消耗 15 费)",
+        ">> <span style=\"color:var(--blue)\">[P2]</span> 进化 <b>Abbadomon</b> (消耗 0 费)",
+        "💾 MEMORY 0",
+        "⏩ Abbadomon: condition not met.",
+        "⏩ Abbadomon: cost could not be paid.",
+        "🌅 P1 turn 15 started. Drew 1.",
+        "⏩ ADR-08 Optimizer: condition not met.",
+        "⏩ UNSUSPEND: no legal target, action fizzles.",
+        "🛡️ Abbadomon Core was trashed after security resolution.",
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Aegisdramon</b> (消耗 15 费)",
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Aegisdramon</b> (消耗 15 费)",
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Atomic Blaster</b> (消耗 5 费)",
+        "💾 MEMORY -5",
+        "⏩ Abbadomon: cost could not be paid.",
+        "🌅 P2 turn 16 started. Drew 1.",
+        "✅ DELETE_DIGIMON: total play cost selection applied to 1 card(s).",
+        "⏩ Abbadomon: cost could not be paid.",
+        "🌅 P1 turn 17 started. Drew 1.",
+        "⏩ UNSUSPEND: no legal target, action fizzles.",
+        "🛡️ DarkTyrannomon was trashed after security resolution.",
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Aegisdramon</b> (消耗 15 费)",
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Aegisdramon</b> (消耗 15 费)",
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Abyss Sanctuary: Throne Room</b> (消耗 3 费)",
+        "💾 MEMORY -3",
+        "🛡️ Added 1 security card(s) from p1 to hand.",
+        "🛡️ Abyss Sanctuary: Throne Room was placed face up as bottom security.",
+        "⏩ PLAY_FROM_HAND: no valid card found.",
+        "⏩ Abbadomon: cost could not be paid.",
+        "🌅 P2 turn 18 started. Drew 1."
+      ],
+      "issues": []
+    }
+  ],
+  "summary": {
+    "total": 280,
+    "failed": 0,
+    "issues": []
+  }
+}
