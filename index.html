@@ -3886,6 +3886,14 @@
         wrap.appendChild(badge);
     }
 
+    // Round 22EU: GameState stores digivolution sources bottom-to-top
+    // ([Lv.2, Lv.3, Lv.4...]), but tabletop display should show the newest
+    // source closest under the host: Host, then Lv.5 > Lv.4 > Lv.3 > Lv.2.
+    function getVisualSourceStack(card) {
+        const stack = Array.isArray(card?.stack) ? card.stack : [];
+        return stack.slice().reverse();
+    }
+
     function renderStack(card, isMine, isHatch) {
         const wrap = document.createElement('div');
         wrap.className = 'stack-wrap';
@@ -4005,11 +4013,17 @@
             };
         }
 
-        const stack = card.stack || [];
-        stack.forEach((s, i) => {
+        const stack = Array.isArray(card.stack) ? card.stack : [];
+        const visualSources = getVisualSourceStack(card);
+        visualSources.forEach((s, i) => {
             const layer = document.createElement('div');
-            layer.className = 'card-layer'; layer.style.backgroundImage = `url('${cssUrl(cardDisplayImage(s))}')`;
-            layer.style.transform = `translateY(${(i+1)*15}px)`; layer.style.zIndex = 5 - i;
+            layer.className = 'card-layer source-card';
+            layer.style.backgroundImage = `url('${cssUrl(cardDisplayImage(s))}')`;
+            layer.style.transform = `translateY(${(i+1)*15}px)`;
+            layer.style.zIndex = 5 - i;
+            layer.dataset.sourceVisualOrder = String(i);
+            layer.dataset.sourceStackIndex = String(stack.length - 1 - i);
+            layer.dataset.cardId = s.id || '';
             wrap.appendChild(layer);
         });
         const top = document.createElement('div'); top.className = 'card-layer top-card'; top.style.backgroundImage = `url('${cssUrl(cardDisplayImage(card))}')`; top.style.zIndex = 10; top.dataset.instanceId = card.instanceId || '';
@@ -4101,7 +4115,7 @@
         mainBlock.style.display = mainText ? 'block' : 'none';
         sourceBlock.style.display = sourceText ? 'block' : 'none';
         if (Array.isArray(card.stack) && card.stack.length) {
-            document.getElementById('inspector-stack-list').innerHTML = card.stack.map((s, idx) => `${idx + 1}. ${escapeHtml(cardDisplayName(s) || s.id || 'Source')}`).join('<br>');
+            document.getElementById('inspector-stack-list').innerHTML = getVisualSourceStack(card).map((s, idx) => `${idx + 1}. ${escapeHtml(cardDisplayName(s) || s.id || 'Source')}`).join('<br>');
             stackBlock.style.display = 'block';
         } else {
             document.getElementById('inspector-stack-list').innerHTML = '';

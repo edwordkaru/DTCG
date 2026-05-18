@@ -10492,6 +10492,58 @@ class GameState {
         return moved;
     }
 
+    // Round 22ET: checked security cleanup must inspect all card text fields.
+    // Some Tamer records store their [Security] text in sourceEffect instead of
+    // mainEffect/securityEffect after card-data refreshes; cleanup must still
+    // play/add the checked card instead of blindly trashing it.
+    getSecurityEffectText(card) {
+        if (!card) return '';
+        return [
+            card.securityEffect || '',
+            card.sourceEffect || '',
+            card.mainEffect || '',
+            card.effectText || '',
+            card.cardText || ''
+        ].filter(Boolean).join(' ');
+    }
+
+    resolveCheckedSecurityCleanup(playerId, fallbackCard = null, options = {}) {
+        const secCard = this.counterTiming?.currentSecurityCard || fallbackCard;
+        if (!secCard) return false;
+        const text = this.getSecurityEffectText(secCard).toLowerCase();
+        const securityEffectSuppressed = !!(options.suppressed ?? this.counterTiming?.currentSecurityEffectSuppressed);
+        const hasSecurityText = text.includes('[security]') || text.includes('【security】') || text.includes('安保');
+        const shouldPlay = !securityEffectSuppressed && hasSecurityText && (
+            text.includes('play this card') ||
+            text.includes('play this tamer') ||
+            text.includes('play it') ||
+            text.includes('without paying') ||
+            text.includes('不支付费用') ||
+            text.includes('登场')
+        );
+        const shouldAddHand = !securityEffectSuppressed && hasSecurityText && (
+            text.includes('add this card') ||
+            text.includes('add it to your hand') ||
+            text.includes('加入手牌')
+        );
+
+        if (shouldPlay) {
+            this.addLog(`🛡️ ${secCard.name || 'Security card'} Security effect plays this card.`);
+            const played = this.playCurrentSecurityCard(playerId, secCard);
+            this.counterTiming.currentSecurityEffectSuppressed = false;
+            return played;
+        }
+        if (shouldAddHand) {
+            this.addLog(`🛡️ ${secCard.name || 'Security card'} Security effect adds this card to hand.`);
+            const added = this.addCurrentSecurityCardToHand(playerId);
+            this.counterTiming.currentSecurityEffectSuppressed = false;
+            return added;
+        }
+        const trashed = this.trashCurrentSecurityCard(playerId);
+        this.counterTiming.currentSecurityEffectSuppressed = false;
+        return trashed;
+    }
+
     playCurrentSecurityCard(playerId, fallbackCard = null) {
         const secCard = this.counterTiming?.currentSecurityCard || fallbackCard;
         if (!secCard) return false;
@@ -13366,23 +13418,7 @@ class GameState {
                 const secCard = this.counterTiming.currentSecurityCard;
                 if (secCard) {
                     const defId = this.counterTiming.defenderId;
-                    const defSide = this.zones[defId];
-                    
-                    const secText = (secCard.mainEffect || "").toLowerCase();
-                    const securityEffectSuppressed = !!this.counterTiming.currentSecurityEffectSuppressed;
-                    const shouldPlay = !securityEffectSuppressed && secText.includes('[security]') && (secText.includes('play this card') || secText.includes('不支付费用') || secText.includes('登场'));
-                    const shouldAddHand = !securityEffectSuppressed && secText.includes('[security]') && (secText.includes('add this card') || secText.includes('加入手牌'));
-
-                    if (shouldPlay) {
-                        console.log(`🛡️ [SECURITY PLAY] ${secCard.name} 触发特权，直接登场！`);
-                        this.playCurrentSecurityCard(defId, secCard);
-                    } else if (shouldAddHand) {
-                        console.log(`🛡️ [SECURITY TO HAND] ${secCard.name} 触发特权，加入手牌！`);
-                        this.addCurrentSecurityCardToHand(defId);
-                    } else {
-                        this.trashCurrentSecurityCard(defId);
-                    }
-                    this.counterTiming.currentSecurityEffectSuppressed = false;
+                    this.resolveCheckedSecurityCleanup(defId, secCard);
                 }
             }
 
@@ -13400,17 +13436,14 @@ class GameState {
                     const defSide = this.zones[defId];
                     const attacker = this.zones[aId].battleArea.find(c => c.instanceId === ad.attackerInstanceId);
 
-                    const secText = (secCard.mainEffect || "").toLowerCase();
+                    const secText = this.getSecurityEffectText(secCard).toLowerCase();
                     const securityEffectSuppressed = !!this.counterTiming.currentSecurityEffectSuppressed;
-                    const shouldPlay = !securityEffectSuppressed && secText.includes('[security]') && (secText.includes('play this card') || secText.includes('不支付费用') || secText.includes('登场'));
-                    const shouldAddHand = !securityEffectSuppressed && secText.includes('[security]') && (secText.includes('add this card') || secText.includes('加入手牌'));
+                    const hasSecurityText = secText.includes('[security]') || secText.includes('【security】') || secText.includes('安保');
+                    const shouldPlay = !securityEffectSuppressed && hasSecurityText && (secText.includes('play this card') || secText.includes('play this tamer') || secText.includes('play it') || secText.includes('without paying') || secText.includes('不支付费用') || secText.includes('登场'));
+                    const shouldAddHand = !securityEffectSuppressed && hasSecurityText && (secText.includes('add this card') || secText.includes('add it to your hand') || secText.includes('加入手牌'));
 
-                    if (shouldPlay) {
-                        console.log(`🛡️ [SECURITY PLAY] ${secCard.name} 越过对撞判定，直接登场！`);
-                        this.playCurrentSecurityCard(defId, secCard);
-                    } else if (shouldAddHand) {
-                        console.log(`🛡️ [SECURITY TO HAND] ${secCard.name} 越过对撞判定，加入手牌！`);
-                        this.addCurrentSecurityCardToHand(defId);
+                    if (shouldPlay || shouldAddHand) {
+                        this.resolveCheckedSecurityCleanup(defId, secCard);
                     } else {
                         // 没有任何特权，乖乖进入物理对撞逻辑
                         if (attacker) {
