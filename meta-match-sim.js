@@ -12219,6 +12219,8 @@ function testRound22EPCurrentDpDisplayAndAnimationGuard(){
 
     if(!/Round 22EP: field cards expose current calculated DP/.test(html)) issues.push('index.html should document the Round 22EP current-DP badge UI.');
     if(!/\.dp-badge/.test(html) || !/\.dp-change-popup/.test(html)) issues.push('front end must include DP badge and DP-change popup styles.');
+    if(!/left:\s*50%/.test(html) || !/transform:\s*translateX\(-50%\)/.test(html)) issues.push('current-DP badge should stay centered under the card like a readable stat plate.');
+    if(!/\.dp-badge \.dp-row/.test(html) || !/\.dp-badge \.dp-value/.test(html) || !/\.dp-badge \.dp-divider/.test(html)) issues.push('current-DP badge should use the larger DP / value row for YGO-style readability.');
     if(!/function getCardCurrentDp\(card\)/.test(html) || !/function appendCurrentDpBadge\(wrap, card\)/.test(html)) issues.push('renderStack must include helpers for current DP badge rendering.');
     if(!/appendCurrentDpBadge\(wrap, card\)/.test(html)) issues.push('renderStack must append the current-DP badge onto visible field card stacks.');
     if(!/function playDpChangeAnimations\(prevMap, currentMap\)/.test(html) || !/showDpChangePopup\(now\.card, now\.ownerId, beforeDp, currentDp\)/.test(html)) issues.push('front end must diff current DP and show a public animation when it changes.');

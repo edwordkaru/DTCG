@@ -365,32 +365,51 @@
 
         .card-layer { position: absolute; width: 100%; height: 100%; background-size: cover; border-radius: 5px; border: 1px solid #000; box-shadow: 2px 2px 10px rgba(0,0,0,0.8); transition: all 0.3s; }
         .top-card { border: 2px solid var(--blue); box-shadow: 0 0 15px var(--blue); z-index: 10; }
-        /* Round 22EP: field cards expose current calculated DP like a live ATK/DP badge.
-           Only public battle/raising cards receive currentDp from the server. */
+        /* Round 22EP: field cards expose current calculated DP like a
+           YGO-style readable stat plate. Round 22EQ refines the badge so it is
+           much easier to read at a glance. Only public battle/raising cards
+           receive currentDp from the server. Keep the plate centered under the
+           card and preserve the DP pulse animation without losing translateX. */
         .dp-badge {
             position: absolute;
-            right: -7px;
-            bottom: -10px;
+            left: 50%;
+            bottom: -16px;
+            transform: translateX(-50%);
             z-index: 34;
-            min-width: 48px;
-            padding: 3px 6px 2px;
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.55);
-            background: rgba(2, 8, 18, 0.88);
-            color: #fff;
-            font-family: Consolas, monospace;
-            font-size: 9px;
+            min-width: 78px;
+            padding: 4px 9px 5px;
+            border-radius: 14px;
+            border: 1px solid rgba(120, 220, 255, 0.72);
+            background: linear-gradient(180deg, rgba(8, 18, 34, 0.96) 0%, rgba(3, 7, 18, 0.96) 100%);
+            color: #eaf9ff;
+            font-family: 'Segoe UI', Consolas, monospace;
             font-weight: 900;
             line-height: 1;
-            letter-spacing: .4px;
+            letter-spacing: .45px;
             text-align: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.6), 0 0 10px rgba(0,210,255,0.20);
+            text-shadow: 0 1px 0 rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.45);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, 0 5px 18px rgba(0,0,0,0.72), 0 0 16px rgba(0,210,255,0.18);
             pointer-events: none;
+            white-space: nowrap;
         }
-        .dp-badge.dp-up { border-color: rgba(0,255,204,0.82); color: var(--green); box-shadow: 0 0 12px rgba(0,255,204,0.22); }
-        .dp-badge.dp-down { border-color: rgba(255,71,87,0.82); color: var(--red); box-shadow: 0 0 12px rgba(255,71,87,0.22); }
-        .dp-badge .dp-label { opacity: .82; font-size: 8px; margin-left: 2px; }
-        .dp-badge .dp-delta { display: block; margin-top: 2px; font-size: 8px; letter-spacing: .2px; }
+        .dp-badge.dp-up { border-color: rgba(0,255,204,0.82); box-shadow: 0 0 0 1px rgba(255,255,255,0.05) inset, 0 5px 18px rgba(0,0,0,0.72), 0 0 18px rgba(0,255,204,0.28); }
+        .dp-badge.dp-down { border-color: rgba(255,71,87,0.82); box-shadow: 0 0 0 1px rgba(255,255,255,0.05) inset, 0 5px 18px rgba(0,0,0,0.72), 0 0 18px rgba(255,71,87,0.28); }
+        .dp-badge .dp-row { display: flex; align-items: baseline; justify-content: center; gap: 4px; }
+        .dp-badge .dp-label { color: rgba(183, 229, 255, 0.92); font-size: 9px; letter-spacing: 1.3px; }
+        .dp-badge .dp-divider { color: rgba(255,255,255,0.34); font-size: 11px; }
+        .dp-badge .dp-value { font-size: 16px; letter-spacing: .2px; color: #ffffff; }
+        .dp-badge .dp-delta {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            font-size: 10px;
+            letter-spacing: .35px;
+            color: rgba(255,255,255,0.94);
+        }
+        .dp-badge.dp-up .dp-delta { background: rgba(0,255,204,0.13); color: var(--green); }
+        .dp-badge.dp-down .dp-delta { background: rgba(255,71,87,0.13); color: var(--red); }
         .stack-wrap.dp-changed .dp-badge { animation: dpBadgePulse .62s ease-out; }
         .dp-change-popup {
             position: fixed;
@@ -412,7 +431,11 @@
         }
         .dp-change-popup.buff { color: var(--green); border-color: rgba(0,255,204,0.7); box-shadow: 0 0 20px rgba(0,255,204,0.22); }
         .dp-change-popup.debuff { color: var(--red); border-color: rgba(255,71,87,0.7); box-shadow: 0 0 20px rgba(255,71,87,0.22); }
-        @keyframes dpBadgePulse { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+        @keyframes dpBadgePulse {
+            0% { transform: translateX(-50%) scale(1); }
+            35% { transform: translateX(-50%) scale(1.18); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
         @keyframes dpFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.86); } 16% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -170%) scale(1.08); } }
 
         /* Round 17U UI: official suspend rotates only the active/top card.
@@ -3802,9 +3825,11 @@
         const printedDp = getCardPrintedDp(card) ?? currentDp;
         const delta = currentDp - printedDp;
         const badge = document.createElement('div');
+        const currentText = Number(currentDp).toLocaleString();
+        const printedText = Number(printedDp).toLocaleString();
         badge.className = `dp-badge ${delta > 0 ? 'dp-up' : delta < 0 ? 'dp-down' : ''}`.trim();
-        badge.innerHTML = `<span class="dp-value">${Number(currentDp).toLocaleString()}</span><span class="dp-label">DP</span>${delta ? `<span class="dp-delta">${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()}</span>` : ''}`;
-        badge.title = `Current DP: ${Number(currentDp).toLocaleString()}${delta ? ` (${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()} from printed ${Number(printedDp).toLocaleString()})` : ''}`;
+        badge.innerHTML = `<span class="dp-row"><span class="dp-label">DP</span><span class="dp-divider">/</span><span class="dp-value">${currentText}</span></span>${delta ? `<span class="dp-delta">${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()}</span>` : ''}`;
+        badge.title = `Current DP: ${currentText}${delta ? ` (${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()} from printed ${printedText})` : ` (printed ${printedText})`}`;
         wrap.appendChild(badge);
     }
 
