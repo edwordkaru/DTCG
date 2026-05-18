@@ -306,36 +306,36 @@
         .hatch-slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,255,255,0.12); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; text-transform: uppercase; }
         .opponent-hatch-zone { grid-template-columns: 1fr; }
 
-        /* Round 13C UI: official field lanes. Digimon occupy the combat row; Tamers/Options occupy the support row. */
+        /* Round 13C UI: official field lanes. Digimon occupy the combat row; Tamers/Options occupy the support row.
+           Round 22ER: keep these lanes as open playmat zones, not scroll boxes. Digivolution
+           stacks and DP plates must be allowed to extend naturally below the top card. */
         .battle-slots {
             height: 100%;
             display: grid;
-            grid-template-rows: minmax(calc(var(--card-h) + 16px), 1fr) minmax(calc(var(--card-h) + 16px), 1fr);
+            grid-template-rows: minmax(calc(var(--card-h) + 48px), 1fr) minmax(calc(var(--card-h) + 48px), 1fr);
             gap: clamp(7px, 0.8vw, 14px);
             justify-items: center;
             align-items: center;
-            overflow: hidden;
-            padding: 7px 4px;
+            overflow: visible;
+            padding: 8px 4px;
             min-width: 0;
         }
         .field-lane {
             position: relative;
-            width: min(100%, 860px);
-            min-height: calc(var(--card-h) + 22px);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(var(--card-w), max-content));
-            grid-auto-flow: column;
-            grid-auto-columns: var(--card-w);
+            width: min(100%, 900px);
+            min-height: calc(var(--card-h) + 54px);
+            display: flex;
+            flex-wrap: wrap;
             gap: clamp(12px, 1.3vw, 24px);
             justify-content: center;
             align-content: center;
             align-items: center;
-            overflow-x: auto;
-            overflow-y: visible;
-            padding: 13px 14px 6px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 9px;
-            background: rgba(0,0,0,0.055);
+            overflow: visible;
+            padding: 18px 14px 24px;
+            border: 1px solid transparent;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
         }
         .field-lane::before {
             content: attr(data-label);
@@ -350,8 +350,8 @@
             text-transform: uppercase;
             pointer-events: none;
         }
-        .digimon-lane { border-color: rgba(255,255,255,0.08); box-shadow: inset 0 0 18px rgba(0,210,255,0.04); }
-        .support-lane { border-color: rgba(255,255,255,0.08); box-shadow: inset 0 0 18px rgba(0,210,255,0.04); }
+        .digimon-lane { border-color: transparent; box-shadow: none; }
+        .support-lane { border-color: transparent; box-shadow: none; }
         .player-area.opponent .battle-slots { grid-template-areas: "support" "digimon"; }
         .player-area.self .battle-slots { grid-template-areas: "digimon" "support"; }
         .digimon-lane { grid-area: digimon; }
@@ -1340,13 +1340,18 @@
                 height: calc(var(--card-w) + 42px);
             }
             body.in-game .sec-card-visual { box-shadow: 0 5px 10px rgba(0,0,0,0.42); }
-            body.in-game .battle-slots { gap: 4px; padding: 4px 2px; }
+            body.in-game .battle-slots { gap: 4px; padding: 6px 2px; overflow: visible; }
             body.in-game .field-lane {
-                min-height: calc(var(--card-h) + 14px);
-                grid-auto-columns: var(--card-w);
+                min-height: calc(var(--card-h) + 46px);
+                display: flex;
+                flex-wrap: wrap;
                 gap: 8px;
-                padding: 10px 5px 3px;
-                border-radius: 7px;
+                overflow: visible;
+                padding: 14px 5px 20px;
+                border-color: transparent;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
             }
             body.in-game .field-lane::before { top: 2px; left: 5px; font-size: 7px; letter-spacing: .8px; }
             body.in-game .support-lane .stack-wrap { transform: scale(0.86); }
