@@ -365,6 +365,56 @@
 
         .card-layer { position: absolute; width: 100%; height: 100%; background-size: cover; border-radius: 5px; border: 1px solid #000; box-shadow: 2px 2px 10px rgba(0,0,0,0.8); transition: all 0.3s; }
         .top-card { border: 2px solid var(--blue); box-shadow: 0 0 15px var(--blue); z-index: 10; }
+        /* Round 22EP: field cards expose current calculated DP like a live ATK/DP badge.
+           Only public battle/raising cards receive currentDp from the server. */
+        .dp-badge {
+            position: absolute;
+            right: -7px;
+            bottom: -10px;
+            z-index: 34;
+            min-width: 48px;
+            padding: 3px 6px 2px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.55);
+            background: rgba(2, 8, 18, 0.88);
+            color: #fff;
+            font-family: Consolas, monospace;
+            font-size: 9px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: .4px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.6), 0 0 10px rgba(0,210,255,0.20);
+            pointer-events: none;
+        }
+        .dp-badge.dp-up { border-color: rgba(0,255,204,0.82); color: var(--green); box-shadow: 0 0 12px rgba(0,255,204,0.22); }
+        .dp-badge.dp-down { border-color: rgba(255,71,87,0.82); color: var(--red); box-shadow: 0 0 12px rgba(255,71,87,0.22); }
+        .dp-badge .dp-label { opacity: .82; font-size: 8px; margin-left: 2px; }
+        .dp-badge .dp-delta { display: block; margin-top: 2px; font-size: 8px; letter-spacing: .2px; }
+        .stack-wrap.dp-changed .dp-badge { animation: dpBadgePulse .62s ease-out; }
+        .dp-change-popup {
+            position: fixed;
+            z-index: 18000;
+            transform: translate(-50%, -50%);
+            padding: 6px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.42);
+            background: rgba(4, 8, 20, 0.92);
+            color: white;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: .8px;
+            pointer-events: none;
+            text-shadow: 0 0 8px rgba(0,0,0,0.8);
+            box-shadow: 0 0 18px rgba(0,0,0,0.55);
+            animation: dpFloatUp .82s ease-out forwards;
+        }
+        .dp-change-popup.buff { color: var(--green); border-color: rgba(0,255,204,0.7); box-shadow: 0 0 20px rgba(0,255,204,0.22); }
+        .dp-change-popup.debuff { color: var(--red); border-color: rgba(255,71,87,0.7); box-shadow: 0 0 20px rgba(255,71,87,0.22); }
+        @keyframes dpBadgePulse { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+        @keyframes dpFloatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.86); } 16% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -170%) scale(1.08); } }
+
         /* Round 17U UI: official suspend rotates only the active/top card.
            Digivolution sources stay upright underneath, so the whole stack must
            not be rotated as one object. */
@@ -3719,6 +3769,45 @@
     // ==========================================
     // 🎴 核心场地图形渲染
     // ==========================================
+    // Round 22EP: current DP is server-calculated and public only for field cards.
+    function parseDpNumber(value) {
+        if (value === undefined || value === null || value === '') return null;
+        const n = Number(value);
+        if (Number.isFinite(n)) return n;
+        const m = String(value).replace(/,/g, '').match(/-?\d+/);
+        return m ? Number(m[0]) : null;
+    }
+
+    function getCardCurrentDp(card) {
+        return parseDpNumber(card?.currentDp ?? card?.effectiveDp ?? card?.calculatedDp ?? card?.dp);
+    }
+
+    function getCardPrintedDp(card) {
+        return parseDpNumber(card?.printedDp ?? card?.baseDp ?? card?.dp);
+    }
+
+    function shouldShowCurrentDpBadge(card) {
+        if (!card || card.hidden || card.showCurrentDp === false) return false;
+        const currentDp = getCardCurrentDp(card);
+        const printedDp = getCardPrintedDp(card);
+        if (currentDp === null) return false;
+        if (card.showCurrentDp === true) return true;
+        const typeText = String(card.type || card.cardType || '').toLowerCase();
+        return (typeText.includes('digimon') || typeText.includes('dual')) && ((printedDp || 0) > 0 || currentDp > 0);
+    }
+
+    function appendCurrentDpBadge(wrap, card) {
+        if (!shouldShowCurrentDpBadge(card)) return;
+        const currentDp = getCardCurrentDp(card);
+        const printedDp = getCardPrintedDp(card) ?? currentDp;
+        const delta = currentDp - printedDp;
+        const badge = document.createElement('div');
+        badge.className = `dp-badge ${delta > 0 ? 'dp-up' : delta < 0 ? 'dp-down' : ''}`.trim();
+        badge.innerHTML = `<span class="dp-value">${Number(currentDp).toLocaleString()}</span><span class="dp-label">DP</span>${delta ? `<span class="dp-delta">${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()}</span>` : ''}`;
+        badge.title = `Current DP: ${Number(currentDp).toLocaleString()}${delta ? ` (${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()} from printed ${Number(printedDp).toLocaleString()})` : ''}`;
+        wrap.appendChild(badge);
+    }
+
     function renderStack(card, isMine, isHatch) {
         const wrap = document.createElement('div');
         wrap.className = 'stack-wrap';
@@ -3846,7 +3935,9 @@
             wrap.appendChild(layer);
         });
         const top = document.createElement('div'); top.className = 'card-layer top-card'; top.style.backgroundImage = `url('${cssUrl(cardDisplayImage(card))}')`; top.style.zIndex = 10; top.dataset.instanceId = card.instanceId || '';
-        wrap.appendChild(top); return wrap;
+        wrap.appendChild(top);
+        appendCurrentDpBadge(wrap, card);
+        return wrap;
     }
 
     // ==========================================
@@ -4287,10 +4378,10 @@
 
     function animationCleanupMs(kind = 'fly') {
         const table = {
-            fast: { fly: 360, 'security-flip': 430, 'attack-dash': 320, memory: 430, banner: 560, pulse: 360, digivolve: 520, 'play-slam': 480, 'trash-burst': 480, cutin: 640 },
-            normal: { fly: 680, 'security-flip': 820, 'attack-dash': 620, memory: 900, banner: 1150, pulse: 620, digivolve: 1080, 'play-slam': 920, 'trash-burst': 920, cutin: 1220 },
-            cinematic: { fly: 980, 'security-flip': 1180, 'attack-dash': 880, memory: 1300, banner: 1650, pulse: 920, digivolve: 1380, 'play-slam': 1280, 'trash-burst': 1280, cutin: 1750 },
-            off: { fly: 0, 'security-flip': 0, 'attack-dash': 0, memory: 0, banner: 0, pulse: 0, digivolve: 0, 'play-slam': 0, 'trash-burst': 0, cutin: 0 }
+            fast: { fly: 360, 'security-flip': 430, 'attack-dash': 320, memory: 430, dp: 520, banner: 560, pulse: 360, digivolve: 520, 'play-slam': 480, 'trash-burst': 480, cutin: 640 },
+            normal: { fly: 680, 'security-flip': 820, 'attack-dash': 620, memory: 900, dp: 900, banner: 1150, pulse: 620, digivolve: 1080, 'play-slam': 920, 'trash-burst': 920, cutin: 1220 },
+            cinematic: { fly: 980, 'security-flip': 1180, 'attack-dash': 880, memory: 1300, dp: 1300, banner: 1650, pulse: 920, digivolve: 1380, 'play-slam': 1280, 'trash-burst': 1280, cutin: 1750 },
+            off: { fly: 0, 'security-flip': 0, 'attack-dash': 0, memory: 0, dp: 0, banner: 0, pulse: 0, digivolve: 0, 'play-slam': 0, 'trash-burst': 0, cutin: 0 }
         };
         return table[animationMode]?.[kind] ?? table[animationMode]?.fly ?? 680;
     }
@@ -4621,6 +4712,46 @@
         });
     }
 
+    function showDpChangePopup(card, ownerId, beforeDp, currentDp) {
+        if (!isAnimationEnabled() || !card || beforeDp === currentDp) return;
+        const delta = currentDp - beforeDp;
+        const targetEl = findCardElement(card.instanceId);
+        const point = centerOfElement(targetEl, centerOfElement(zoneAnchorElement(ownerId, 'battleArea')));
+        const el = document.createElement('div');
+        el.className = `dp-change-popup ${delta > 0 ? 'buff' : 'debuff'}`;
+        el.textContent = `${delta > 0 ? '+' : ''}${Number(delta).toLocaleString()} DP`;
+        el.title = `${Number(beforeDp).toLocaleString()} → ${Number(currentDp).toLocaleString()} DP`;
+        el.style.left = `${point.x}px`;
+        el.style.top = `${point.y - 18}px`;
+        document.body.appendChild(el);
+        window.setTimeout(() => el.remove(), animationCleanupMs('dp'));
+        if (targetEl) {
+            targetEl.classList.remove('dp-changed');
+            void targetEl.offsetWidth;
+            targetEl.classList.add('dp-changed');
+            window.setTimeout(() => targetEl.classList.remove('dp-changed'), animationCleanupMs('dp'));
+        }
+        pulseElement(targetEl);
+        playUiSfx(delta > 0 ? 'confirm' : 'soft');
+    }
+
+    function playDpChangeAnimations(prevMap, currentMap) {
+        if (!isAnimationEnabled() || !prevMap || !currentMap) return;
+        let played = 0;
+        currentMap.forEach((now, instanceId) => {
+            if (played >= 10) return;
+            const before = prevMap.get(instanceId);
+            if (!before || before.ownerId !== now.ownerId || before.zoneName !== now.zoneName) return;
+            if (!['battleArea', 'breedingArea'].includes(now.zoneName)) return;
+            if (!shouldShowCurrentDpBadge(now.card)) return;
+            const beforeDp = getCardCurrentDp(before.card);
+            const currentDp = getCardCurrentDp(now.card);
+            if (beforeDp === null || currentDp === null || beforeDp === currentDp) return;
+            showDpChangePopup(now.card, now.ownerId, beforeDp, currentDp);
+            played += 1;
+        });
+    }
+
     function playBattleTimingPresentation(prevState, state) {
         const prevStep = prevState?.counterTiming?.step || 'IDLE';
         const step = state?.counterTiming?.step || 'IDLE';
@@ -4724,6 +4855,7 @@
             cStep: state?.counterTiming?.step || 'IDLE',
             cCard: state?.counterTiming?.currentSecurityCard?.instanceId || state?.counterTiming?.revealedSecurityTop?.card?.instanceId || null,
             vSeq: maxVisualEventSeq(state),
+            dp: ['p1','p2'].map(pid => ['battleArea','breedingArea'].flatMap(zone => (state?.zones?.[pid]?.[zone] || []).map(c => `${c.instanceId || c.id || ''}:${getCardCurrentDp(c) ?? ''}`)).join('|')).join(';'),
             p1: ['hand','battleArea','security','trash'].map(z => (state?.zones?.p1?.[z] || []).length).join(','),
             p2: ['hand','battleArea','security','trash'].map(z => (state?.zones?.p2?.[z] || []).length).join(',')
         });
@@ -4739,6 +4871,7 @@
             const currentMap = flattenAnimationCards(state);
             playServerVisualEvents(prevState, state, currentMap);
             playTamerSuspendDiffAnimations(prevMap, currentMap);
+            playDpChangeAnimations(prevMap, currentMap);
             showMemoryPopup(Number(prevState.memory || 0), Number(state.memory || 0));
             if (prevState.turnPlayer !== state.turnPlayer || prevState.phase !== state.phase) {
                 showTurnBanner(`${String(state.turnPlayer || '').toUpperCase()} ${String(state.phase || '').toUpperCase()}`);

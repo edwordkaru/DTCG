@@ -658,6 +658,45 @@ function maskZone(cards, zoneName) {
     return Array.isArray(cards) ? cards.map((card, index) => maskHiddenCard(card, zoneName, index)) : [];
 }
 
+
+// Round 22EP: publish current DP only for public field cards. The engine's
+// getDp() already accounts for SET_DP, Link DP, inherited/source DP text,
+// temporary DP_MOD buffs/debuffs, and live continuous DP auras. Hidden zones
+// must never receive this metadata in the private-safe socket payload.
+function parsePublicDpValue(value) {
+    if (value === undefined || value === null || value === '') return 0;
+    const raw = String(value).replace(/,/g, '').match(/-?\d+/);
+    return raw ? Number(raw[0]) : 0;
+}
+
+function annotatePublicVisibleDp(game, state) {
+    if (!game || !state?.zones || typeof game.getDp !== 'function') return state;
+    for (const playerId of ['p1', 'p2']) {
+        const originalZone = game.zones?.[playerId] || {};
+        const publicZone = state.zones?.[playerId] || {};
+        for (const zoneName of ['battleArea', 'breedingArea']) {
+            const originalCards = Array.isArray(originalZone[zoneName]) ? originalZone[zoneName] : [];
+            const publicCards = Array.isArray(publicZone[zoneName]) ? publicZone[zoneName] : [];
+            for (let i = 0; i < publicCards.length; i++) {
+                const publicCard = publicCards[i];
+                if (!publicCard || publicCard.hidden) continue;
+                const originalCard = originalCards.find(c => c && publicCard.instanceId && c.instanceId === publicCard.instanceId) || originalCards[i];
+                if (!originalCard) continue;
+                const printedDp = parsePublicDpValue(originalCard.dp);
+                const currentDp = Number(game.getDp(originalCard) || 0);
+                const isFieldDigimon = typeof game.isDigimonLike === 'function' ? game.isDigimonLike(originalCard) : /digimon|dual/i.test(String(originalCard.type || originalCard.cardType || ''));
+                if (!isFieldDigimon || (printedDp <= 0 && currentDp <= 0)) continue;
+                publicCard.printedDp = printedDp;
+                publicCard.currentDp = currentDp;
+                publicCard.effectiveDp = currentDp;
+                publicCard.dpDelta = currentDp - printedDp;
+                publicCard.showCurrentDp = true;
+            }
+        }
+    }
+    return state;
+}
+
 function maskPrivatePendingSearch(pending, viewer) {
     if (!pending || pending.privateSearch !== true) return pending;
     const owner = pending.playerId;
@@ -677,6 +716,7 @@ function maskPrivatePendingSearch(pending, viewer) {
 function sanitizeGameStateForRole(game, role = 'spectator') {
     const state = clonePlain(game);
     if (!state || !state.zones) return state;
+    annotatePublicVisibleDp(game, state);
     const viewer = (role === 'p1' || role === 'p2') ? role : 'spectator';
 
     for (const playerId of ['p1', 'p2']) {

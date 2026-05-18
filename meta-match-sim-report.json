@@ -1,6 +1,10 @@
 {
-  "createdAt": "2026-05-17T16:12:41.520Z",
+  "createdAt": "2026-05-18T02:40:06.494Z",
   "tests": [
+    {
+      "name": "Round 22EP current DP display and animation guard",
+      "issues": []
+    },
     {
       "name": "Round 22EO security-search player choice / pending-state guard",
       "issues": []
@@ -729,22 +733,22 @@
       "matchReports": [
         {
           "pairing": "mastemon vs appmon",
-          "turns": 10,
-          "turnPlayer": "p2",
+          "turns": 11,
+          "turnPlayer": "p1",
           "phase": "HATCH",
-          "memory": -2,
+          "memory": 4,
           "gameOver": false,
           "zones": {
             "p1": {
-              "deck": 27,
-              "hand": 7,
-              "battle": 3,
-              "security": 4,
+              "deck": 29,
+              "hand": 5,
+              "battle": 6,
+              "security": 2,
               "eggs": 5,
               "revealed": 0
             },
             "p2": {
-              "deck": 35,
+              "deck": 34,
               "hand": 9,
               "battle": 1,
               "security": 1,
@@ -770,41 +774,41 @@
             "counterStep": "IDLE"
           },
           "recentLogs": [
-            "💾 MEMORY -2",
-            "🔍 P1 revealed 3 card(s) from deck.",
-            "🔄 Reveal rest moved to deck_bottom (1 card(s)).",
-            "✅ P1 added 2 selected card(s) to hand.",
+            "⏩ DNA_DIGIVOLVE: no valid Digimon card in hand.",
+            "🌅 P2 turn 10 started. Drew 1.",
+            "💾 MEMORY -1",
             "⏭️ No legal blockers available; blocker timing auto-skipped.",
-            "🛡️ Gatchmon was trashed after security resolution.",
-            ">> <span style=\"color:var(--blue)\">[P1]</span> 进化 <b>Angewomon</b> (消耗 3 费)",
-            "💾 MEMORY -3",
-            "🔄 P1 Recovery +1",
-            "🛡️ Searched security and added Mastemon to hand.",
-            "↩️ Angewomon moved from battle area to security.",
-            "🌅 P2 turn 10 started. Drew 1."
+            "🛡️ Angewomon was trashed after security resolution.",
+            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Dan Yuki</b> (消耗 3 费)",
+            "💾 MEMORY +3",
+            "💰 Cost: suspended Dan Yuki",
+            "⏩ DP_MOD: no legal target, action fizzles.",
+            "⏩ Effect attack: no legal attacker.",
+            "💾 MEMORY +1",
+            "🌅 P1 turn 11 started. Drew 1."
           ]
         },
         {
           "pairing": "dReaper vs greymonRaid",
-          "turns": 12,
-          "turnPlayer": "p2",
-          "phase": "HATCH",
-          "memory": -3,
-          "gameOver": false,
+          "turns": 13,
+          "turnPlayer": "p1",
+          "phase": "GAME_OVER",
+          "memory": 3,
+          "gameOver": true,
           "zones": {
             "p1": {
-              "deck": 33,
-              "hand": 9,
-              "battle": 1,
-              "security": 2,
+              "deck": 34,
+              "hand": 5,
+              "battle": 5,
+              "security": 5,
               "eggs": 5,
               "revealed": 0
             },
             "p2": {
-              "deck": 33,
-              "hand": 7,
-              "battle": 1,
-              "security": 4,
+              "deck": 34,
+              "hand": 11,
+              "battle": 0,
+              "security": 0,
               "eggs": 5,
               "revealed": 0
             }
@@ -827,136 +831,22 @@
             "counterStep": "IDLE"
           },
           "recentLogs": [
-            "🛡️ ADR-08 Optimizer was trashed after security resolution.",
-            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Agumon</b> (消耗 3 费)",
-            "💾 MEMORY +3",
-            "🔍 P2 revealed 5 card(s) from deck.",
-            "✅ P2 added 0 selected card(s) to hand.",
-            "🔄 Reveal rest moved to deck_bottom (5 card(s)).",
-            "🌅 P1 turn 11 started. Drew 1.",
-            "💸 ADR-02 Searcher reduced ADR-02 Searcher play cost by 2.",
-            "💸 ADR-02 Searcher reduced ADR-02 Searcher play cost by 2.",
-            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>ADR-02 Searcher</b> (消耗 1 费)",
-            "💾 MEMORY -1",
-            "🌅 P2 turn 12 started. Drew 1."
+            "🛡️ Greymon (X Antibody) was trashed after security resolution.",
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>ADR-01 Jeri</b> (消耗 5 费)",
+            "💾 MEMORY -5",
+            "⏩ DP_MOD: no legal target, action fizzles.",
+            "⏩ Abbadomon: cost could not be paid.",
+            "🌅 P2 turn 12 started. Drew 1.",
+            "⏩ Abbadomon: cost could not be paid.",
+            "🌅 P1 turn 13 started. Drew 1.",
+            "⏩ ADR-08 Optimizer: condition not met.",
+            "⏩ ADR-08 Optimizer: condition not met.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🏁 GAME OVER: P1 wins. Reason: DIRECT_ATTACK."
           ]
         },
         {
           "pairing": "blueSource vs securityControl",
-          "turns": 15,
-          "turnPlayer": "p1",
-          "phase": "HATCH",
-          "memory": 3,
-          "gameOver": false,
-          "zones": {
-            "p1": {
-              "deck": 33,
-              "hand": 8,
-              "battle": 2,
-              "security": 2,
-              "eggs": 5,
-              "revealed": 0
-            },
-            "p2": {
-              "deck": 33,
-              "hand": 11,
-              "battle": 2,
-              "security": 0,
-              "eggs": 5,
-              "revealed": 0
-            }
-          },
-          "pending": {
-            "target": false,
-            "targetType": null,
-            "targetCandidates": null,
-            "targetCandidateIds": null,
-            "reveal": false,
-            "choice": false,
-            "choiceMode": null,
-            "choiceCandidates": null,
-            "choiceCandidateIds": null,
-            "trashRevive": false,
-            "protection": false,
-            "effectSelection": false,
-            "startPhase": false,
-            "counter": false,
-            "counterStep": "IDLE"
-          },
-          "recentLogs": [
-            "🌅 P1 turn 11 started. Drew 1.",
-            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>MarineAngemon</b> (消耗 9 费)",
-            "💾 MEMORY -9",
-            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
-            "🌅 P2 turn 12 started. Drew 1.",
-            "🌅 P1 turn 13 started. Drew 1.",
-            "⏭️ No legal blockers available; blocker timing auto-skipped.",
-            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Achillesmon</b> (消耗 11 费)",
-            "💾 MEMORY -11",
-            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
-            "🌅 P2 turn 14 started. Drew 1.",
-            "🌅 P1 turn 15 started. Drew 1."
-          ]
-        },
-        {
-          "pairing": "aceBlast vs tokenOverclock",
-          "turns": 16,
-          "turnPlayer": "p2",
-          "phase": "HATCH",
-          "memory": -3,
-          "gameOver": false,
-          "zones": {
-            "p1": {
-              "deck": 33,
-              "hand": 6,
-              "battle": 4,
-              "security": 4,
-              "eggs": 5,
-              "revealed": 0
-            },
-            "p2": {
-              "deck": 32,
-              "hand": 12,
-              "battle": 2,
-              "security": 0,
-              "eggs": 5,
-              "revealed": 0
-            }
-          },
-          "pending": {
-            "target": false,
-            "targetType": null,
-            "targetCandidates": null,
-            "targetCandidateIds": null,
-            "reveal": false,
-            "choice": false,
-            "choiceMode": null,
-            "choiceCandidates": null,
-            "choiceCandidateIds": null,
-            "trashRevive": false,
-            "protection": false,
-            "effectSelection": false,
-            "startPhase": false,
-            "counter": false,
-            "counterStep": "IDLE"
-          },
-          "recentLogs": [
-            "🌅 P2 turn 12 started. Drew 1.",
-            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>MarineAngemon</b> (消耗 9 费)",
-            "💾 MEMORY +9",
-            "⏩ MarineAngemon: condition not met.",
-            "🌅 P1 turn 13 started. Drew 1.",
-            "🌅 P2 turn 14 started. Drew 1.",
-            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>MarineAngemon</b> (消耗 9 费)",
-            "💾 MEMORY +9",
-            "⏩ MarineAngemon: condition not met.",
-            "⏩ MarineAngemon: condition not met.",
-            "🌅 P1 turn 15 started. Drew 1.",
-            "🌅 P2 turn 16 started. Drew 1."
-          ]
-        },
-        {
-          "pairing": "appmon vs blueSource",
           "turns": 14,
           "turnPlayer": "p2",
           "phase": "HATCH",
@@ -964,17 +854,17 @@
           "gameOver": false,
           "zones": {
             "p1": {
-              "deck": 34,
-              "hand": 9,
-              "battle": 1,
+              "deck": 32,
+              "hand": 5,
+              "battle": 5,
               "security": 5,
               "eggs": 5,
               "revealed": 0
             },
             "p2": {
-              "deck": 32,
-              "hand": 8,
-              "battle": 3,
+              "deck": 33,
+              "hand": 13,
+              "battle": 0,
               "security": 4,
               "eggs": 5,
               "revealed": 0
@@ -998,40 +888,97 @@
             "counterStep": "IDLE"
           },
           "recentLogs": [
-            "⏭️ No legal blockers available; blocker timing auto-skipped.",
-            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Absolute Blast</b> (消耗 6 费)",
-            "💾 MEMORY +6",
+            "💾 MEMORY -9",
             "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
-            "🌅 P1 turn 13 started. Drew 1.",
-            "⏩ TRASH_BOTTOM_EVO: no legal target, action fizzles.",
-            "⏩ RETURN_TO_DECK: no legal target, action fizzles.",
-            "💰 Cost: suspended Dan Yuki",
-            "⏩ DP_MOD: no legal target, action fizzles.",
-            "⏩ Effect attack: no legal attacker.",
+            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
+            "🌅 P2 turn 12 started. Drew 1.",
             "🚫 Achillesmon can't unsuspend (unsuspend phase).",
+            "🌅 P1 turn 13 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Gabumon</b> (消耗 3 费)",
+            "💾 MEMORY -3",
+            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
+            "⏩ GRANT_KEYWORD: no legal target, action fizzles.",
             "🌅 P2 turn 14 started. Drew 1."
           ]
         },
         {
-          "pairing": "securityControl vs dReaper",
+          "pairing": "aceBlast vs tokenOverclock",
           "turns": 13,
           "turnPlayer": "p1",
-          "phase": "HATCH",
+          "phase": "GAME_OVER",
           "memory": 3,
-          "gameOver": false,
+          "gameOver": true,
           "zones": {
             "p1": {
               "deck": 34,
-              "hand": 8,
-              "battle": 2,
-              "security": 1,
+              "hand": 5,
+              "battle": 6,
+              "security": 4,
               "eggs": 5,
               "revealed": 0
             },
             "p2": {
-              "deck": 31,
+              "deck": 34,
               "hand": 11,
+              "battle": 0,
+              "security": 0,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            "⏩ SUSPEND: no legal target, action fizzles.",
+            "⏩ CANT_UNSUSPEND: previous target no longer legal, action fizzles.",
+            "⏩ GRANT_KEYWORD: action condition not met.",
+            "⏩ DP_MOD: action condition not met.",
+            "🌪️ Vortex: no legal opponent Digimon target.",
+            "🌅 P2 turn 12 started. Drew 1.",
+            "⏩ Angewomon ACE: condition not met.",
+            "🌅 P1 turn 13 started. Drew 1.",
+            "⏩ WARP_EVOLVE: no valid digivolution card found.",
+            "⏩ PLACE_SECURITY_FROM_HAND: action condition not met.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🏁 GAME OVER: P1 wins. Reason: DIRECT_ATTACK."
+          ]
+        },
+        {
+          "pairing": "appmon vs blueSource",
+          "turns": 12,
+          "turnPlayer": "p2",
+          "phase": "HATCH",
+          "memory": -3,
+          "gameOver": false,
+          "zones": {
+            "p1": {
+              "deck": 36,
+              "hand": 6,
               "battle": 2,
+              "security": 2,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 34,
+              "hand": 7,
+              "battle": 4,
               "security": 2,
               "eggs": 5,
               "revealed": 0
@@ -1055,18 +1002,75 @@
             "counterStep": "IDLE"
           },
           "recentLogs": [
+            "⏩ Effect attack: no legal attacker.",
+            "🌅 P2 turn 10 started. Drew 1.",
+            "⏭️ No legal blockers available; blocker timing auto-skipped.",
+            "🛡️ Gammamon was trashed after security resolution.",
+            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Aegiochusmon: Blue</b> (消耗 8 费)",
+            "💾 MEMORY +8",
+            "⏩ DE_DIGIVOLVE stopped: Shoutmon is already level 3.",
+            "🌅 P1 turn 11 started. Drew 1.",
+            "💰 Cost: suspended Dan Yuki",
+            "⏩ DP_MOD: no legal target, action fizzles.",
+            "⏩ Effect attack: no legal attacker.",
+            "🌅 P2 turn 12 started. Drew 1."
+          ]
+        },
+        {
+          "pairing": "securityControl vs dReaper",
+          "turns": 14,
+          "turnPlayer": "p2",
+          "phase": "GAME_OVER",
+          "memory": -3,
+          "gameOver": true,
+          "zones": {
+            "p1": {
+              "deck": 34,
+              "hand": 10,
+              "battle": 1,
+              "security": 0,
+              "eggs": 5,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 33,
+              "hand": 11,
+              "battle": 1,
+              "security": 0,
+              "eggs": 5,
+              "revealed": 0
+            }
+          },
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "recentLogs": [
+            ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>Acid Injection</b> (消耗 1 费)",
+            "💾 MEMORY -1",
+            "⏩ DP_MOD: no legal target, action fizzles.",
+            "🌅 P2 turn 12 started. Drew 1.",
+            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>ADR-08 Optimizer</b> (消耗 10 费)",
+            "💾 MEMORY +10",
+            "⏩ ADR-08 Optimizer: condition not met.",
+            "🌅 P1 turn 13 started. Drew 1.",
+            "🌅 P2 turn 14 started. Drew 1.",
             "⏩ ADR-08 Optimizer: condition not met.",
             "⏭️ No legal blockers available; blocker timing auto-skipped.",
-            "▶️ P1 played Aegiomon without paying cost.",
-            "💰 Cost: added 1 security card(s) to hand",
-            "⏩ PLAY_FROM_HAND: no valid card found.",
-            "🛡️ Abyss Sanctuary: Throne Room was trashed after security resolution.",
-            ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>ADR-03 Pendulum Feet</b> (消耗 3 费)",
-            "💾 MEMORY +3",
-            "🔍 P2 revealed 3 card(s) from deck.",
-            "🔄 Reveal rest moved to deck_bottom (1 card(s)).",
-            "✅ P2 added 2 selected card(s) to hand.",
-            "🌅 P1 turn 13 started. Drew 1."
+            "🏁 GAME OVER: P2 wins. Reason: DIRECT_ATTACK."
           ]
         }
       ],
@@ -1324,25 +1328,25 @@
           {
             "index": 0,
             "position": "bottom",
-            "id": "BT1-010",
-            "name": "Agumon",
-            "instanceId": "c8liy9n3x1779034368575",
+            "id": "BT1-014",
+            "name": "Kokatorimon",
+            "instanceId": "f1te1xxxm1779072012977",
             "faceUp": false
           },
           {
             "index": 1,
             "position": "middle",
-            "id": "BT1-010",
-            "name": "Agumon",
-            "instanceId": "e8yvba5uh1779034368575",
+            "id": "BT1-011",
+            "name": "Agumon Expert",
+            "instanceId": "dyptjpgbm1779072012977",
             "faceUp": false
           },
           {
             "index": 2,
             "position": "middle",
-            "id": "BT1-012",
-            "name": "Biyomon",
-            "instanceId": "jt43c2she1779034368575",
+            "id": "BT1-014",
+            "name": "Kokatorimon",
+            "instanceId": "tpbw5om5m1779072012977",
             "faceUp": false
           },
           {
@@ -1350,15 +1354,15 @@
             "position": "middle",
             "id": "BT1-011",
             "name": "Agumon Expert",
-            "instanceId": "6qb3b2yec1779034368575",
+            "instanceId": "fa3v1ep7a1779072012977",
             "faceUp": false
           },
           {
             "index": 4,
             "position": "top",
-            "id": "BT1-010",
-            "name": "Agumon",
-            "instanceId": "8x3nhkgkw1779034368575",
+            "id": "BT1-011",
+            "name": "Agumon Expert",
+            "instanceId": "tdb9v98iw1779072012977",
             "faceUp": false
           }
         ],
@@ -1368,15 +1372,15 @@
             "position": "bottom",
             "id": "BT2-010",
             "name": "Biyomon",
-            "instanceId": "49ja6fzyz1779034368575",
+            "instanceId": "m34z84cjc1779072012977",
             "faceUp": false
           },
           {
             "index": 1,
             "position": "middle",
-            "id": "BT2-014",
-            "name": "Lavorvomon",
-            "instanceId": "cmu2hp44y1779034368575",
+            "id": "BT2-012",
+            "name": "Birdramon",
+            "instanceId": "g6aimk1by1779072012977",
             "faceUp": false
           },
           {
@@ -1384,15 +1388,15 @@
             "position": "middle",
             "id": "BT2-012",
             "name": "Birdramon",
-            "instanceId": "hyisqxcz01779034368575",
+            "instanceId": "ad79ipp6m1779072012977",
             "faceUp": false
           },
           {
             "index": 3,
             "position": "middle",
-            "id": "BT2-013",
-            "name": "Growlmon",
-            "instanceId": "hlrsdzsgq1779034368575",
+            "id": "BT2-014",
+            "name": "Lavorvomon",
+            "instanceId": "pbast9gh71779072012977",
             "faceUp": false
           },
           {
@@ -1400,7 +1404,7 @@
             "position": "top",
             "id": "BT2-013",
             "name": "Growlmon",
-            "instanceId": "w6h96too41779034368575",
+            "instanceId": "li30ky26j1779072012977",
             "faceUp": false
           }
         ]
@@ -1468,19 +1472,19 @@
         "mode": "TOTAL_DP_TARGET_CHOICE",
         "playerId": "p1",
         "selectedIds": [
-          "BT1-010-battle-17kt7a",
-          "BT1-011-battle-l3m160"
+          "BT1-010-battle-3y0y2c",
+          "BT1-011-battle-oslfoj"
         ],
         "selectedCards": [
           {
             "id": "BT1-010",
             "name": "Agumon",
-            "instanceId": "BT1-010-battle-17kt7a"
+            "instanceId": "BT1-010-battle-3y0y2c"
           },
           {
             "id": "BT1-011",
             "name": "Agumon Expert",
-            "instanceId": "BT1-011-battle-l3m160"
+            "instanceId": "BT1-011-battle-oslfoj"
           }
         ],
         "selectedCount": 2,
@@ -1501,25 +1505,25 @@
         "mode": "TOTAL_DP_TARGET_CHOICE",
         "playerId": "p1",
         "selectedIds": [
-          "BT1-010-battle-jaem32",
-          "BT2-010-battle-csqfx8",
-          "BT3-010-battle-uhfecl"
+          "BT1-010-battle-txd358",
+          "BT2-010-battle-89tcub",
+          "BT3-010-battle-y6y6c3"
         ],
         "selectedCards": [
           {
             "id": "BT1-010",
             "name": "Agumon",
-            "instanceId": "BT1-010-battle-jaem32"
+            "instanceId": "BT1-010-battle-txd358"
           },
           {
             "id": "BT2-010",
             "name": "Biyomon",
-            "instanceId": "BT2-010-battle-csqfx8"
+            "instanceId": "BT2-010-battle-89tcub"
           },
           {
             "id": "BT3-010",
             "name": "ZubaEagermon",
-            "instanceId": "BT3-010-battle-uhfecl"
+            "instanceId": "BT3-010-battle-y6y6c3"
           }
         ],
         "selectedCount": 3,
@@ -1545,14 +1549,14 @@
           {
             "id": "BT1-010",
             "name": "Agumon",
-            "instanceId": "BT1-010-battle-14umd2",
+            "instanceId": "BT1-010-battle-yzizvf",
             "playCost": 2,
             "dp": 2000
           },
           {
             "id": "BT1-011",
             "name": "Agumon Expert",
-            "instanceId": "BT1-011-battle-11szlu",
+            "instanceId": "BT1-011-battle-vadtkt",
             "playCost": 3,
             "dp": 3000
           }
@@ -1581,25 +1585,25 @@
         "mode": "TOTAL_PLAY_COST_TARGET_CHOICE",
         "playerId": "p1",
         "selectedIds": [
-          "BT1-010-battle-w4rhjc",
-          "BT2-010-battle-2nwg8o",
-          "BT3-010-battle-8g93oy"
+          "BT1-010-battle-7qkz7x",
+          "BT2-010-battle-8xlvt9",
+          "BT3-010-battle-khriqb"
         ],
         "selectedCards": [
           {
             "id": "BT1-010",
             "name": "Agumon",
-            "instanceId": "BT1-010-battle-w4rhjc"
+            "instanceId": "BT1-010-battle-7qkz7x"
           },
           {
             "id": "BT2-010",
             "name": "Biyomon",
-            "instanceId": "BT2-010-battle-2nwg8o"
+            "instanceId": "BT2-010-battle-8xlvt9"
           },
           {
             "id": "BT3-010",
             "name": "ZubaEagermon",
-            "instanceId": "BT3-010-battle-8g93oy"
+            "instanceId": "BT3-010-battle-khriqb"
           }
         ],
         "selectedCount": 3,
@@ -1836,16 +1840,16 @@
     {
       "name": "Digivolve instanceId regression",
       "top": "DarkTyrannomon",
-      "hostInstance": "BT1-010-agumon-717pzl",
+      "hostInstance": "BT1-010-agumon-yv3u6a",
       "sourceIds": [
-        "src-oh7cr1i-1779034368870"
+        "src-bxb3s17-1779072013244"
       ],
       "issues": []
     },
     {
       "name": "De-Digivolve peeled shell keeps unique trash instanceId",
-      "survivorInstance": "BT25-025-dedigiHost-jlll0w",
-      "shellInstance": "BT25-025-dedigiHost-jlll0w-shell-0-tr23p0",
+      "survivorInstance": "BT25-025-dedigiHost-ryd7bf",
+      "shellInstance": "BT25-025-dedigiHost-ryd7bf-shell-0-oksn39",
       "issues": []
     },
     {
@@ -2107,8 +2111,8 @@
           },
           "zones": {
             "p1": {
-              "deck": 35,
-              "hand": 5,
+              "deck": 34,
+              "hand": 6,
               "battle": 1,
               "security": 5,
               "eggs": 9,
@@ -2126,91 +2130,9 @@
         },
         {
           "turn": 2,
-          "next": "p2",
+          "next": "p1",
           "phase": "HATCH",
-          "memory": -3,
-          "pending": {
-            "target": false,
-            "targetType": null,
-            "targetCandidates": null,
-            "targetCandidateIds": null,
-            "reveal": false,
-            "choice": false,
-            "choiceMode": null,
-            "choiceCandidates": null,
-            "choiceCandidateIds": null,
-            "trashRevive": false,
-            "protection": false,
-            "effectSelection": false,
-            "startPhase": false,
-            "counter": false,
-            "counterStep": "IDLE"
-          },
-          "zones": {
-            "p1": {
-              "deck": 35,
-              "hand": 4,
-              "battle": 1,
-              "security": 5,
-              "eggs": 9,
-              "revealed": 0
-            },
-            "p2": {
-              "deck": 38,
-              "hand": 7,
-              "battle": 0,
-              "security": 4,
-              "eggs": 5,
-              "revealed": 0
-            }
-          }
-        },
-        {
-          "turn": 3,
-          "next": "p2",
-          "phase": "HATCH",
-          "memory": -3,
-          "pending": {
-            "target": false,
-            "targetType": null,
-            "targetCandidates": null,
-            "targetCandidateIds": null,
-            "reveal": false,
-            "choice": false,
-            "choiceMode": null,
-            "choiceCandidates": null,
-            "choiceCandidateIds": null,
-            "trashRevive": false,
-            "protection": false,
-            "effectSelection": false,
-            "startPhase": false,
-            "counter": false,
-            "counterStep": "IDLE"
-          },
-          "zones": {
-            "p1": {
-              "deck": 34,
-              "hand": 5,
-              "battle": 0,
-              "security": 5,
-              "eggs": 9,
-              "revealed": 0
-            },
-            "p2": {
-              "deck": 37,
-              "hand": 7,
-              "battle": 1,
-              "security": 4,
-              "eggs": 5,
-              "revealed": 0
-            }
-          }
-        },
-        {
-          "turn": 4,
-          "next": "p2",
-          "phase": "HATCH",
-          "memory": -3,
+          "memory": 3,
           "pending": {
             "target": false,
             "targetType": null,
@@ -2232,15 +2154,15 @@
             "p1": {
               "deck": 33,
               "hand": 6,
-              "battle": 0,
+              "battle": 1,
               "security": 5,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
-              "deck": 36,
+              "deck": 38,
               "hand": 7,
-              "battle": 2,
+              "battle": 0,
               "security": 4,
               "eggs": 5,
               "revealed": 0
@@ -2248,10 +2170,10 @@
           }
         },
         {
-          "turn": 5,
-          "next": "p2",
+          "turn": 3,
+          "next": "p1",
           "phase": "HATCH",
-          "memory": -3,
+          "memory": 3,
           "pending": {
             "target": false,
             "targetType": null,
@@ -2272,17 +2194,99 @@
           "zones": {
             "p1": {
               "deck": 32,
-              "hand": 7,
+              "hand": 6,
+              "battle": 1,
+              "security": 5,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 37,
+              "hand": 8,
               "battle": 0,
-              "security": 4,
+              "security": 3,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 4,
+          "next": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 31,
+              "hand": 6,
+              "battle": 1,
+              "security": 5,
+              "eggs": 9,
+              "revealed": 0
+            },
+            "p2": {
+              "deck": 36,
+              "hand": 9,
+              "battle": 0,
+              "security": 2,
+              "eggs": 5,
+              "revealed": 0
+            }
+          }
+        },
+        {
+          "turn": 5,
+          "next": "p1",
+          "phase": "HATCH",
+          "memory": 3,
+          "pending": {
+            "target": false,
+            "targetType": null,
+            "targetCandidates": null,
+            "targetCandidateIds": null,
+            "reveal": false,
+            "choice": false,
+            "choiceMode": null,
+            "choiceCandidates": null,
+            "choiceCandidateIds": null,
+            "trashRevive": false,
+            "protection": false,
+            "effectSelection": false,
+            "startPhase": false,
+            "counter": false,
+            "counterStep": "IDLE"
+          },
+          "zones": {
+            "p1": {
+              "deck": 30,
+              "hand": 6,
+              "battle": 1,
+              "security": 5,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
               "deck": 35,
-              "hand": 7,
-              "battle": 3,
-              "security": 4,
+              "hand": 10,
+              "battle": 0,
+              "security": 1,
               "eggs": 5,
               "revealed": 0
             }
@@ -2312,18 +2316,18 @@
           },
           "zones": {
             "p1": {
-              "deck": 31,
-              "hand": 8,
-              "battle": 0,
-              "security": 3,
+              "deck": 29,
+              "hand": 6,
+              "battle": 1,
+              "security": 5,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
               "deck": 34,
-              "hand": 7,
-              "battle": 4,
-              "security": 4,
+              "hand": 11,
+              "battle": 0,
+              "security": 0,
               "eggs": 5,
               "revealed": 0
             }
@@ -2353,18 +2357,18 @@
           },
           "zones": {
             "p1": {
-              "deck": 30,
-              "hand": 9,
-              "battle": 0,
-              "security": 2,
+              "deck": 28,
+              "hand": 7,
+              "battle": 1,
+              "security": 5,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
               "deck": 33,
-              "hand": 7,
-              "battle": 4,
-              "security": 4,
+              "hand": 11,
+              "battle": 1,
+              "security": 0,
               "eggs": 5,
               "revealed": 0
             }
@@ -2394,18 +2398,18 @@
           },
           "zones": {
             "p1": {
-              "deck": 29,
-              "hand": 10,
-              "battle": 0,
-              "security": 2,
+              "deck": 27,
+              "hand": 8,
+              "battle": 1,
+              "security": 4,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
               "deck": 32,
-              "hand": 7,
-              "battle": 4,
-              "security": 4,
+              "hand": 11,
+              "battle": 2,
+              "security": 0,
               "eggs": 5,
               "revealed": 0
             }
@@ -2435,18 +2439,18 @@
           },
           "zones": {
             "p1": {
-              "deck": 28,
-              "hand": 11,
-              "battle": 0,
-              "security": 2,
+              "deck": 26,
+              "hand": 9,
+              "battle": 1,
+              "security": 3,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
               "deck": 31,
-              "hand": 7,
-              "battle": 4,
-              "security": 4,
+              "hand": 11,
+              "battle": 3,
+              "security": 0,
               "eggs": 5,
               "revealed": 0
             }
@@ -2454,9 +2458,9 @@
         },
         {
           "turn": 10,
-          "next": "p2",
+          "next": "p1",
           "phase": "HATCH",
-          "memory": -3,
+          "memory": 3,
           "pending": {
             "target": false,
             "targetType": null,
@@ -2476,18 +2480,18 @@
           },
           "zones": {
             "p1": {
-              "deck": 27,
-              "hand": 12,
-              "battle": 0,
+              "deck": 25,
+              "hand": 10,
+              "battle": 1,
               "security": 2,
               "eggs": 9,
               "revealed": 0
             },
             "p2": {
               "deck": 30,
-              "hand": 7,
+              "hand": 11,
               "battle": 3,
-              "security": 4,
+              "security": 0,
               "eggs": 5,
               "revealed": 0
             }
@@ -2495,42 +2499,42 @@
         }
       ],
       "logs": [
+        ">> <span style=\"color:var(--green)\">[P1]</span> 登场 <b>ADR-03 Pendulum Feet</b> (消耗 3 费)",
+        "💾 MEMORY -3",
+        "🔍 P1 revealed 3 card(s) from deck.",
+        "🔄 Reveal rest moved to deck_bottom (2 card(s)).",
+        "✅ P1 added 1 selected card(s) to hand.",
+        "🌅 P2 turn 12 started. Drew 1.",
         ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>DarkTyrannomon</b> (消耗 6 费)",
         "💾 MEMORY +6",
-        "⏩ Abbadomon: cost could not be paid.",
         "🌅 P1 turn 13 started. Drew 1.",
-        "⏩ Abbadomon: cost could not be paid.",
         "🌅 P2 turn 14 started. Drew 1.",
-        "⏩ UNSUSPEND: no legal target, action fizzles.",
         "⏭️ No legal blockers available; blocker timing auto-skipped.",
+        "🛡️ Aegiomon was trashed after security resolution.",
         ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>DarkTyrannomon</b> (消耗 6 费)",
         "💾 MEMORY +6",
         "🌅 P1 turn 15 started. Drew 1.",
         "🌅 P2 turn 16 started. Drew 1.",
-        "⏩ UNSUSPEND: no legal target, action fizzles.",
         "⏭️ No legal blockers available; blocker timing auto-skipped.",
-        ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>BlackWarGrowlmon</b> (消耗 8 费)",
+        "🛡️ ADR-02 Searcher was trashed after security resolution.",
+        "🚫 [Rules] Aegiochusmon: Blue cannot digivolve on DarkTyrannomon: special digivolution requirement not met.",
+        "🚫 [Rules] Aegiochusmon: Blue cannot digivolve on DarkTyrannomon: special digivolution requirement not met.",
+        ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Aegiochusmon: Blue</b> (消耗 8 费)",
         "💾 MEMORY +8",
+        "⏩ DE_DIGIVOLVE stopped: ADR-03 Pendulum Feet has no digivolution cards.",
         "🌅 P1 turn 17 started. Drew 1.",
         "🌅 P2 turn 18 started. Drew 1.",
-        "⏩ UNSUSPEND: no legal target, action fizzles.",
-        "⏩ UNSUSPEND: no legal target, action fizzles.",
         "⏭️ No legal blockers available; blocker timing auto-skipped.",
-        ">> <span style=\"color:var(--green)\">[P2]</span> 登场 <b>Abbadomon</b> (消耗 11 费)",
-        "💾 MEMORY +11",
-        "⏩ Abbadomon: condition not met.",
-        "🧬 Abbadomon placed under Abbadomon.",
-        "💰 Cost: placed 1 card(s) as digivolution cards under Abbadomon.",
-        "⏩ DELETE_DIGIMON: no legal target, action fizzles.",
-        "🌅 P1 turn 19 started. Drew 1.",
-        "⏩ Abbadomon: cost could not be paid.",
-        "🌅 P2 turn 20 started. Drew 1."
+        "🛡️ Aegiomon was trashed after security resolution.",
+        ">> <span style=\"color:var(--blue)\">[P2]</span> 进化 <b>Groundramon</b> (消耗 2 费)",
+        "💾 MEMORY +2",
+        "🌅 P1 turn 19 started. Drew 1."
       ],
       "issues": []
     }
   ],
   "summary": {
-    "total": 281,
+    "total": 282,
     "failed": 0,
     "issues": []
   }
